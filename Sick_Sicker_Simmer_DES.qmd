@@ -1,0 +1,83 @@
+---
+title: "Sick Sicker Simmer DES"
+author: "Shawn Garbett"
+format: html
+editor: visual
+---
+
+## Purpose
+
+The Sick/Sicker model is a common reference model used by the Health Policy community as a learning example about methods. The `simmer` R package provides a discrete event simulation (DES) framework for running DES simulations in the R environment. The purpose of this document is to show how to progressively build a DES Health Policy model, the Sick/Sicker model using these tools.
+
+*"Practice yourself, for heaven's sake in little things, and then proceed to greater."* --Epictetus
+
+The structure of this is to provide the simplest possible series of
+steps to constructing a Sick/Sicker model.
+
+## DES / Health Policy Terminology Mapping
+
+A simulation in DES involves multiple trajectories running in
+parallel. In the health policy framework the goal is to evaluate
+health outcomes of patients moving through different health 
+strategies. This translates to trajectory == patient. Simulation
+is usually a single strategy. The `simmer::env` is the global
+environment, or health system of the simulation.
+
+A trajectory has attributes, which are intended to represent
+the state of the patient. At the end of a run, the simmer framework
+can provide attributes on a patient and resources consumed. Thus
+attribute == patient state during the simulation and resources == events or counters happening to a patient we wish to evaluate costs
+or quality of life around.
+
+DES supports the idea of modeling shared resources between 
+patients, e.g. a limited health care system or access to care. The
+Sick/Sicker and a fair number of models make no use of this 
+capability of DES. This tutorial does not explore shared resource
+constraints and would be an advanced or follow on topic.
+
+Patients are independent in the Sick/Sicker Model. Thus for events
+we wish to model, we need two functions: time to event and event handling. Time to event is given the parameters or inputs to the 
+model and returns time to event based on the patient state. Event
+handling updates the state of the current trajectory by modifying
+attributes. This can trigger redraws of other events, or not. 
+
+## Sick/Sicker Model
+
+## Model 1
+
+Goal: A DES model that runs patients through a simulation till
+the time horizon is reached and does nothing else.
+
+Getting such a simple model running is an important step to see the
+basic framework of constructing a model. A classic beginner mistake
+is to attempt to code an entire model in one go without building
+it up slowly step by step. Avoid doing this and keep your model
+running with each additional step. This framework allows a lot
+of modularity of adding and subtracting events.
+
+Further the ability to audit and see what happens to a single 
+patient in a simulation is crucial to success. Without being 
+able to see the individual and how they progress through a 
+simulation and the ability to locate interesting trajectories it
+is near impossible to know when success has been achieved.
+
+## Model 2
+
+Goal: A DES model that now includes the death event transition
+as defined by Sick/Sicker.
+
+## Model 3
+
+Goal: A DES model that now adds the Sick/Sicker and Treat/no Treat states.
+
+## Model 4
+
+Goal: A DES model that now creates measures of cost and utility.
+
+## Model 5
+
+Goal: A framework to run models with different strategies and compare.
+
+## Aftermatter
+
+
