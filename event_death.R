@@ -1,8 +1,11 @@
+#
 
-# Given attributes of a patient (trajectory), it returns in days 
+
+# Given attributes of a patient (trajectory), it returns in years 
 # how long till the patient would die a secular death.
 #
-# NOTE: The variable in must be named attrs
+# This is a terrible mortality model, but is the reference
+# from sicker as a simple exponential draw
 years_till_death <- function(inputs)
 {
   rexp(1, inputs$r.HD)
@@ -14,11 +17,13 @@ years_till_death <- function(inputs)
 # In this case, it marks a counter and terminates 
 # the trajectory. A branch is required, even though
 # it doesn't branch to force the termination.
-secular_death <- function(traj, inputs)
+death <- function(traj, inputs)
 {
-  traj %>% branch(
+  traj |> branch(
     function() 1,
     continue=c(FALSE), # False is patient death, had to use a branch to force termination
-    trajectory("Secular Death") %>% mark("secular_death") %>% terminate_simulation()
+    trajectory("Death") |>
+      mark("death")     |> # Must be in 'counters'
+      terminate_simulation()
   )
 }

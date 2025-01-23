@@ -13,18 +13,17 @@
 #
 ###############################################################################
 
+# This is an empty model with nothing but entry/exit of a patient trajectory
 
 library(simmer)
 
-# Load parameters
-source('./inputs.R')
-# This sources the main loop, which uses the event_registry and counters.
-source('./event_loop.R')
+source('inputs.R')     # Your Model Parameters
+source('main_loop.R')  # Boilerplate code
   
 # Define starting state of patient
 initialize_patient <- function(traj, inputs)
 {
-  traj |>
+  traj                   |>
   seize("time_in_model") |>
   set_attribute("AgeInitial", function() sample(20:40, 1))
 }
@@ -66,7 +65,7 @@ counters <- c(
 # This does a single DES run versus the defined inputs.
 des_run <- function(inputs)
 {
-  env  <<- simmer("BC_DES")
+  env  <<- simmer("SickSicker")
   traj <- des(env, inputs)
   env |> 
     create_counters(counters) |>
