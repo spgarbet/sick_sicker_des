@@ -223,7 +223,9 @@ des_run(inputs)
 
 ```
 
-There it is, 5 patients who are simulated independently for 30 years. Relax and get a cup of tea, the first step is over. 
+There it is, 5 patients who are simulated independently for 30 years. One can see the name of the trajectory, which we've used 'patient0', the start_time and end_time for a resource--of each patient we've used one. They start the simulation at time 0 and end at time 30. The `activity_time` spent in the model is 30. The only resource used at this point is the only one we've defined, `time_in_model`. The replication is 1, is we were doing multiple runs and accumulating them. 
+
+While simple, just getting a framework up and running is an accomplishment. Relax and get a cup of tea, the first step is over. 
 
 ## Model 2
 

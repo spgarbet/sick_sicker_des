@@ -118,7 +118,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="des-health-policy-terminology-mapping" class="level2">
 <h2 class="anchored" data-anchor-id="des-health-policy-terminology-mapping">DES / Health Policy Terminology Mapping</h2>
-<p>A simulation in DES involves multiple trajectories running in parallel. In the health policy framework the goal is to evaluate health outcomes of patients moving through different health strategies. This translates to trajectory == patient. Simulation is usually a single strategy. The <code>simmer::env</code> is the global environment, or health system of the simulation.</p>
+<p>A simulation in DES involves multiple trajectories running in parallel. In the health policy framework the Objective is to evaluate health outcomes of patients moving through different health strategies. This translates to trajectory == patient. Simulation is usually a single strategy. The <code>simmer::env</code> is the global environment, or health system of the simulation.</p>
 <p>A trajectory has attributes, which are intended to represent the state of the patient. At the end of a run, the simmer framework can provide attributes on a patient and resources consumed. Thus attribute == patient state during the simulation and resources == events or counters happening to a patient we wish to evaluate costs or quality of life around.</p>
 <p>DES supports the idea of modeling shared resources between patients, e.g.&nbsp;a limited health care system or access to care. The Sick/Sicker and a fair number of models make no use of this capability of DES. This tutorial does not explore shared resource constraints and would be an advanced or follow on topic.</p>
 <p>Patients are independent in the Sick/Sicker Model. Thus for events we wish to model, we need two functions: time to event and event handling. Time to event is given the parameters or inputs to the model and returns time to event based on the patient state. Event handling updates the state of the current trajectory by modifying attributes. This can trigger redraws of other events, or not.</p>
@@ -279,6 +279,8 @@ event_registry &lt;- list(
 5 patient4          0       30            30 time_in_model           1</code></pre>
 </div>
 </div>
+<p>There it is, 5 patients who are simulated independently for 30 years. One can see the name of the trajectory, which we’ve used ‘patient0’, the start_time and end_time for a resource–of each patient we’ve used one. They start the simulation at time 0 and end at time 30. The <code>activity_time</code> spent in the model is 30. The only resource used at this point is the only one we’ve defined, <code>time_in_model</code>. The replication is 1, is we were doing multiple runs and accumulating them.</p>
+<p>While simple, just getting a framework up and running is an accomplishment. Relax and get a cup of tea, the first step is over.</p>
 </section>
 <section id="model-2" class="level2">
 <h2 class="anchored" data-anchor-id="model-2">Model 2</h2>
@@ -286,19 +288,19 @@ event_registry &lt;- list(
 </section>
 <section id="model-3" class="level2">
 <h2 class="anchored" data-anchor-id="model-3">Model 3</h2>
-<p>Goal: A DES model that now includes the death event transition as defined by Sick/Sicker.</p>
+<p>Objective: A DES model that now includes the death event transition as defined by Sick/Sicker.</p>
 </section>
 <section id="model-4" class="level2">
 <h2 class="anchored" data-anchor-id="model-4">Model 4</h2>
-<p>Goal: A DES model that now adds the Sick/Sicker and Treat/no Treat states.</p>
+<p>Objective: A DES model that now adds the Sick/Sicker and Treat/no Treat states.</p>
 </section>
 <section id="model-4-1" class="level2">
 <h2 class="anchored" data-anchor-id="model-4-1">Model 4</h2>
-<p>Goal: A DES model that now creates measures of cost and utility.</p>
+<p>Objective: A DES model that now creates measures of cost and utility.</p>
 </section>
 <section id="model-5" class="level2">
 <h2 class="anchored" data-anchor-id="model-5">Model 5</h2>
-<p>Goal: A framework to run models with different strategies and compare.</p>
+<p>Objective: A framework to run models with different strategies and compare.</p>
 </section>
 <section id="aftermatter" class="level2">
 <h2 class="anchored" data-anchor-id="aftermatter">Aftermatter</h2>
