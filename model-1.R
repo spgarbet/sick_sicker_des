@@ -20,12 +20,21 @@ library(simmer)
 source('inputs.R')     # Your Model Parameters
 source('main_loop.R')  # Boilerplate code
   
+# Resource or "Counters"
+#
+# These are used to track things that incur costs or qalys, or other
+# things of which a count might be of interest.
+# Infinite in quantity
+counters <- c(
+  "time_in_model"
+)
+  
 # Define starting state of patient
 initialize_patient <- function(traj, inputs)
 {
   traj                   |>
   seize("time_in_model") |>
-  set_attribute("AgeInitial", function() sample(20:40, 1))
+  set_attribute("AgeInitial", function() sample(20:30, 1))
 }
 
 # Cleanup function if a termination occurs
@@ -52,14 +61,6 @@ event_registry <- list(
        time_to_event = function(inputs) inputs$horizon,
        func          = terminate_simulation,
        reactive      = FALSE)
-)
-
-# Resource or "Counters"
-#
-# These are used to track things that incur costs or qalys, or other
-# things of which a count might be of interest.
-counters <- c(
-  "time_in_model"
 )
 
 # This does a single DES run versus the defined inputs.

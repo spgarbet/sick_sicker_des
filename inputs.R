@@ -20,7 +20,7 @@ inputs <- list(
     N      = 5,
   
     # Parameters
-    n.t    =    30,      # Time horizon
+    horizon=    30,      # Time horizon
     
     # Cycle => 1 year
     d.r    =     0.03,   # Discount Rate
@@ -51,6 +51,5 @@ inputs <- list(
     
     wtp    = 1e5,
     
-    strategy = 'notreat',
-    horizon  = 10
+    strategy = 'notreat' # Default strategy is no treatment
   )

@@ -2,82 +2,247 @@
 title: "Sick Sicker Simmer DES"
 author: "Shawn Garbett"
 format: html
+date: 2025-01-23
 editor: visual
 ---
 
 ## Purpose
 
-The Sick/Sicker model is a common reference model used by the Health Policy community as a learning example about methods. The `simmer` R package provides a discrete event simulation (DES) framework for running DES simulations in the R environment. The purpose of this document is to show how to progressively build a DES Health Policy model, the Sick/Sicker model using these tools.
+The Sick/Sicker model is a common reference model used by the Health Policy community as a learning example about methods. The [simmer](https://cran.r-project.org/package=simmer) R package provides a discrete event simulation (DES) framework for running DES simulations in the R environment. The purpose of this document is to show how to progressively build a DES Health Policy model, the Sick/Sicker model using these tools.
 
-*"Practice yourself, for heaven's sake in little things, and then proceed to greater."* --Epictetus
+> *"Practice yourself, for heaven's sake in little things, and then proceed to greater."* --Epictetus
 
-The structure of this is to provide the simplest possible series of
-steps to constructing a Sick/Sicker model.
+The structure of this is to provide the simplest possible series of steps to constructing a Sick/Sicker model using [simmer](https://cran.r-project.org/package=simmer)
 
 ## DES / Health Policy Terminology Mapping
 
-A simulation in DES involves multiple trajectories running in
-parallel. In the health policy framework the goal is to evaluate
-health outcomes of patients moving through different health 
-strategies. This translates to trajectory == patient. Simulation
-is usually a single strategy. The `simmer::env` is the global
-environment, or health system of the simulation.
+A simulation in DES involves multiple trajectories running in parallel. In the health policy framework the Objective is to evaluate health outcomes of patients moving through different health strategies. This translates to trajectory == patient. Simulation is usually a single strategy. The `simmer::env` is the global environment, or health system of the simulation.
 
-A trajectory has attributes, which are intended to represent
-the state of the patient. At the end of a run, the simmer framework
-can provide attributes on a patient and resources consumed. Thus
-attribute == patient state during the simulation and resources == events or counters happening to a patient we wish to evaluate costs
-or quality of life around.
+A trajectory has attributes, which are intended to represent the state of the patient. At the end of a run, the simmer framework can provide attributes on a patient and resources consumed. Thus attribute == patient state during the simulation and resources == events or counters happening to a patient we wish to evaluate costs or quality of life around.
 
-DES supports the idea of modeling shared resources between 
-patients, e.g. a limited health care system or access to care. The
-Sick/Sicker and a fair number of models make no use of this 
-capability of DES. This tutorial does not explore shared resource
-constraints and would be an advanced or follow on topic.
+DES supports the idea of modeling shared resources between patients, e.g. a limited health care system or access to care. The Sick/Sicker and a fair number of models make no use of this capability of DES. This tutorial does not explore shared resource constraints and would be an advanced or follow on topic.
 
-Patients are independent in the Sick/Sicker Model. Thus for events
-we wish to model, we need two functions: time to event and event handling. Time to event is given the parameters or inputs to the 
-model and returns time to event based on the patient state. Event
-handling updates the state of the current trajectory by modifying
-attributes. This can trigger redraws of other events, or not. 
+Patients are independent in the Sick/Sicker Model. Thus for events we wish to model, we need two functions: time to event and event handling. Time to event is given the parameters or inputs to the model and returns time to event based on the patient state. Event handling updates the state of the current trajectory by modifying attributes. This can trigger redraws of other events, or not.
 
 ## Sick/Sicker Model
 
-## Model 1
+Source is [Univ of Minnesota 2018 Workshop](http://htmlpreview.github.io/?https://github.com/spgarbet/CostEffectivenessMN2018/master/Notes-Day1.html) provided by the [DARTH Workgroup](https://darthworkgroup.com/).
 
-Goal: A DES model that runs patients through a simulation till
-the time horizon is reached and does nothing else.
+Notes from Workshop:
 
-Getting such a simple model running is an important step to see the
-basic framework of constructing a model. A classic beginner mistake
-is to attempt to code an entire model in one go without building
-it up slowly step by step. Avoid doing this and keep your model
-running with each additional step. This framework allows a lot
-of modularity of adding and subtracting events.
+![](./02_model_diagram.png)
 
-Further the ability to audit and see what happens to a single 
-patient in a simulation is crucial to success. Without being 
-able to see the individual and how they progress through a 
-simulation and the ability to locate interesting trajectories it
-is near impossible to know when success has been achieved.
+> In this exercise, we will model a hypothetical disease that affects individuals with an average age of 25 years and results in increased mortality, increased healthcare costs, and reduced quality of life. The disease has two levels; affected individuals initially become sick but can subsequently progress and become sicker. Two alternative strategies exist for this hypothetical disease: a no-treatment and a treatment strategy. Under the treatment strategy, individuals in the sick and sicker states are treated until they recover (only if sick; individuals in the sicker state cannot recover) or die. The cost of the treatment is additive to the baseline healthcare costs of being sick or sicker. The treatment improves quality of life for those individuals who are sick but has no impact on the quality of life of those who are sicker. Unfortunately, it is not possible to reliably differentiate between people in the sick and sicker states, so treatment cannot be targeted to only those in the sick state. You are asked to evaluate the cost-effectiveness of the treatment.
+>
+> To model this disease, we will rely on a state-transition cohort model, called the Sick-Sicker model, first described by Enns et al. The Sick-Sicker model consists of four health states: Healthy (H), two disease states, Sick (S1) and Sicker (S2), and Dead (D) (Figure 1). All individuals start in the Healthy state. Over time, healthy individuals may develop the disease and can progress to S1. Individuals in S1 can recover (return to state H), progress further to S2 or die. Individuals in S2 cannot recover (i.e. cannot transition to either S1 or H). Individuals in H have a baseline probability of death; individuals in S1 and S2 experience increased mortality compared to those in the H state, given in terms of hazard ratios. These ratios are used to calculate the probabilities of dying when in S1 and S2.
+>
+> Enns, E A, L E Cipriano, C T Simons, and C Y Kong. 2015. “Identifying Best-Fitting Inputs in Health-Economic Model Calibration: A Pareto Frontier Approach.” Medical Decision Making 35 (2): 170–82. [doi:10.1177/0272989X14528382](https://doi.org/10.1177/0272989X14528382).
+
+See also: [darthpack](https://darth-git.github.io/darthpack/articles/aa-introduction.html)
+
+## Model 1 (_Premiers pas_)
+
+Objective: A DES model that runs patients through a simulation till the time horizon is reached and does nothing else.
+
+[_The Little-Known Power of Going Slow to Go Fast_](https://medium.com/publishous/the-little-known-power-of-going-slow-to-go-fast-2ce0ea0b8bff)
+
+Getting such a simple model running is an important step to see the basic framework of constructing a model. A classic beginner mistake is to attempt to code an entire model in one go without building it up slowly step by step.
+Debugging a massive pile of code is daunting task. Avoid doing this and keep your model running with each additional step taken in model construction. This framework provided allows a lot of modularity of adding and subtracting events. 
+
+Further the ability to audit and see what happens to a single patient in a simulation is crucial to success. Without being able to see the individual and how they progress through a simulation and the ability to locate interesting trajectories it is near impossible to know when success has been achieved.
+
+The first step in this tutorial for simplicity is to include the DARTH rates of the Sick/Sicker model in `inputs.R`. 
+
+```
+inputs <- list(
+    N      = 5,
+  
+    # Parameters (1 cycle == 1 year)
+    horizon=    30,      # Time horizon in years
+    
+    d.r    =     0.03,   # Discount Rate
+    
+    r.HS1  =     0.15,   # Disease Onset Rate / year       (H  -> S1)
+    r.S1H  =     0.7,    # Recovery Rate / year            (S1 -> H)
+    r.S1S2 =     0.10,   # Disease Progression rate / year (S1 -> S2)
+    r.HD   =     0.005,  # Healthy to Dead rate / year     (H  -> D)
+    hr.S1D =     3,      # Hazard ratio in S1 vs healthy 
+    hr.S2D =    10,      # Hazard ratio in S2 vs healthy
+    hr.cor =     2,      # Hazard ratio of a condition giving the other condition.
+    
+    # Annual Costs
+    c.H    =  2000,      # Healthy individuals 
+    c.S1   =  4000,      # Sick individuals in S1
+    c.S2   = 15000,      # Sick individuals in S2
+    c.D    =     0,      # Dead individuals
+    c.Trt  = 12000,      # Additional Annual cost for S1 and S2
+    
+    # Utility Weights
+    u.H    =     1.00,   # Healthy
+    u.S1   =     0.80,   # S1
+    u.S2   =     0.60,   # S2
+    u.D    =     0.00,   # Dead
+    
+    # Intervention Effect
+    u.Trt  =     0.95,   # S1 Utility for treatment in S1
+    
+    wtp    = 1e5,
+    
+    strategy = 'notreat' # Default strategy is to do nothing
+  )
+
+```
+
+This is mostly lifted from our example source and the model definition and reading up on Sick/Sicker is an exercise for the reader using the materials in the previous section.
+
+The next part is really simple. Including `main_loop.R` in ones code gives the essential framework to build a model using simmer. This code allows for an event registry that by defining a function that returns time_to_event and a function to deal with resulting state transition if that event fires. It deals with drawing the next event and firing it. This code has remained mostly unchanged for a decade across numerous projects. 
+
+Thus the main file to run our model we can now begin construction of `model-1.R`. The fragments of this file will be described below. 
+
+### Boilerplate 
+
+First part is to load necessary bits: `simmer`, our `inputs` and the boilerplate `main_loop`. 
+
+```
+library(simmer)
+
+source('inputs.R')     # Your Model Parameters
+source('main_loop.R')  # Boilerplate code
+```
+
+### Counters
+
+First is to define the resources or things we wish to track about a patient.
+
+```
+counters <- c(
+  "time_in_model"
+)
+```
+
+This will be used later with a convenience function provided by `main_loop` to define resources that have infinite capacity, i.e. no resource contention or competition. Our objective is to get a trajectory for a patient to run to the time horizon and we want to track their time in our model. Thus our first `counter` will be `time_in_model`.
+
+### Initialize our patient
+
+We need a function to define the starting state of a patient. This can be arbitrary complex as needed to define the attributes of the starting population of a study. 
+
+**NOTE**: It is important when using simmer to mostly pass functions for defining things in a trajectory. This is a call back, and if not done properly it can result in puzzling behavior. If one passed to simmer the following: `sample(20:30,1)`, it would result in a single random draw applied to every single patient. For example, if 25 were draw every patient would be 25. Instead one needs to pass to simmer `function() sample(20:30,1)` to get a random draw for each patient resulting a uniform spread of this parameter. If every patient had the same attribute being assigned, it would be fine to leave off the `function()`, but this can lead to forgetting to do it in cases where it's needed and it doesn't hurt to leave it in on all calls.
+
+```
+initialize_patient <- function(traj, inputs)
+{
+  traj                   |>
+  seize("time_in_model") |>
+  set_attribute("AgeInitial", function() sample(20:30, 1))
+}
+```
+
+This function expects a patient trajectory and the inputs to be provided. Using this trajectory it seizes the counter "time_in_model" simply stating that patient is taking time inside a model. We follow with an example function of setting an attribute "AgeInitial". This isn't utilized in Sick/Sicker and is only for example purposes of setting.
+
+### Release Resources on Exit
+
+When a patient leaves the simulation via any means it is helpful to have a function that examines the state or attributes of that patient/trajectory and releases any resources they used. 
+
+In this section, we know they've seized `time_in_model`, so they need to let that go when they exit.
+
+```
+cleanup_on_termination <- function(traj)
+{
+  traj |> 
+  release("time_in_model")
+}
+```
+
+This function can get a lot more complex as patient state grows more complex.
+
+### Termination Routine
+
+This routine terminates the trajectory and calls the above cleanup. These two pieces could easily have been one function, but keeping them separate has proven useful in practice, primarily for organizational purposes.
+
+```
+terminate_simulation <- function(traj, inputs)
+{
+  traj |>
+  branch( function() 1, 
+          continue=FALSE,
+          trajectory() |> cleanup_on_termination()
+        )
+}
+```
+
+### Event Registry
+
+Now we're approaching the heart of the model. The event registry. We're going to define a single event to terminate the patient trajectory when the defined time horizon is reached. For a full life simulation such a function isn't needed as a proper mortality model would have individuals simulated die at some point, however it's not bad to have something like this to prevent a run away simulation. 
+
+Here's how it looks for a single entry. 
+
+```
+# Main Event registry
+event_registry <- list(
+  list(name          = "Terminate at time horizon",
+       attr          = "aTerminate",
+       time_to_event = function(inputs) inputs$horizon,
+       func          = terminate_simulation,
+       reactive      = FALSE)
+)
+```
+
+The `name` field is for debugging purposes and may come up on a simmer trace. It's not used much in practice. The `attr` is the name of the attribute on a patient used to store the time to event. It needs to be unique and not correspond to any other attribute name defined on the
+patient. The `time_to_event` is a call back function that defines how long till the event occurs. Simulation time starts at 0 and proceeds forward. In this Sick/Sicker model we have chosen the cycle to each a year. Thus when time reaches 2.0, that's 2 years into the simulation for that patient--_not their_age_. The `func` is the callback function that will modify the state of the patient, in this case it's the terminate simulation function defined above. The `reactive` field is a logical TRUE/FALSE that defines whether all other events should be redraw if this event fires. In this case the patient trajectory is ending, so no events for them should be redrawn. 
+
+## DES Simulation
+
+Now, to pull it together in a simmer simulation.
+
+```
+des_run <- function(inputs)
+{
+  env  <<- simmer("SickSicker")
+  traj <- des(env, inputs)
+  env |> 
+    create_counters(counters) |>
+    add_generator("patient", traj, at(rep(0, inputs$N)), mon=2) |>
+    run(inputs$horizon+1/365) |> # Simulate just past horizon (in years)
+    wrap()
+        
+  get_mon_arrivals(env, per_resource = T)
+}
+```
+
+The first step is to create a global environment used to run simmer. 
+This is followed by creating a des definition of a trajectory (this function is in `main_loop`. It uses the things we've defined above. 
+
+Then the env is given resources or counters, patients are generated into the simulation, the simulation is run for an amount of time (just past the horizon) and then the `wrap` makes sure all summaries are ready. 
+
+`get_mon_arrival` returns us the trajectories of the patients in a data.frame. We will expand on this quite a bit later. It really the soul of understanding what's going on in a simulation and critical for auditing and validation of expectations about a model as we demonstrate later.
+
+```{r}
+source('model-1.R')
+
+des_run(inputs)
+
+```
+
+There it is, 5 patients who are simulated independently for 30 years. Relax and get a cup of tea, the first step is over. 
 
 ## Model 2
 
-Goal: A DES model that now includes the death event transition
-as defined by Sick/Sicker.
+Objective: Add in cost / quality accumulators
 
 ## Model 3
 
-Goal: A DES model that now adds the Sick/Sicker and Treat/no Treat states.
+Objective: A DES model that now includes the death event transition as defined by Sick/Sicker.
 
 ## Model 4
 
-Goal: A DES model that now creates measures of cost and utility.
+Objective: A DES model that now adds the Sick/Sicker and Treat/no Treat states.
+
+## Model 4
+
+Objective: A DES model that now creates measures of cost and utility.
 
 ## Model 5
 
-Goal: A framework to run models with different strategies and compare.
+Objective: A framework to run models with different strategies and compare.
 
 ## Aftermatter
-
-

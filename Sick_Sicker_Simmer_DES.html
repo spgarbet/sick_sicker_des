@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.340">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Shawn Garbett">
+<meta name="dcterms.date" content="2025-01-23">
+
+<title>Sick Sicker Simmer DES</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Sick_Sicker_Simmer_DES_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Sick_Sicker_Simmer_DES_files/libs/quarto-html/quarto.js"></script>
+<script src="Sick_Sicker_Simmer_DES_files/libs/quarto-html/popper.min.js"></script>
+<script src="Sick_Sicker_Simmer_DES_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Sick_Sicker_Simmer_DES_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Sick_Sicker_Simmer_DES_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Sick_Sicker_Simmer_DES_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Sick_Sicker_Simmer_DES_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Sick_Sicker_Simmer_DES_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Sick_Sicker_Simmer_DES_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Sick Sicker Simmer DES</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Shawn Garbett </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 23, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>The Sick/Sicker model is a common reference model used by the Health Policy community as a learning example about methods. The <a href="https://cran.r-project.org/package=simmer">simmer</a> R package provides a discrete event simulation (DES) framework for running DES simulations in the R environment. The purpose of this document is to show how to progressively build a DES Health Policy model, the Sick/Sicker model using these tools.</p>
+<blockquote class="blockquote">
+<p><em>“Practice yourself, for heaven’s sake in little things, and then proceed to greater.”</em> –Epictetus</p>
+</blockquote>
+<p>The structure of this is to provide the simplest possible series of steps to constructing a Sick/Sicker model using <a href="https://cran.r-project.org/package=simmer">simmer</a></p>
+</section>
+<section id="des-health-policy-terminology-mapping" class="level2">
+<h2 class="anchored" data-anchor-id="des-health-policy-terminology-mapping">DES / Health Policy Terminology Mapping</h2>
+<p>A simulation in DES involves multiple trajectories running in parallel. In the health policy framework the goal is to evaluate health outcomes of patients moving through different health strategies. This translates to trajectory == patient. Simulation is usually a single strategy. The <code>simmer::env</code> is the global environment, or health system of the simulation.</p>
+<p>A trajectory has attributes, which are intended to represent the state of the patient. At the end of a run, the simmer framework can provide attributes on a patient and resources consumed. Thus attribute == patient state during the simulation and resources == events or counters happening to a patient we wish to evaluate costs or quality of life around.</p>
+<p>DES supports the idea of modeling shared resources between patients, e.g.&nbsp;a limited health care system or access to care. The Sick/Sicker and a fair number of models make no use of this capability of DES. This tutorial does not explore shared resource constraints and would be an advanced or follow on topic.</p>
+<p>Patients are independent in the Sick/Sicker Model. Thus for events we wish to model, we need two functions: time to event and event handling. Time to event is given the parameters or inputs to the model and returns time to event based on the patient state. Event handling updates the state of the current trajectory by modifying attributes. This can trigger redraws of other events, or not.</p>
+</section>
+<section id="sicksicker-model" class="level2">
+<h2 class="anchored" data-anchor-id="sicksicker-model">Sick/Sicker Model</h2>
+<p>Source is <a href="http://htmlpreview.github.io/?https://github.com/spgarbet/CostEffectivenessMN2018/master/Notes-Day1.html">Univ of Minnesota 2018 Workshop</a> provided by the <a href="https://darthworkgroup.com/">DARTH Workgroup</a>.</p>
+<p>Notes from Workshop:</p>
+<p><img src="./02_model_diagram.png" class="img-fluid"></p>
+<blockquote class="blockquote">
+<p>In this exercise, we will model a hypothetical disease that affects individuals with an average age of 25 years and results in increased mortality, increased healthcare costs, and reduced quality of life. The disease has two levels; affected individuals initially become sick but can subsequently progress and become sicker. Two alternative strategies exist for this hypothetical disease: a no-treatment and a treatment strategy. Under the treatment strategy, individuals in the sick and sicker states are treated until they recover (only if sick; individuals in the sicker state cannot recover) or die. The cost of the treatment is additive to the baseline healthcare costs of being sick or sicker. The treatment improves quality of life for those individuals who are sick but has no impact on the quality of life of those who are sicker. Unfortunately, it is not possible to reliably differentiate between people in the sick and sicker states, so treatment cannot be targeted to only those in the sick state. You are asked to evaluate the cost-effectiveness of the treatment.</p>
+<p>To model this disease, we will rely on a state-transition cohort model, called the Sick-Sicker model, first described by Enns et al.&nbsp;The Sick-Sicker model consists of four health states: Healthy (H), two disease states, Sick (S1) and Sicker (S2), and Dead (D) (Figure 1). All individuals start in the Healthy state. Over time, healthy individuals may develop the disease and can progress to S1. Individuals in S1 can recover (return to state H), progress further to S2 or die. Individuals in S2 cannot recover (i.e.&nbsp;cannot transition to either S1 or H). Individuals in H have a baseline probability of death; individuals in S1 and S2 experience increased mortality compared to those in the H state, given in terms of hazard ratios. These ratios are used to calculate the probabilities of dying when in S1 and S2.</p>
+<p>Enns, E A, L E Cipriano, C T Simons, and C Y Kong. 2015. “Identifying Best-Fitting Inputs in Health-Economic Model Calibration: A Pareto Frontier Approach.” Medical Decision Making 35 (2): 170–82. <a href="https://doi.org/10.1177/0272989X14528382">doi:10.1177/0272989X14528382</a>.</p>
+</blockquote>
+<p>See also: <a href="https://darth-git.github.io/darthpack/articles/aa-introduction.html">darthpack</a></p>
+</section>
+<section id="model-1-premiers-pas" class="level2">
+<h2 class="anchored" data-anchor-id="model-1-premiers-pas">Model 1 (<em>Premiers pas</em>)</h2>
+<p>Objective: A DES model that runs patients through a simulation till the time horizon is reached and does nothing else.</p>
+<p><a href="https://medium.com/publishous/the-little-known-power-of-going-slow-to-go-fast-2ce0ea0b8bff"><em>The Little-Known Power of Going Slow to Go Fast</em></a></p>
+<p>Getting such a simple model running is an important step to see the basic framework of constructing a model. A classic beginner mistake is to attempt to code an entire model in one go without building it up slowly step by step. Debugging a massive pile of code is daunting task. Avoid doing this and keep your model running with each additional step taken in model construction. This framework provided allows a lot of modularity of adding and subtracting events.</p>
+<p>Further the ability to audit and see what happens to a single patient in a simulation is crucial to success. Without being able to see the individual and how they progress through a simulation and the ability to locate interesting trajectories it is near impossible to know when success has been achieved.</p>
+<p>The first step in this tutorial for simplicity is to include the DARTH rates of the Sick/Sicker model in <code>inputs.R</code>.</p>
+<pre><code>inputs &lt;- list(
+    N      = 5,
+  
+    # Parameters (1 cycle == 1 year)
+    horizon=    30,      # Time horizon in years
+    
+    d.r    =     0.03,   # Discount Rate
+    
+    r.HS1  =     0.15,   # Disease Onset Rate / year       (H  -&gt; S1)
+    r.S1H  =     0.7,    # Recovery Rate / year            (S1 -&gt; H)
+    r.S1S2 =     0.10,   # Disease Progression rate / year (S1 -&gt; S2)
+    r.HD   =     0.005,  # Healthy to Dead rate / year     (H  -&gt; D)
+    hr.S1D =     3,      # Hazard ratio in S1 vs healthy 
+    hr.S2D =    10,      # Hazard ratio in S2 vs healthy
+    hr.cor =     2,      # Hazard ratio of a condition giving the other condition.
+    
+    # Annual Costs
+    c.H    =  2000,      # Healthy individuals 
+    c.S1   =  4000,      # Sick individuals in S1
+    c.S2   = 15000,      # Sick individuals in S2
+    c.D    =     0,      # Dead individuals
+    c.Trt  = 12000,      # Additional Annual cost for S1 and S2
+    
+    # Utility Weights
+    u.H    =     1.00,   # Healthy
+    u.S1   =     0.80,   # S1
+    u.S2   =     0.60,   # S2
+    u.D    =     0.00,   # Dead
+    
+    # Intervention Effect
+    u.Trt  =     0.95,   # S1 Utility for treatment in S1
+    
+    wtp    = 1e5,
+    
+    strategy = 'notreat' # Default strategy is to do nothing
+  )
+</code></pre>
+<p>This is mostly lifted from our example source and the model definition and reading up on Sick/Sicker is an exercise for the reader using the materials in the previous section.</p>
+<p>The next part is really simple. Including <code>main_loop.R</code> in ones code gives the essential framework to build a model using simmer. This code allows for an event registry that by defining a function that returns time_to_event and a function to deal with resulting state transition if that event fires. It deals with drawing the next event and firing it. This code has remained mostly unchanged for a decade across numerous projects.</p>
+<p>Thus the main file to run our model we can now begin construction of <code>model-1.R</code>. The fragments of this file will be described below.</p>
+<section id="boilerplate" class="level3">
+<h3 class="anchored" data-anchor-id="boilerplate">Boilerplate</h3>
+<p>First part is to load necessary bits: <code>simmer</code>, our <code>inputs</code> and the boilerplate <code>main_loop</code>.</p>
+<pre><code>library(simmer)
+
+source('inputs.R')     # Your Model Parameters
+source('main_loop.R')  # Boilerplate code</code></pre>
+</section>
+<section id="counters" class="level3">
+<h3 class="anchored" data-anchor-id="counters">Counters</h3>
+<p>First is to define the resources or things we wish to track about a patient.</p>
+<pre><code>counters &lt;- c(
+  "time_in_model"
+)</code></pre>
+<p>This will be used later with a convenience function provided by <code>main_loop</code> to define resources that have infinite capacity, i.e.&nbsp;no resource contention or competition. Our objective is to get a trajectory for a patient to run to the time horizon and we want to track their time in our model. Thus our first <code>counter</code> will be <code>time_in_model</code>.</p>
+</section>
+<section id="initialize-our-patient" class="level3">
+<h3 class="anchored" data-anchor-id="initialize-our-patient">Initialize our patient</h3>
+<p>We need a function to define the starting state of a patient. This can be arbitrary complex as needed to define the attributes of the starting population of a study.</p>
+<p><strong>NOTE</strong>: It is important when using simmer to mostly pass functions for defining things in a trajectory. This is a call back, and if not done properly it can result in puzzling behavior. If one passed to simmer the following: <code>sample(20:30,1)</code>, it would result in a single random draw applied to every single patient. For example, if 25 were draw every patient would be 25. Instead one needs to pass to simmer <code>function() sample(20:30,1)</code> to get a random draw for each patient resulting a uniform spread of this parameter. If every patient had the same attribute being assigned, it would be fine to leave off the <code>function()</code>, but this can lead to forgetting to do it in cases where it’s needed and it doesn’t hurt to leave it in on all calls.</p>
+<pre><code>initialize_patient &lt;- function(traj, inputs)
+{
+  traj                   |&gt;
+  seize("time_in_model") |&gt;
+  set_attribute("AgeInitial", function() sample(20:30, 1))
+}</code></pre>
+<p>This function expects a patient trajectory and the inputs to be provided. Using this trajectory it seizes the counter “time_in_model” simply stating that patient is taking time inside a model. We follow with an example function of setting an attribute “AgeInitial”. This isn’t utilized in Sick/Sicker and is only for example purposes of setting.</p>
+</section>
+<section id="release-resources-on-exit" class="level3">
+<h3 class="anchored" data-anchor-id="release-resources-on-exit">Release Resources on Exit</h3>
+<p>When a patient leaves the simulation via any means it is helpful to have a function that examines the state or attributes of that patient/trajectory and releases any resources they used.</p>
+<p>In this section, we know they’ve seized <code>time_in_model</code>, so they need to let that go when they exit.</p>
+<pre><code>cleanup_on_termination &lt;- function(traj)
+{
+  traj |&gt; 
+  release("time_in_model")
+}</code></pre>
+<p>This function can get a lot more complex as patient state grows more complex.</p>
+</section>
+<section id="termination-routine" class="level3">
+<h3 class="anchored" data-anchor-id="termination-routine">Termination Routine</h3>
+<p>This routine terminates the trajectory and calls the above cleanup. These two pieces could easily have been one function, but keeping them separate has proven useful in practice, primarily for organizational purposes.</p>
+<pre><code>terminate_simulation &lt;- function(traj, inputs)
+{
+  traj |&gt;
+  branch( function() 1, 
+          continue=FALSE,
+          trajectory() |&gt; cleanup_on_termination()
+        )
+}</code></pre>
+</section>
+<section id="event-registry" class="level3">
+<h3 class="anchored" data-anchor-id="event-registry">Event Registry</h3>
+<p>Now we’re approaching the heart of the model. The event registry. We’re going to define a single event to terminate the patient trajectory when the defined time horizon is reached. For a full life simulation such a function isn’t needed as a proper mortality model would have individuals simulated die at some point, however it’s not bad to have something like this to prevent a run away simulation.</p>
+<p>Here’s how it looks for a single entry.</p>
+<pre><code># Main Event registry
+event_registry &lt;- list(
+  list(name          = "Terminate at time horizon",
+       attr          = "aTerminate",
+       time_to_event = function(inputs) inputs$horizon,
+       func          = terminate_simulation,
+       reactive      = FALSE)
+)</code></pre>
+<p>The <code>name</code> field is for debugging purposes and may come up on a simmer trace. It’s not used much in practice. The <code>attr</code> is the name of the attribute on a patient used to store the time to event. It needs to be unique and not correspond to any other attribute name defined on the patient. The <code>time_to_event</code> is a call back function that defines how long till the event occurs. Simulation time starts at 0 and proceeds forward. In this Sick/Sicker model we have chosen the cycle to each a year. Thus when time reaches 2.0, that’s 2 years into the simulation for that patient–<em>not their_age</em>. The <code>func</code> is the callback function that will modify the state of the patient, in this case it’s the terminate simulation function defined above. The <code>reactive</code> field is a logical TRUE/FALSE that defines whether all other events should be redraw if this event fires. In this case the patient trajectory is ending, so no events for them should be redrawn.</p>
+</section>
+</section>
+<section id="des-simulation" class="level2">
+<h2 class="anchored" data-anchor-id="des-simulation">DES Simulation</h2>
+<p>Now, to pull it together in a simmer simulation.</p>
+<pre><code>des_run &lt;- function(inputs)
+{
+  env  &lt;&lt;- simmer("SickSicker")
+  traj &lt;- des(env, inputs)
+  env |&gt; 
+    create_counters(counters) |&gt;
+    add_generator("patient", traj, at(rep(0, inputs$N)), mon=2) |&gt;
+    run(inputs$horizon+1/365) |&gt; # Simulate just past horizon (in years)
+    wrap()
+        
+  get_mon_arrivals(env, per_resource = T)
+}</code></pre>
+<p>The first step is to create a global environment used to run simmer. This is followed by creating a des definition of a trajectory (this function is in <code>main_loop</code>. It uses the things we’ve defined above.</p>
+<p>Then the env is given resources or counters, patients are generated into the simulation, the simulation is run for an amount of time (just past the horizon) and then the <code>wrap</code> makes sure all summaries are ready.</p>
+<p><code>get_mon_arrival</code> returns us the trajectories of the patients in a data.frame. We will expand on this quite a bit later. It really the soul of understanding what’s going on in a simulation and critical for auditing and validation of expectations about a model as we demonstrate later.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-1.R'</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      name start_time end_time activity_time      resource replication
+1 patient0          0       30            30 time_in_model           1
+2 patient1          0       30            30 time_in_model           1
+3 patient2          0       30            30 time_in_model           1
+4 patient3          0       30            30 time_in_model           1
+5 patient4          0       30            30 time_in_model           1</code></pre>
+</div>
+</div>
+</section>
+<section id="model-2" class="level2">
+<h2 class="anchored" data-anchor-id="model-2">Model 2</h2>
+<p>Objective: Add in cost / quality accumulators</p>
+</section>
+<section id="model-3" class="level2">
+<h2 class="anchored" data-anchor-id="model-3">Model 3</h2>
+<p>Goal: A DES model that now includes the death event transition as defined by Sick/Sicker.</p>
+</section>
+<section id="model-4" class="level2">
+<h2 class="anchored" data-anchor-id="model-4">Model 4</h2>
+<p>Goal: A DES model that now adds the Sick/Sicker and Treat/no Treat states.</p>
+</section>
+<section id="model-4-1" class="level2">
+<h2 class="anchored" data-anchor-id="model-4-1">Model 4</h2>
+<p>Goal: A DES model that now creates measures of cost and utility.</p>
+</section>
+<section id="model-5" class="level2">
+<h2 class="anchored" data-anchor-id="model-5">Model 5</h2>
+<p>Goal: A framework to run models with different strategies and compare.</p>
+</section>
+<section id="aftermatter" class="level2">
+<h2 class="anchored" data-anchor-id="aftermatter">Aftermatter</h2>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
