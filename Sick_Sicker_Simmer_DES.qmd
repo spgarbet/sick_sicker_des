@@ -354,12 +354,10 @@ This shows a death event occurring for patient 1. Note the ordering by patient i
 
 Objective: A DES model that now adds the Sick/Sicker and Treat/no Treat states.
 
-## Model 4
-
-Objective: A DES model that now creates measures of cost and utility.
+This is the thick of it. We have a lot of work now that the framework is up and running and the basic functions / layout is defined.
 
 ## Model 5
 
-Objective: A framework to run models with different strategies and compare.
+Objective: A framework to run models, get summaries with different strategies and compare.
 
 ## Aftermatter
