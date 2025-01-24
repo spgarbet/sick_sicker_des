@@ -13,24 +13,29 @@
 #
 ###############################################################################
 
-# Model that includes
-#
-# * Start/Stop based on time horizon
-# * Secular Death based on r.HD
+# This is an empty model with nothing but entry/exit of a patient trajectory
 
 library(simmer)
 
+source('discount.R')
 source('inputs.R')     # Your Model Parameters
-source('main_loop.R') # Boilerplate code
+source('main_loop.R')  # Boilerplate code
   
-source('event_death.R') # Our First Event
+# Resource or "Counters"
+#
+# These are used to track things that incur costs or qalys, or other
+# things of which a count might be of interest.
+# Infinite in quantity
+counters <- c(
+  "time_in_model"
+)
   
 # Define starting state of patient
 initialize_patient <- function(traj, inputs)
 {
-  traj |>
+  traj                   |>
   seize("time_in_model") |>
-  set_attribute("AgeInitial", function() sample(20:40, 1))
+  set_attribute("AgeInitial", function() sample(20:30, 1))
 }
 
 # Cleanup function if a termination occurs
@@ -56,22 +61,33 @@ event_registry <- list(
        attr          = "aTerminate",
        time_to_event = function(inputs) inputs$horizon,
        func          = terminate_simulation,
-       reactive      = FALSE),
-  list(name          = "Death",
-       attr          = "aDeath",
-       time_to_event = years_till_death,
-       func          = death,
        reactive      = FALSE)
 )
 
-# Resource or "Counters"
-#
-# These are used to track things that incur costs or qalys, or other
-# things of which a count might be of interest.
-counters <- c(
-  "time_in_model",
-  "death"
-)
+cost_arrivals <- function(arrivals, inputs)
+{
+  arrivals$cost  <- 0  # No costs yet
+  arrivals$dcost <- 0  # No discounted costs either
+  
+  arrivals
+}
+
+qaly_arrivals <- function(arrivals, inputs)
+{
+  arrivals$qaly  <- 0  # No qaly yet
+  arrivals$dqaly <- 0  # No discounted qaly either
+  
+  selector <- arrivals$resource == 'time_in_model'
+  arrivals$qaly[selector] <-
+    arrivals$end_time[selector] - 
+    arrivals$start_time[selector]
+  arrivals$dqaly[selector] <- 
+      discount_value(1, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+    
+  arrivals
+}
 
 # This does a single DES run versus the defined inputs.
 des_run <- function(inputs)
@@ -84,7 +100,9 @@ des_run <- function(inputs)
     run(inputs$horizon+1/365) |> # Simulate just past horizon (in years)
     wrap()
         
-  get_mon_arrivals(env, per_resource = T)
+  get_mon_arrivals(env, per_resource = T) |>
+    cost_arrivals(inputs) |> 
+    qaly_arrivals(inputs) 
 }
 
 

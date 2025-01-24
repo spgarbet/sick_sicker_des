@@ -6,7 +6,9 @@ date: 2025-01-23
 editor: visual
 ---
 
-## Purpose
+## Goal
+
+Sick/Sicker implemented in DES using R. 
 
 The Sick/Sicker model is a common reference model used by the Health Policy community as a learning example about methods. The [simmer](https://cran.r-project.org/package=simmer) R package provides a discrete event simulation (DES) framework for running DES simulations in the R environment. The purpose of this document is to show how to progressively build a DES Health Policy model, the Sick/Sicker model using these tools.
 
@@ -223,6 +225,8 @@ des_run(inputs)
 
 ```
 
+These are called 'arrivals' in DES parlance.
+
 There it is, 5 patients who are simulated independently for 30 years. One can see the name of the trajectory, which we've used 'patient0', the start_time and end_time for a resource--of each patient we've used one. They start the simulation at time 0 and end at time 30. The `activity_time` spent in the model is 30. The only resource used at this point is the only one we've defined, `time_in_model`. The replication is 1, is we were doing multiple runs and accumulating them. 
 
 While simple, just getting a framework up and running is an accomplishment. Relax and get a cup of tea, the first step is over. 
@@ -231,9 +235,120 @@ While simple, just getting a framework up and running is an accomplishment. Rela
 
 Objective: Add in cost / quality accumulators
 
+At this point there's not much to accumulate, but once again we're taking really small steps toward our goal. The existing model code doesn't change much but we need to add accumulators for showing cost and quality. 
+
+### Discounting
+
+A small diversion is we need to be able to apply [discounting](https://en.wikipedia.org/wiki/Discounting) to our results. Thus a numerically stable and vectorized version of discounting is just the ticket. The file [`discount.R`](./discount.R) contains what's required. Other common versions utilize the power definition of discounting, this uses the "^" operator and this limits the numerical range of the function. This function uses the exponential formulation with a greater numerical stability range. The function also does point discounting or integrated area discounted. 
+
+Discount the value 1 at 1 year in the future at a default rate of 0.03. This is a point in time discount.
+
+```{r}
+source('discount.R')
+discount_value(1, 1)
+```
+
+Integrate the discounted value 1 over the time period from 0 to 1. This is the area under the discount curve over that time period. 
+
+```{r}
+discount_value(1, 0, 1)
+```
+
+Vectorized R calls that can be used inside numerical optimizers is important for more complex models. Demonstration of discounting the value 1 over two ranges, [0,365] and [125,490] using a discount rate of 0.04, and units passed in are 365 days of a year. 
+
+```{r}
+discount_value(1, c(0, 125), c(365, 490), 0.04, 365)
+```
+
+### Cost Model
+
+We need to define incured costs for our model. It should take the `data.frame` from `des_run` and add cost columns for the resources. We
+pass in the inputs as they might be needed. However in this case there
+is no cost to a patient spending time in the model. 
+
+```
+cost_arrivals <- function(arrivals, inputs)
+{
+  arrivals$cost  <- 0  # No costs yet
+  arrivals$dcost <- 0  # No discounted costs either
+  
+  arrivals
+}
+```
+
+### Utility or Quality of Life
+
+Our patients in the model are healthy and enjoy a full quality of life, measured in quality life years. We define their time in the model as a utility of 1 and then integrate how much utility they experience in their life. 
+
+```
+qaly_arrivals <- function(arrivals, inputs)
+{
+  arrivals$qaly  <- 0  # No qaly yet
+  arrivals$dqaly <- 0  # No discounted qaly either
+  
+  selector <- arrivals$resource == 'time_in_model'
+  arrivals$qaly[selector] <-
+    arrivals$end_time[selector] - 
+    arrivals$start_time[selector]
+  arrivals$dqaly[selector] <- 
+      discount_value(1, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+    
+  arrivals
+}
+```
+
+### Pull it together
+
+With those functions added, we can modify the last line of the `des_run` function in our model to apply them on what we get from the model. 
+
+```{r}
+source('model-2.R')
+des_run(inputs)
+```
+One can now see the integration of qaly and dqaly, which is the total amount of QALY an individual in the simulation accumulates.
+
+Not a very exciting model, but the foundation is solid. One can see exactly what's going on in this small sample. 
+
 ## Model 3
 
 Objective: A DES model that now includes the death event transition as defined by Sick/Sicker.
+
+The Sick/Sicker mortality model is a simple exponential draw. Not a very robust mortality model, but for demonstration purposes is sufficient. 
+
+I prefer keeping events in files starting with `event_` for organization and quick identification purposes. We need an event for death, so let's use `event_death.R` and define the time_to_death draw function.
+
+```
+years_till_death <- function(inputs)
+{
+  rexp(1, inputs$r.HD)
+}
+```
+
+When a death occurs an update to the patient trajectory needs to be made. 
+
+```
+death <- function(traj, inputs)
+{
+  traj |> branch(
+    function() 1,
+    continue=c(FALSE), # False is patient death, had to use a branch to force termination
+    trajectory("Death") |>
+      mark("death")     |> # Must be in 'counters'
+      terminate_simulation()
+  )
+}
+```
+
+Go back and add the `death` counter, and source the event file and death is implemented.
+
+```{r}
+source('model-3.R')
+set.seed(1)
+des_run(inputs)
+```
+This shows a death event occurring for patient 1. Note the ordering by patient isn't guaranteed. Patient 1 also doesn't get as much QALY as the other patients due to existing the model early. 
 
 ## Model 4
 

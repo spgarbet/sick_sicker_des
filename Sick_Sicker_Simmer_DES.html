@@ -108,8 +108,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<section id="purpose" class="level2">
-<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<section id="goal" class="level2">
+<h2 class="anchored" data-anchor-id="goal">Goal</h2>
+<p>Sick/Sicker implemented in DES using R.</p>
 <p>The Sick/Sicker model is a common reference model used by the Health Policy community as a learning example about methods. The <a href="https://cran.r-project.org/package=simmer">simmer</a> R package provides a discrete event simulation (DES) framework for running DES simulations in the R environment. The purpose of this document is to show how to progressively build a DES Health Policy model, the Sick/Sicker model using these tools.</p>
 <blockquote class="blockquote">
 <p><em>“Practice yourself, for heaven’s sake in little things, and then proceed to greater.”</em> –Epictetus</p>
@@ -279,16 +280,139 @@ event_registry &lt;- list(
 5 patient4          0       30            30 time_in_model           1</code></pre>
 </div>
 </div>
+<p>These are called ‘arrivals’ in DES parlance.</p>
 <p>There it is, 5 patients who are simulated independently for 30 years. One can see the name of the trajectory, which we’ve used ‘patient0’, the start_time and end_time for a resource–of each patient we’ve used one. They start the simulation at time 0 and end at time 30. The <code>activity_time</code> spent in the model is 30. The only resource used at this point is the only one we’ve defined, <code>time_in_model</code>. The replication is 1, is we were doing multiple runs and accumulating them.</p>
 <p>While simple, just getting a framework up and running is an accomplishment. Relax and get a cup of tea, the first step is over.</p>
 </section>
 <section id="model-2" class="level2">
 <h2 class="anchored" data-anchor-id="model-2">Model 2</h2>
 <p>Objective: Add in cost / quality accumulators</p>
+<p>At this point there’s not much to accumulate, but once again we’re taking really small steps toward our goal. The existing model code doesn’t change much but we need to add accumulators for showing cost and quality.</p>
+<section id="discounting" class="level3">
+<h3 class="anchored" data-anchor-id="discounting">Discounting</h3>
+<p>A small diversion is we need to be able to apply <a href="https://en.wikipedia.org/wiki/Discounting">discounting</a> to our results. Thus a numerically stable and vectorized version of discounting is just the ticket. The file <a href="./discount.R"><code>discount.R</code></a> contains what’s required. Other common versions utilize the power definition of discounting, this uses the “^” operator and this limits the numerical range of the function. This function uses the exponential formulation with a greater numerical stability range. The function also does point discounting or integrated area discounted.</p>
+<p>Discount the value 1 at 1 year in the future at a default rate of 0.03. This is a point in time discount.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'discount.R'</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">discount_value</span>(<span class="dv">1</span>, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9708738</code></pre>
+</div>
+</div>
+<p>Integrate the discounted value 1 over the time period from 0 to 1. This is the area under the discount curve over that time period.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">discount_value</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9853651</code></pre>
+</div>
+</div>
+<p>Vectorized R calls that can be used inside numerical optimizers is important for more complex models. Demonstration of discounting the value 1 over two ranges, [0,365] and [125,490] using a discount rate of 0.04, and units passed in are 365 days of a year.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">discount_value</span>(<span class="dv">1</span>, <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">125</span>), <span class="fu">c</span>(<span class="dv">365</span>, <span class="dv">490</span>), <span class="fl">0.04</span>, <span class="dv">365</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9806435 0.9675598</code></pre>
+</div>
+</div>
+</section>
+<section id="cost-model" class="level3">
+<h3 class="anchored" data-anchor-id="cost-model">Cost Model</h3>
+<p>We need to define incured costs for our model. It should take the <code>data.frame</code> from <code>des_run</code> and add cost columns for the resources. We pass in the inputs as they might be needed. However in this case there is no cost to a patient spending time in the model.</p>
+<pre><code>cost_arrivals &lt;- function(arrivals, inputs)
+{
+  arrivals$cost  &lt;- 0  # No costs yet
+  arrivals$dcost &lt;- 0  # No discounted costs either
+  
+  arrivals
+}</code></pre>
+</section>
+<section id="utility-or-quality-of-life" class="level3">
+<h3 class="anchored" data-anchor-id="utility-or-quality-of-life">Utility or Quality of Life</h3>
+<p>Our patients in the model are healthy and enjoy a full quality of life, measured in quality life years. We define their time in the model as a utility of 1 and then integrate how much utility they experience in their life.</p>
+<pre><code>qaly_arrivals &lt;- function(arrivals, inputs)
+{
+  arrivals$qaly  &lt;- 0  # No qaly yet
+  arrivals$dqaly &lt;- 0  # No discounted qaly either
+  
+  selector &lt;- arrivals$resource == 'time_in_model'
+  arrivals$qaly[selector] &lt;-
+    arrivals$end_time[selector] - 
+    arrivals$start_time[selector]
+  arrivals$dqaly[selector] &lt;- 
+      discount_value(1, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+    
+  arrivals
+}</code></pre>
+</section>
+<section id="pull-it-together" class="level3">
+<h3 class="anchored" data-anchor-id="pull-it-together">Pull it together</h3>
+<p>With those functions added, we can modify the last line of the <code>des_run</code> function in our model to apply them on what we get from the model.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-2.R'</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      name start_time end_time activity_time      resource replication cost
+1 patient0          0       30            30 time_in_model           1    0
+2 patient1          0       30            30 time_in_model           1    0
+3 patient2          0       30            30 time_in_model           1    0
+4 patient3          0       30            30 time_in_model           1    0
+5 patient4          0       30            30 time_in_model           1    0
+  dcost qaly  dqaly
+1     0   30 19.893
+2     0   30 19.893
+3     0   30 19.893
+4     0   30 19.893
+5     0   30 19.893</code></pre>
+</div>
+</div>
+<p>One can now see the integration of qaly and dqaly, which is the total amount of QALY an individual in the simulation accumulates.</p>
+<p>Not a very exciting model, but the foundation is solid. One can see exactly what’s going on in this small sample.</p>
+</section>
 </section>
 <section id="model-3" class="level2">
 <h2 class="anchored" data-anchor-id="model-3">Model 3</h2>
 <p>Objective: A DES model that now includes the death event transition as defined by Sick/Sicker.</p>
+<p>The Sick/Sicker mortality model is a simple exponential draw. Not a very robust mortality model, but for demonstration purposes is sufficient.</p>
+<p>I prefer keeping events in files starting with <code>event_</code> for organization and quick identification purposes. We need an event for death, so let’s use <code>event_death.R</code> and define the time_to_death draw function.</p>
+<pre><code>years_till_death &lt;- function(inputs)
+{
+  rexp(1, inputs$r.HD)
+}</code></pre>
+<p>When a death occurs an update to the patient trajectory needs to be made.</p>
+<pre><code>death &lt;- function(traj, inputs)
+{
+  traj |&gt; branch(
+    function() 1,
+    continue=c(FALSE), # False is patient death, had to use a branch to force termination
+    trajectory("Death") |&gt;
+      mark("death")     |&gt; # Must be in 'counters'
+      terminate_simulation()
+  )
+}</code></pre>
+<p>Go back and add the <code>death</code> counter, and source the event file and death is implemented.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-3.R'</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      name start_time end_time activity_time      resource replication cost
+1 patient1   27.95905 27.95905       0.00000         death           1    0
+2 patient1    0.00000 27.95905      27.95905 time_in_model           1    0
+3 patient0    0.00000 30.00000      30.00000 time_in_model           1    0
+4 patient2    0.00000 30.00000      30.00000 time_in_model           1    0
+5 patient3    0.00000 30.00000      30.00000 time_in_model           1    0
+6 patient4    0.00000 30.00000      30.00000 time_in_model           1    0
+  dcost     qaly    dqaly
+1     0  0.00000  0.00000
+2     0 27.95905 19.02628
+3     0 30.00000 19.89300
+4     0 30.00000 19.89300
+5     0 30.00000 19.89300
+6     0 30.00000 19.89300</code></pre>
+</div>
+</div>
+<p>This shows a death event occurring for patient 1. Note the ordering by patient isn’t guaranteed. Patient 1 also doesn’t get as much QALY as the other patients due to existing the model early.</p>
 </section>
 <section id="model-4" class="level2">
 <h2 class="anchored" data-anchor-id="model-4">Model 4</h2>
