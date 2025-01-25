@@ -239,7 +239,9 @@ At this point there's not much to accumulate, but once again we're taking really
 
 ### Discounting
 
-A small diversion is we need to be able to apply [discounting](https://en.wikipedia.org/wiki/Discounting) to our results. Thus a numerically stable and vectorized version of discounting is just the ticket. The file [`discount.R`](./discount.R) contains what's required. Other common versions utilize the power definition of discounting, this uses the "^" operator and this limits the numerical range of the function. This function uses the exponential formulation with a greater numerical stability range. The function also does point discounting or integrated area discounted. 
+A small diversion is we need to be able to apply [discounting](https://en.wikipedia.org/wiki/Discounting) to our results. Thus a numerically stable and vectorized version of discounting is just the ticket. The file [`discount.R`](./discount.R) contains what's required. Other common versions utilize the power definition of discounting, this uses the "^" operator which limits the numerical stable range of the function. Our function uses the exponential formulation with a greater numerical stability. The function also does point discounting or integrated area discounted. 
+
+#### Examples
 
 Discount the value 1 at 1 year in the future at a default rate of 0.03. This is a point in time discount.
 
@@ -263,8 +265,7 @@ discount_value(1, c(0, 125), c(365, 490), 0.04, 365)
 ### Cost Model
 
 We need to define incured costs for our model. It should take the `data.frame` from `des_run` and add cost columns for the resources. We
-pass in the inputs as they might be needed. However in this case there
-is no cost to a patient spending time in the model. 
+pass in the inputs as they might be needed. We will ignore the costs for healthy till we can add that state later.
 
 ```
 cost_arrivals <- function(arrivals, inputs)
@@ -341,6 +342,23 @@ death <- function(traj, inputs)
 }
 ```
 
+Next we add this to the `event_registry`. 
+
+```
+event_registry <- list(
+  list(name          = "Terminate at time horizon",
+       attr          = "aTerminate",
+       time_to_event = function(inputs) inputs$horizon,
+       func          = terminate_simulation,
+       reactive      = FALSE),
+  list(name          = "Death",
+       attr          = "aDeath",
+       time_to_event = years_till_death,
+       func          = death,
+       reactive      = FALSE)
+)
+```
+
 Go back and add the `death` counter, and source the event file and death is implemented.
 
 ```{r}
@@ -352,12 +370,567 @@ This shows a death event occurring for patient 1. Note the ordering by patient i
 
 ## Model 4
 
-Objective: A DES model that now adds the Sick/Sicker and Treat/no Treat states.
+Objective: A DES model that now adds the Sick State transition
 
-This is the thick of it. We have a lot of work now that the framework is up and running and the basic functions / layout is defined.
+This is the thick of it. We have a lot of proper model work now that the framework is up and running and the basic functions / layout is defined. This is a critical step in model construction and it cannot be understated how carefully this step must be considered and that is the definition of the state model. While the state diagram is provided for the Sick/Sicker when constructing a novel model, must look at existing literature and experts and carefully construct a state model of a patient. State modeling is a know
+combinatorial complex process, and it is very easy to make it too complicated and in construction it is almost certain to have missed transitions. A lot of coding work follows from the decision on state and
+changing it later carries a large cost in time. 
+
+With the thoroughly reviewed and making sure it is the minimum to answer the question and corresponds to the literature, we proceed to implement the state model by defining integers that correspond to states. Ths isn't code
+but a map to the coding. Note that one for dead is not needed as this exits the simulation. Also, this coding is needed as `simmer` can only store numeric information as an attribute on a trajectory.
+
+```
+0=H
+1=S1
+2=S2
+```
+
+Next we need to modify the initialization of the patient to be healthy.
+
+```
+initialize_patient <- function(traj, inputs)
+{
+  traj                   |>
+  seize("time_in_model") |>
+  set_attribute("AgeInitial", function() sample(20:30, 1)) |>
+  set_attribute("State", 0) |> # Patients start healthy
+  seize("healthy") 
+}
+```
+
+Being in Sick1 has a disutility to life and incurs costs we'd like to track and accumulate those measure for that state, thus a new counter is needed.
+
+```
+counters <- c(
+  "time_in_model",
+  "death",
+  "healthy",
+  "sick1"
+)
+```
+
+Now 2 events or transitions are needed: `event_sick1` and `event_healthy` (the transition back). Here's `event_sick1`:
+
+
+```
+years_till_sick1 <- function(inputs)
+{
+  state <- get_attribute(env, "State") 
+  if(state == 0) # 0 => Healthy
+  {
+    rexp(1,inputs$r.HS1)
+  } else
+  {
+    inputs$horizon+1 # Past end of simulation time
+  }
+}
+
+sick1 <- function(traj, inputs)
+{
+  traj                      |> 
+  set_attribute("State", 1) |> # 1 => Sick 1 (S1)
+  release('healthy')        |> # Track state change for tally later
+  seize('sick1')
+}
+
+```
+
+At this point we can drop the new event in our event registry and the model can be run as a check. 
+
+```
+  list(name          = "Sick1",
+       attr          = "aSick1",
+       time_to_event = years_till_sick1,
+       func          = sick1,
+       reactive      = TRUE)
+```
+
+In constructions of this tutorial, the author encountered two errors due to typos at this point, and got this warning message:
+
+```
+Warning messages:
+1: In run_(.env$sim_obj, until) :
+  'patient0': leaving without releasing 'sick1'
+2: In run_(.env$sim_obj, until) :
+  'patient4': leaving without releasing 'sick1'
+3: In run_(.env$sim_obj, until) :
+  'patient1': leaving without releasing 'sick1'
+4: In run_(.env$sim_obj, until) :
+  'patient3': leaving without releasing 'sick1'
+5: In run_(.env$sim_obj, until) :
+  'patient2': leaving without releasing 'sick1'
+```
+
+This is saying that the 5 trajectories seized the sick1 resource and when terminated didn't cleanup. We can go back and modify the cleanup.
+
+```
+cleanup_on_termination <- function(traj)
+{
+  traj |> 
+  release("time_in_model") |>
+  branch( 
+    function() get_attribute(env, "State")+1,
+      continue = rep(TRUE, 3),
+      trajectory() |> release("healthy"),
+      trajectory() |> release("sick1"), # Leaving sick1 state on termination
+      trajectory()      # Future Sick2 state
+  )
+}
+```
+
+The `event_death::time_to_death` needs to be modified to account for state as the hazard rate changes based on state. For this tutorial we used `event_death2.R`, to keep all the files in one directory. For a well run, best practices project, learn and use git and between each of this steps just `git` do it's job and keep track of all your versions. 
+
+```
+years_till_death <- function(inputs)
+{
+  state <- get_attribute(env, "State")
+  rate <- inputs$r.HD
+  if(state == 1) rate <- rate * inputs$hr.S1D # Deal with Sick1 Hazard Ratio
+  rexp(1, rate)
+}
+```
+
+Next let's update the cost accumulation to use the inputs for these 2 states that exist. 
+
+```
+cost_arrivals <- function(arrivals, inputs)
+{
+  arrivals$cost  <- 0  # No costs yet
+  arrivals$dcost <- 0  # No discounted costs either
+  
+  selector = arrivals$resource == 'healthy'
+  arrivals$cost[selector] <- inputs$c.H *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] <- discount_value(inputs$c.H,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+  
+  selector = arrivals$resource == 'sick1'
+  arrivals$cost[selector] <- inputs$c.S1 *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] <- discount_value(inputs$c.S1,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+ 
+  arrivals
+}
+```
+
+Similarly update the QALY accumulation, but switch from using time in model to using the utilities defined in input.
+
+```
+
+qaly_arrivals <- function(arrivals, inputs)
+{
+  arrivals$qaly  <- 0  # No qaly yet
+  arrivals$dqaly <- 0  # No discounted qaly either
+  
+  selector <- arrivals$resource == 'healthy'
+  arrivals$qaly[selector] <-
+    inputs$u.H*
+     (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dqaly[selector] <- 
+      discount_value(inputs$u.H, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+  
+  selector <- arrivals$resource == 'sick1'
+  arrivals$qaly[selector] <-
+    inputs$u.S1*
+     (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dqaly[selector] <- 
+      discount_value(inputs$u.S1, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+  
+  arrivals
+}
+```
+
+Now a run is in order. 
+
+```{r}
+set.seed(2)
+source('model-4.R')
+results <- des_run(inputs)
+results
+```
+The results are lot more complicated and harder to interpret. To bring some order to what's happening what we can do is now randomly audit patients.
+
+```{r}
+set.seed(4)
+pn <- sample(1:inputs$N, 1) - 1 # Starts a zero
+audit <- results[results$name == paste0('patient',pn),]
+audit[order(audit$start_time, audit$end_time),] # For clarity
+```
+
+The random audit (the set.seed is just so we can reproduce the result and discuss here, remove it to be truly random), shows that Patient trajectory 2 in this simulation is health for 3/4 of the year. His time in the model is cut short to just under 20 years. He spends most of that time in the S1 state until his death. 
+
+The ability to audit random patients is vital to model validation that it is performing as expected. One can do things like find a patient based on a desired event in a trajectory. Let's look for a patient who died.
+
+```{r}
+pn <- sample(results[results$resource=='death','name'],1)
+results[results$name == pn, ]
+```
+
+Thus tools to grab and look at trajectories containing specific events randomly auditing and verifying the expected costs and qualitys can be done.
 
 ## Model 5
 
-Objective: A framework to run models, get summaries with different strategies and compare.
+Objective: Add the return to Healthy from Sick1. 
+
+This is adding another event, `event_healthy` to our project.
+
+```
+
+years_till_healthy <- function(inputs)
+{
+  state <- get_attribute(env, "State") 
+  if(state == 1) # 1 => Sick 1
+  {
+    rexp(1,inputs$r.S1H)
+  } else
+  {
+    inputs$horizon+1 # Past end of simulation time
+  }
+}
+
+healthy <- function(traj, inputs)
+{
+  traj                      |> 
+  set_attribute("State", 0) |> # 0 => Healthy (H)
+  seize('healthy')          |>
+  release('sick1')
+}
+```
+
+Source it and update the event registry.
+
+```
+  list(name          = "Healthy",
+       attr          = "aHealthy",
+       time_to_event = years_till_healthy,
+       func          = healthy,
+       reactive      = TRUE)
+```
+
+Now the pattern is becoming familar. Let's run and check.
+
+```{r}
+source('model-5.R')
+set.seed(4)
+results <- des_run(inputs)
+audit <- results[results$name == 'patient1',]
+audit[order(audit$start_time, audit$end_time),]
+```
+
+Now the patient bounces back and forth between healthy and sick. The costs and qalys stay the same. The model is nearly complete. 
+
+## Model 6
+
+Objective: Add in the Sick2 state.
+
+Add a sick2 counter. 
+
+```
+counters <- c(
+  "time_in_model",
+  "death",
+  "healthy",
+  "sick1",
+  "sick2"
+)
+```
+
+Create `event_sick2.R`
+
+```
+years_till_sick2 <- function(inputs)
+{
+  state <- get_attribute(env, "State") 
+  if(state == 1) # 1 => Sick1
+  {
+    rexp(1,inputs$r.S1S2)
+  } else
+  {
+    inputs$horizon+1 # Past end of simulation time
+  }
+}
+
+sick2 <- function(traj, inputs)
+{
+  traj                      |> 
+  set_attribute("State", 2) |> # 2 => Sick 2 (S2)
+  release('sick1')          |> # Track state change for tally later
+  seize('sick2')
+}
+```
+
+Make sure it's released on exit
+
+```
+cleanup_on_termination <- function(traj)
+{
+  traj |> 
+  release("time_in_model") |>
+  branch( 
+    function() get_attribute(env, "State")+1,
+      continue = rep(TRUE, 3),
+      trajectory() |> release("healthy"),
+      trajectory() |> release("sick1"),
+      trajectory() |> release("sick2")  
+  )
+}
+```
+Modify costs
+
+```
+  selector = arrivals$resource == 'sick2'
+  arrivals$cost[selector] <- inputs$c.S2 *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] <- discount_value(inputs$c.S2,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+ 
+```
+
+Modify QALY
+
+```
+  selector <- arrivals$resource == 'sick2'
+  arrivals$qaly[selector] <-
+    inputs$u.S2*
+     (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dqaly[selector] <- 
+      discount_value(inputs$u.S2, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+  
+```
+
+Modify the `event_death` (here in `event_death3.R`)
+
+```
+years_till_death <- function(inputs)
+{
+  state <- get_attribute(env, "State")
+  rate <- inputs$r.HD
+  if(state == 1) rate <- rate * inputs$hr.S1D # Deal with Sick1 Hazard Ratio
+  if(state == 2) rate <- rate * inputs$hr.S2D
+  rexp(1, rate)
+}
+```
+
+Let's see if we can audit a trajectory with sick2.
+
+```{r}
+source('model-6.R')
+set.seed(3)
+results <- des_run(inputs)
+pn <- results$name[results$resource == 'sick2'][1]
+audit <- results[results$name == pn,]
+audit[order(audit$start_time, audit$end_time),]
+```
+
+This shows that base case of the Sick/Sicker model is now fully handled. 
+
+## Model 7
+
+Objective: Add treatment strategy to model.
+
+```
+counters <- c(
+  "time_in_model",
+  "death",
+  "healthy",
+  "sick1",
+  "sick2",
+  "treat"
+)
+
+initialize_patient <- function(traj, inputs)
+{
+  traj                   |>
+  seize("time_in_model") |>
+  set_attribute("AgeInitial", function() sample(20:30, 1)) |>
+  set_attribute("State", 0) |> # Patients start healthy
+  seize("healthy")       |>
+  set_attribute("Treat", function() inputs$strategy == 'treat')
+}
+
+# Cleanup function if a termination occurs
+# Good for releasing any seized resources based on state.
+cleanup_on_termination <- function(traj, inputs)
+{
+  traj |> 
+  release("time_in_model") |>
+  branch( 
+    function() get_attribute(env, "State")+1,
+      continue = rep(TRUE, 3),
+      trajectory() |> release("healthy"),
+      trajectory() |> release("sick1"),
+      trajectory() |> release("sick2") 
+  ) |>
+  branch( # Assigned to treatment and not healthy
+    function() (get_attribute(env, "Treat")  && 
+                get_attribute(env, "State")) + 1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |> release('treat')
+  )
+}
+```
+
+Update costing.
+
+```
+  selector = arrivals$resource == 'treat'
+  arrivals$cost[selector] <- inputs$c.Trt *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] <- discount_value(inputs$c.Trt,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+ 
+```
+
+And modify Quality for S1. 
+
+```
+  uS1 <- if(inputs$strategy == 'treat') u.Trt else u.S1
+  arrivals$qaly[selector] <-
+    uS1*
+     (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dqaly[selector] <- 
+      discount_value(uS1, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+```
+
+Modify both event_sick1 and event_healthy. 
+
+```
+sick1 <- function(traj, inputs)
+{
+  traj                      |> 
+  set_attribute("State", 1) |> # 1 => Sick 1 (S1)
+  release('healthy')        |> # Track state change for tally later
+  seize('sick1')            |>
+  branch( 
+    function() get_attribute(env, "Treat")+1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |> seize('treat')
+  )
+}
+
+healthy <- function(traj, inputs)
+{
+  traj                      |> 
+  set_attribute("State", 0) |> # 0 => Healthy (H)
+  seize('healthy')          |>
+  release('sick1')          |>
+  branch(
+    function() get_attribute(env, "Treat") +1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |> release('treat')
+  )
+}
+```
+
+And we can run.
+
+```{r}
+source('model-7.R')
+set.seed(3)
+results <- des_run(inputs)
+pn <- results$name[results$resource == 'sick2'][1]
+audit <- results[results$name == pn,]
+audit[order(audit$start_time, audit$end_time),]
+```
+
+Now with treatment.
+
+```{r}
+set.seed(3)
+inputs$strategy <- 'treat'
+results <- des_run(inputs)
+pn <- results$name[results$resource == 'sick2'][1]
+audit <- results[results$name == pn,]
+audit[order(audit$start_time, audit$end_time),]
+```
+Notice patient4 now has higher QALY under treatment, but also has treatment costs. 
+
+## Model 8
+
+Objective: Now compare models and do analysis. 
+
+First crank up sample size and then create aggregate measures.
+
+```{r}
+source('model-7.R')
+inputs$N <- 10000
+inputs$strategy <- 'notreat'
+set.seed(1)
+results.notreat <- des_run(inputs)
+inputs$strategy <- 'treat'
+set.seed(1)
+results.treat <- des_run(inputs)
+
+library(dplyr)
+
+sum.treat <- 
+  results.treat |> 
+  group_by(name) |> 
+  summarise(cost=sum(cost),
+            dcost=sum(dcost),
+            qaly=sum(qaly),
+            dqaly=sum(dqaly))
+
+sum.notreat <- 
+  results.notreat |> 
+  group_by(name) |> 
+  summarise(cost=sum(cost),
+            dcost=sum(dcost),
+            qaly=sum(qaly),
+            dqaly=sum(dqaly))
+
+cea <- rbind(
+  notreat=colMeans(sum.notreat[c('cost', 'dcost', 'qaly', 'dqaly')]),
+  treat=colMeans(sum.treat[c('cost', 'dcost', 'qaly', 'dqaly')])
+)
+cea
+```
+
+```{r}
+# NHB (discounted)
+diff(cea[,'dqaly']) - diff(cea[,'dcost'])/inputs$wtp
+
+# NMB (discounted)
+diff(cea[,'dqaly'])*inputs$wtp - diff(cea[,'dcost'])
+
+# ICER
+diff(cea[,'dcost'])/ diff(cea[,'dqaly'])
+```
 
 ## Aftermatter
+
+The first point to be made is the application of new costs and qalys followed the same code pattern with each additional event. If the costs in the `inputs` were named the same as the `resources`, these could be applied with a loop. The continued cut and paste of a block of code is the cue to the coder that a function would be easier. It is a recommended exercise to code this and compare results. See [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself). Hint: the inputs lists can contain lists or groupings of parameters to denote how they would be used.
+
+Secondly, the workflow of always keeping a model working with the tiniest steps possible is the fastest path to the goal. Checking each working version into git (and not renaming models like was done here, use git as it was intended), also allows going back and finding where a bug was introduced via [`git biset`](https://git-scm.com/docs/git-bisect). 
+
+While the benefits of DES are face validity, the ability to directly utilize hazard rates and survival curves, and deal with very complex patient states that lead to state explosion in Markov models; there are some hidden benefits as well: the ability to model the variability in patient population and model what response to treatment would be expected in a real world population. Here's a plot of each individuals cost and qaly. 
+
+```{r}
+library(ggplot2)
+x <- rbind(sum.treat, sum.notreat)
+x$group <- rep(c('treat', 'notreat'), each=inputs$N)
+
+ggplot(x, aes(x=dqaly, y=dcost, color=group)) + 
+  geom_point(alpha=0.2)
+```
+
+This plot is odd due to the utilization of simple non realistic exponential rates. 
+
+The capability of DES to include constrained resources was not included in this tutorial and would need a separate exploration. The fact that `simmer` has this capability means that it cannot treat patients as independent in evaluating events. Thus a key feature of `simmer` is not utilized in independent patient simulations. This feature incurs a computational cost of $\mathcal{O}(n \log n)$. There is a frameworks written by [Fernando Alarid-Escudero](https://med.stanford.edu/profiles/fernando-alarid-escudero) utilizing `data.table` in R that removes the ability to model constrained resources and reduces the computational cost to $\mathcal{O}(n)$ for this type of modeling. The lessons in this tutorial still apply, but the memory layout of events is in a wide `data.table`.  
+
+To get convergence for studying conditions that are rare events, we have found that we need over 1,000,000 patient trajectories to get convergence of estimators within acceptible statistical bounds. The R `simmer` framework functions with reasonable speed at no more that 10,000 patient trajectories and possibly less for complex models. We utilize [ACCRE](https://github.com/vubiostat/accre_tutorial) to batch the jobs and get sufficient coverage. This is a major issue for performing a probability sensitivity analysis on a model as now a 1000 runs typically need of a 1,000,000 patient trajectories requiring 100,000 job runs! Planning for time to do this is required at project outset. 
+
+Shawn Garbett <shawn dot garbett at vumc dot org>
+

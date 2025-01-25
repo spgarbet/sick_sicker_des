@@ -70,6 +70,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="Sick_Sicker_Simmer_DES_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="Sick_Sicker_Simmer_DES_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
@@ -290,7 +292,9 @@ event_registry &lt;- list(
 <p>At this point there’s not much to accumulate, but once again we’re taking really small steps toward our goal. The existing model code doesn’t change much but we need to add accumulators for showing cost and quality.</p>
 <section id="discounting" class="level3">
 <h3 class="anchored" data-anchor-id="discounting">Discounting</h3>
-<p>A small diversion is we need to be able to apply <a href="https://en.wikipedia.org/wiki/Discounting">discounting</a> to our results. Thus a numerically stable and vectorized version of discounting is just the ticket. The file <a href="./discount.R"><code>discount.R</code></a> contains what’s required. Other common versions utilize the power definition of discounting, this uses the “^” operator and this limits the numerical range of the function. This function uses the exponential formulation with a greater numerical stability range. The function also does point discounting or integrated area discounted.</p>
+<p>A small diversion is we need to be able to apply <a href="https://en.wikipedia.org/wiki/Discounting">discounting</a> to our results. Thus a numerically stable and vectorized version of discounting is just the ticket. The file <a href="./discount.R"><code>discount.R</code></a> contains what’s required. Other common versions utilize the power definition of discounting, this uses the “^” operator which limits the numerical stable range of the function. Our function uses the exponential formulation with a greater numerical stability. The function also does point discounting or integrated area discounted.</p>
+<section id="examples" class="level4">
+<h4 class="anchored" data-anchor-id="examples">Examples</h4>
 <p>Discount the value 1 at 1 year in the future at a default rate of 0.03. This is a point in time discount.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'discount.R'</span>)</span>
@@ -314,9 +318,10 @@ event_registry &lt;- list(
 </div>
 </div>
 </section>
+</section>
 <section id="cost-model" class="level3">
 <h3 class="anchored" data-anchor-id="cost-model">Cost Model</h3>
-<p>We need to define incured costs for our model. It should take the <code>data.frame</code> from <code>des_run</code> and add cost columns for the resources. We pass in the inputs as they might be needed. However in this case there is no cost to a patient spending time in the model.</p>
+<p>We need to define incured costs for our model. It should take the <code>data.frame</code> from <code>des_run</code> and add cost columns for the resources. We pass in the inputs as they might be needed. We will ignore the costs for healthy till we can add that state later.</p>
 <pre><code>cost_arrivals &lt;- function(arrivals, inputs)
 {
   arrivals$cost  &lt;- 0  # No costs yet
@@ -390,11 +395,24 @@ event_registry &lt;- list(
       terminate_simulation()
   )
 }</code></pre>
+<p>Next we add this to the <code>event_registry</code>.</p>
+<pre><code>event_registry &lt;- list(
+  list(name          = "Terminate at time horizon",
+       attr          = "aTerminate",
+       time_to_event = function(inputs) inputs$horizon,
+       func          = terminate_simulation,
+       reactive      = FALSE),
+  list(name          = "Death",
+       attr          = "aDeath",
+       time_to_event = years_till_death,
+       func          = death,
+       reactive      = FALSE)
+)</code></pre>
 <p>Go back and add the <code>death</code> counter, and source the event file and death is implemented.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-3.R'</span>)</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-3.R'</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>      name start_time end_time activity_time      resource replication cost
 1 patient1   27.95905 27.95905       0.00000         death           1    0
@@ -416,15 +434,613 @@ event_registry &lt;- list(
 </section>
 <section id="model-4" class="level2">
 <h2 class="anchored" data-anchor-id="model-4">Model 4</h2>
-<p>Objective: A DES model that now adds the Sick/Sicker and Treat/no Treat states.</p>
-<p>This is the thick of it. We have a lot of work now that the framework is up and running and the basic functions / layout is defined.</p>
+<p>Objective: A DES model that now adds the Sick State transition</p>
+<p>This is the thick of it. We have a lot of proper model work now that the framework is up and running and the basic functions / layout is defined. This is a critical step in model construction and it cannot be understated how carefully this step must be considered and that is the definition of the state model. While the state diagram is provided for the Sick/Sicker when constructing a novel model, must look at existing literature and experts and carefully construct a state model of a patient. State modeling is a know combinatorial complex process, and it is very easy to make it too complicated and in construction it is almost certain to have missed transitions. A lot of coding work follows from the decision on state and changing it later carries a large cost in time.</p>
+<p>With the thoroughly reviewed and making sure it is the minimum to answer the question and corresponds to the literature, we proceed to implement the state model by defining integers that correspond to states. Ths isn’t code but a map to the coding. Note that one for dead is not needed as this exits the simulation. Also, this coding is needed as <code>simmer</code> can only store numeric information as an attribute on a trajectory.</p>
+<pre><code>0=H
+1=S1
+2=S2</code></pre>
+<p>Next we need to modify the initialization of the patient to be healthy.</p>
+<pre><code>initialize_patient &lt;- function(traj, inputs)
+{
+  traj                   |&gt;
+  seize("time_in_model") |&gt;
+  set_attribute("AgeInitial", function() sample(20:30, 1)) |&gt;
+  set_attribute("State", 0) |&gt; # Patients start healthy
+  seize("healthy") 
+}</code></pre>
+<p>Being in Sick1 has a disutility to life and incurs costs we’d like to track and accumulate those measure for that state, thus a new counter is needed.</p>
+<pre><code>counters &lt;- c(
+  "time_in_model",
+  "death",
+  "healthy",
+  "sick1"
+)</code></pre>
+<p>Now 2 events or transitions are needed: <code>event_sick1</code> and <code>event_healthy</code> (the transition back). Here’s <code>event_sick1</code>:</p>
+<pre><code>years_till_sick1 &lt;- function(inputs)
+{
+  state &lt;- get_attribute(env, "State") 
+  if(state == 0) # 0 =&gt; Healthy
+  {
+    rexp(1,inputs$r.HS1)
+  } else
+  {
+    inputs$horizon+1 # Past end of simulation time
+  }
+}
+
+sick1 &lt;- function(traj, inputs)
+{
+  traj                      |&gt; 
+  set_attribute("State", 1) |&gt; # 1 =&gt; Sick 1 (S1)
+  release('healthy')        |&gt; # Track state change for tally later
+  seize('sick1')
+}
+</code></pre>
+<p>At this point we can drop the new event in our event registry and the model can be run as a check.</p>
+<pre><code>  list(name          = "Sick1",
+       attr          = "aSick1",
+       time_to_event = years_till_sick1,
+       func          = sick1,
+       reactive      = TRUE)</code></pre>
+<p>In constructions of this tutorial, the author encountered two errors due to typos at this point, and got this warning message:</p>
+<pre><code>Warning messages:
+1: In run_(.env$sim_obj, until) :
+  'patient0': leaving without releasing 'sick1'
+2: In run_(.env$sim_obj, until) :
+  'patient4': leaving without releasing 'sick1'
+3: In run_(.env$sim_obj, until) :
+  'patient1': leaving without releasing 'sick1'
+4: In run_(.env$sim_obj, until) :
+  'patient3': leaving without releasing 'sick1'
+5: In run_(.env$sim_obj, until) :
+  'patient2': leaving without releasing 'sick1'</code></pre>
+<p>This is saying that the 5 trajectories seized the sick1 resource and when terminated didn’t cleanup. We can go back and modify the cleanup.</p>
+<pre><code>cleanup_on_termination &lt;- function(traj)
+{
+  traj |&gt; 
+  release("time_in_model") |&gt;
+  branch( 
+    function() get_attribute(env, "State")+1,
+      continue = rep(TRUE, 3),
+      trajectory() |&gt; release("healthy"),
+      trajectory() |&gt; release("sick1"), # Leaving sick1 state on termination
+      trajectory()      # Future Sick2 state
+  )
+}</code></pre>
+<p>The <code>event_death::time_to_death</code> needs to be modified to account for state as the hazard rate changes based on state. For this tutorial we used <code>event_death2.R</code>, to keep all the files in one directory. For a well run, best practices project, learn and use git and between each of this steps just <code>git</code> do it’s job and keep track of all your versions.</p>
+<pre><code>years_till_death &lt;- function(inputs)
+{
+  state &lt;- get_attribute(env, "State")
+  rate &lt;- inputs$r.HD
+  if(state == 1) rate &lt;- rate * inputs$hr.S1D # Deal with Sick1 Hazard Ratio
+  rexp(1, rate)
+}</code></pre>
+<p>Next let’s update the cost accumulation to use the inputs for these 2 states that exist.</p>
+<pre><code>cost_arrivals &lt;- function(arrivals, inputs)
+{
+  arrivals$cost  &lt;- 0  # No costs yet
+  arrivals$dcost &lt;- 0  # No discounted costs either
+  
+  selector = arrivals$resource == 'healthy'
+  arrivals$cost[selector] &lt;- inputs$c.H *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] &lt;- discount_value(inputs$c.H,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+  
+  selector = arrivals$resource == 'sick1'
+  arrivals$cost[selector] &lt;- inputs$c.S1 *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] &lt;- discount_value(inputs$c.S1,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+ 
+  arrivals
+}</code></pre>
+<p>Similarly update the QALY accumulation, but switch from using time in model to using the utilities defined in input.</p>
+<pre><code>
+qaly_arrivals &lt;- function(arrivals, inputs)
+{
+  arrivals$qaly  &lt;- 0  # No qaly yet
+  arrivals$dqaly &lt;- 0  # No discounted qaly either
+  
+  selector &lt;- arrivals$resource == 'healthy'
+  arrivals$qaly[selector] &lt;-
+    inputs$u.H*
+     (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dqaly[selector] &lt;- 
+      discount_value(inputs$u.H, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+  
+  selector &lt;- arrivals$resource == 'sick1'
+  arrivals$qaly[selector] &lt;-
+    inputs$u.S1*
+     (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dqaly[selector] &lt;- 
+      discount_value(inputs$u.S1, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+  
+  arrivals
+}</code></pre>
+<p>Now a run is in order.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-4.R'</span>)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       name start_time   end_time activity_time      resource replication
+1  patient2  0.0000000  0.7023209     0.7023209       healthy           1
+2  patient0  0.0000000  0.9776845     0.9776845       healthy           1
+3  patient1  0.0000000  4.4459842     4.4459842       healthy           1
+4  patient4  0.0000000  4.9674597     4.9674597       healthy           1
+5  patient3  0.0000000 12.2190344    12.2190344       healthy           1
+6  patient1 17.9052361 17.9052361     0.0000000         death           1
+7  patient1  0.0000000 17.9052361    17.9052361 time_in_model           1
+8  patient1  4.4459842 17.9052361    13.4592519         sick1           1
+9  patient2 19.9934967 19.9934967     0.0000000         death           1
+10 patient2  0.0000000 19.9934967    19.9934967 time_in_model           1
+11 patient2  0.7023209 19.9934967    19.2911758         sick1           1
+12 patient0  0.0000000 30.0000000    30.0000000 time_in_model           1
+13 patient4  0.0000000 30.0000000    30.0000000 time_in_model           1
+14 patient3  0.0000000 30.0000000    30.0000000 time_in_model           1
+15 patient0  0.9776845 30.0000000    29.0223155         sick1           1
+16 patient4  4.9674597 30.0000000    25.0325403         sick1           1
+17 patient3 12.2190344 30.0000000    17.7809656         sick1           1
+         cost     dcost       qaly      dqaly
+1    1404.642  1390.162  0.7023209  0.6950811
+2    1955.369  1927.385  0.9776845  0.9636924
+3    8891.968  8332.462  4.4459842  4.1662310
+4    9934.919  9239.963  4.9674597  4.6199813
+5   24438.069 20511.417 12.2190344 10.2557086
+6       0.000     0.000  0.0000000  0.0000000
+7       0.000     0.000  0.0000000  0.0000000
+8   53837.008 38947.307 10.7674015  7.7894613
+9       0.000     0.000  0.0000000  0.0000000
+10      0.000     0.000  0.0000000  0.0000000
+11  77164.703 57603.422 15.4329406 11.5206844
+12      0.000     0.000  0.0000000  0.0000000
+13      0.000     0.000  0.0000000  0.0000000
+14      0.000     0.000  0.0000000  0.0000000
+15 116089.262 75717.229 23.2178524 15.1434457
+16 100130.161 61092.073 20.0260322 12.2184146
+17  71123.862 38549.164 14.2247724  7.7098328</code></pre>
+</div>
+</div>
+<p>The results are lot more complicated and harder to interpret. To bring some order to what’s happening what we can do is now randomly audit patients.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4</span>)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>inputs<span class="sc">$</span>N, <span class="dv">1</span>) <span class="sc">-</span> <span class="dv">1</span> <span class="co"># Starts a zero</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> <span class="fu">paste0</span>(<span class="st">'patient'</span>,pn),]</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),] <span class="co"># For clarity</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       name start_time   end_time activity_time      resource replication
+1  patient2  0.0000000  0.7023209     0.7023209       healthy           1
+10 patient2  0.0000000 19.9934967    19.9934967 time_in_model           1
+11 patient2  0.7023209 19.9934967    19.2911758         sick1           1
+9  patient2 19.9934967 19.9934967     0.0000000         death           1
+        cost     dcost       qaly      dqaly
+1   1404.642  1390.162  0.7023209  0.6950811
+10     0.000     0.000  0.0000000  0.0000000
+11 77164.703 57603.422 15.4329406 11.5206844
+9      0.000     0.000  0.0000000  0.0000000</code></pre>
+</div>
+</div>
+<p>The random audit (the set.seed is just so we can reproduce the result and discuss here, remove it to be truly random), shows that Patient trajectory 2 in this simulation is health for 3/4 of the year. His time in the model is cut short to just under 20 years. He spends most of that time in the S1 state until his death.</p>
+<p>The ability to audit random patients is vital to model validation that it is performing as expected. One can do things like find a patient based on a desired event in a trajectory. Let’s look for a patient who died.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> <span class="fu">sample</span>(results[results<span class="sc">$</span>resource<span class="sc">==</span><span class="st">'death'</span>,<span class="st">'name'</span>],<span class="dv">1</span>)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>results[results<span class="sc">$</span>name <span class="sc">==</span> pn, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      name start_time  end_time activity_time      resource replication
+3 patient1   0.000000  4.445984      4.445984       healthy           1
+6 patient1  17.905236 17.905236      0.000000         death           1
+7 patient1   0.000000 17.905236     17.905236 time_in_model           1
+8 patient1   4.445984 17.905236     13.459252         sick1           1
+       cost     dcost      qaly    dqaly
+3  8891.968  8332.462  4.445984 4.166231
+6     0.000     0.000  0.000000 0.000000
+7     0.000     0.000  0.000000 0.000000
+8 53837.008 38947.307 10.767402 7.789461</code></pre>
+</div>
+</div>
+<p>Thus tools to grab and look at trajectories containing specific events randomly auditing and verifying the expected costs and qualitys can be done.</p>
 </section>
 <section id="model-5" class="level2">
 <h2 class="anchored" data-anchor-id="model-5">Model 5</h2>
-<p>Objective: A framework to run models, get summaries with different strategies and compare.</p>
+<p>Objective: Add the return to Healthy from Sick1.</p>
+<p>This is adding another event, <code>event_healthy</code> to our project.</p>
+<pre><code>
+years_till_healthy &lt;- function(inputs)
+{
+  state &lt;- get_attribute(env, "State") 
+  if(state == 1) # 1 =&gt; Sick 1
+  {
+    rexp(1,inputs$r.S1H)
+  } else
+  {
+    inputs$horizon+1 # Past end of simulation time
+  }
+}
+
+healthy &lt;- function(traj, inputs)
+{
+  traj                      |&gt; 
+  set_attribute("State", 0) |&gt; # 0 =&gt; Healthy (H)
+  seize('healthy')          |&gt;
+  release('sick1')
+}</code></pre>
+<p>Source it and update the event registry.</p>
+<pre><code>  list(name          = "Healthy",
+       attr          = "aHealthy",
+       time_to_event = years_till_healthy,
+       func          = healthy,
+       reactive      = TRUE)</code></pre>
+<p>Now the pattern is becoming familar. Let’s run and check.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-5.R'</span>)</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4</span>)</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> <span class="st">'patient1'</span>,]</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       name start_time  end_time activity_time      resource replication
+7  patient1   0.000000  4.899055     4.8990551       healthy           1
+34 patient1   0.000000 30.000000    30.0000000 time_in_model           1
+8  patient1   4.899055  5.247788     0.3487328         sick1           1
+20 patient1   5.247788 13.559917     8.3121288       healthy           1
+23 patient1  13.559917 15.528413     1.9684958         sick1           1
+26 patient1  15.528413 18.120708     2.5922960       healthy           1
+27 patient1  18.120708 18.488023     0.3673147         sick1           1
+38 patient1  18.488023 30.000000    11.5119768       healthy           1
+        cost      dcost       qaly     dqaly
+7   9798.110  9121.7168  4.8990551 4.5608584
+34     0.000     0.0000  0.0000000 0.0000000
+8   1394.931  1200.6767  0.2789863 0.2401353
+20 16624.258 12621.6089  8.3121288 6.3108045
+23  7873.983  5123.2911  1.5747966 1.0246582
+26  5184.592  3153.8437  2.5922960 1.5769218
+27  1469.259   855.3092  0.2938517 0.1710618
+38 23023.954 11299.1913 11.5119768 5.6495957</code></pre>
+</div>
+</div>
+<p>Now the patient bounces back and forth between healthy and sick. The costs and qalys stay the same. The model is nearly complete.</p>
+</section>
+<section id="model-6" class="level2">
+<h2 class="anchored" data-anchor-id="model-6">Model 6</h2>
+<p>Objective: Add in the Sick2 state.</p>
+<p>Add a sick2 counter.</p>
+<pre><code>counters &lt;- c(
+  "time_in_model",
+  "death",
+  "healthy",
+  "sick1",
+  "sick2"
+)</code></pre>
+<p>Create <code>event_sick2.R</code></p>
+<pre><code>years_till_sick2 &lt;- function(inputs)
+{
+  state &lt;- get_attribute(env, "State") 
+  if(state == 1) # 1 =&gt; Sick1
+  {
+    rexp(1,inputs$r.S1S2)
+  } else
+  {
+    inputs$horizon+1 # Past end of simulation time
+  }
+}
+
+sick2 &lt;- function(traj, inputs)
+{
+  traj                      |&gt; 
+  set_attribute("State", 2) |&gt; # 2 =&gt; Sick 2 (S2)
+  release('sick1')          |&gt; # Track state change for tally later
+  seize('sick2')
+}</code></pre>
+<p>Make sure it’s released on exit</p>
+<pre><code>cleanup_on_termination &lt;- function(traj)
+{
+  traj |&gt; 
+  release("time_in_model") |&gt;
+  branch( 
+    function() get_attribute(env, "State")+1,
+      continue = rep(TRUE, 3),
+      trajectory() |&gt; release("healthy"),
+      trajectory() |&gt; release("sick1"),
+      trajectory() |&gt; release("sick2")  
+  )
+}</code></pre>
+<p>Modify costs</p>
+<pre><code>  selector = arrivals$resource == 'sick2'
+  arrivals$cost[selector] &lt;- inputs$c.S2 *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] &lt;- discount_value(inputs$c.S2,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+ </code></pre>
+<p>Modify QALY</p>
+<pre><code>  selector &lt;- arrivals$resource == 'sick2'
+  arrivals$qaly[selector] &lt;-
+    inputs$u.S2*
+     (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dqaly[selector] &lt;- 
+      discount_value(inputs$u.S2, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])
+  </code></pre>
+<p>Modify the <code>event_death</code> (here in <code>event_death3.R</code>)</p>
+<pre><code>years_till_death &lt;- function(inputs)
+{
+  state &lt;- get_attribute(env, "State")
+  rate &lt;- inputs$r.HD
+  if(state == 1) rate &lt;- rate * inputs$hr.S1D # Deal with Sick1 Hazard Ratio
+  if(state == 2) rate &lt;- rate * inputs$hr.S2D
+  rexp(1, rate)
+}</code></pre>
+<p>Let’s see if we can audit a trajectory with sick2.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-6.R'</span>)</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> results<span class="sc">$</span>name[results<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'sick2'</span>][<span class="dv">1</span>]</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> pn,]</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       name start_time   end_time activity_time      resource replication
+2  patient4  0.0000000  0.5150044     0.5150044       healthy           1
+26 patient4  0.0000000 22.8997743    22.8997743 time_in_model           1
+13 patient4  0.5150044  6.3379526     5.8229482         sick1           1
+27 patient4  6.3379526 22.8997743    16.5618216         sick2           1
+25 patient4 22.8997743 22.8997743     0.0000000         death           1
+         cost      dcost      qaly     dqaly
+2    1030.009   1022.209 0.5150044 0.5111043
+26      0.000      0.000 0.0000000 0.0000000
+13  23291.793  21074.263 4.6583586 4.2148526
+27 248427.325 162877.777 9.9370930 6.5151111
+25      0.000      0.000 0.0000000 0.0000000</code></pre>
+</div>
+</div>
+<p>This shows that base case of the Sick/Sicker model is now fully handled.</p>
+</section>
+<section id="model-7" class="level2">
+<h2 class="anchored" data-anchor-id="model-7">Model 7</h2>
+<p>Objective: Add treatment strategy to model.</p>
+<pre><code>counters &lt;- c(
+  "time_in_model",
+  "death",
+  "healthy",
+  "sick1",
+  "sick2",
+  "treat"
+)
+
+initialize_patient &lt;- function(traj, inputs)
+{
+  traj                   |&gt;
+  seize("time_in_model") |&gt;
+  set_attribute("AgeInitial", function() sample(20:30, 1)) |&gt;
+  set_attribute("State", 0) |&gt; # Patients start healthy
+  seize("healthy")       |&gt;
+  set_attribute("Treat", function() inputs$strategy == 'treat')
+}
+
+# Cleanup function if a termination occurs
+# Good for releasing any seized resources based on state.
+cleanup_on_termination &lt;- function(traj, inputs)
+{
+  traj |&gt; 
+  release("time_in_model") |&gt;
+  branch( 
+    function() get_attribute(env, "State")+1,
+      continue = rep(TRUE, 3),
+      trajectory() |&gt; release("healthy"),
+      trajectory() |&gt; release("sick1"),
+      trajectory() |&gt; release("sick2") 
+  ) |&gt;
+  branch( # Assigned to treatment and not healthy
+    function() (get_attribute(env, "Treat")  &amp;&amp; 
+                get_attribute(env, "State")) + 1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |&gt; release('treat')
+  )
+}</code></pre>
+<p>Update costing.</p>
+<pre><code>  selector = arrivals$resource == 'treat'
+  arrivals$cost[selector] &lt;- inputs$c.Trt *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] &lt;- discount_value(inputs$c.Trt,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+ </code></pre>
+<p>And modify Quality for S1.</p>
+<pre><code>  uS1 &lt;- if(inputs$strategy == 'treat') u.Trt else u.S1
+  arrivals$qaly[selector] &lt;-
+    uS1*
+     (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dqaly[selector] &lt;- 
+      discount_value(uS1, 
+                     arrivals$start_time[selector],
+                     arrivals$end_time[selector])</code></pre>
+<p>Modify both event_sick1 and event_healthy.</p>
+<pre><code>sick1 &lt;- function(traj, inputs)
+{
+  traj                      |&gt; 
+  set_attribute("State", 1) |&gt; # 1 =&gt; Sick 1 (S1)
+  release('healthy')        |&gt; # Track state change for tally later
+  seize('sick1')            |&gt;
+  branch( 
+    function() get_attribute(env, "Treat")+1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |&gt; seize('treat')
+  )
+}
+
+healthy &lt;- function(traj, inputs)
+{
+  traj                      |&gt; 
+  set_attribute("State", 0) |&gt; # 0 =&gt; Healthy (H)
+  seize('healthy')          |&gt;
+  release('sick1')          |&gt;
+  branch(
+    function() get_attribute(env, "Treat") +1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |&gt; release('treat')
+  )
+}</code></pre>
+<p>And we can run.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-7.R'</span>)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> results<span class="sc">$</span>name[results<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'sick2'</span>][<span class="dv">1</span>]</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> pn,]</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       name start_time   end_time activity_time      resource replication
+2  patient4  0.0000000  0.5150044     0.5150044       healthy           1
+26 patient4  0.0000000 22.8997743    22.8997743 time_in_model           1
+13 patient4  0.5150044  6.3379526     5.8229482         sick1           1
+27 patient4  6.3379526 22.8997743    16.5618216         sick2           1
+25 patient4 22.8997743 22.8997743     0.0000000         death           1
+         cost      dcost      qaly     dqaly
+2    1030.009   1022.209 0.5150044 0.5111043
+26      0.000      0.000 0.0000000 0.0000000
+13  23291.793  21074.263 4.6583586 4.2148526
+27 248427.325 162877.777 9.9370930 6.5151111
+25      0.000      0.000 0.0000000 0.0000000</code></pre>
+</div>
+</div>
+<p>Now with treatment.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>inputs<span class="sc">$</span>strategy <span class="ot">&lt;-</span> <span class="st">'treat'</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> results<span class="sc">$</span>name[results<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'sick2'</span>][<span class="dv">1</span>]</span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> pn,]</span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       name start_time   end_time activity_time      resource replication
+2  patient4  0.0000000  0.5150044     0.5150044       healthy           1
+34 patient4  0.0000000 22.8997743    22.8997743 time_in_model           1
+17 patient4  0.5150044  6.3379526     5.8229482         sick1           1
+36 patient4  0.5150044 22.8997743    22.3847698         treat           1
+35 patient4  6.3379526 22.8997743    16.5618216         sick2           1
+33 patient4 22.8997743 22.8997743     0.0000000         death           1
+         cost      dcost      qaly     dqaly
+2    1030.009   1022.209 0.5150044 0.5111043
+34      0.000      0.000 0.0000000 0.0000000
+17  23291.793  21074.263 5.5318008 5.0051374
+36 268617.238 193525.011 0.0000000 0.0000000
+35 248427.325 162877.777 9.9370930 6.5151111
+33      0.000      0.000 0.0000000 0.0000000</code></pre>
+</div>
+</div>
+<p>Notice patient4 now has higher QALY under treatment, but also has treatment costs.</p>
+</section>
+<section id="model-8" class="level2">
+<h2 class="anchored" data-anchor-id="model-8">Model 8</h2>
+<p>Objective: Now compare models and do analysis.</p>
+<p>First crank up sample size and then create aggregate measures.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-7.R'</span>)</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>inputs<span class="sc">$</span>N <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>inputs<span class="sc">$</span>strategy <span class="ot">&lt;-</span> <span class="st">'notreat'</span></span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>results.notreat <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>inputs<span class="sc">$</span>strategy <span class="ot">&lt;-</span> <span class="st">'treat'</span></span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>results.treat <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:simmer':
+
+    select</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>sum.treat <span class="ot">&lt;-</span> </span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  results.treat <span class="sc">|&gt;</span> </span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(name) <span class="sc">|&gt;</span> </span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">cost=</span><span class="fu">sum</span>(cost),</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">dcost=</span><span class="fu">sum</span>(dcost),</span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">qaly=</span><span class="fu">sum</span>(qaly),</span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">dqaly=</span><span class="fu">sum</span>(dqaly))</span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a>sum.notreat <span class="ot">&lt;-</span> </span>
+<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>  results.notreat <span class="sc">|&gt;</span> </span>
+<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(name) <span class="sc">|&gt;</span> </span>
+<span id="cb67-12"><a href="#cb67-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">cost=</span><span class="fu">sum</span>(cost),</span>
+<span id="cb67-13"><a href="#cb67-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">dcost=</span><span class="fu">sum</span>(dcost),</span>
+<span id="cb67-14"><a href="#cb67-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">qaly=</span><span class="fu">sum</span>(qaly),</span>
+<span id="cb67-15"><a href="#cb67-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">dqaly=</span><span class="fu">sum</span>(dqaly))</span>
+<span id="cb67-16"><a href="#cb67-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-17"><a href="#cb67-17" aria-hidden="true" tabindex="-1"></a>cea <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb67-18"><a href="#cb67-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">notreat=</span><span class="fu">colMeans</span>(sum.notreat[<span class="fu">c</span>(<span class="st">'cost'</span>, <span class="st">'dcost'</span>, <span class="st">'qaly'</span>, <span class="st">'dqaly'</span>)]),</span>
+<span id="cb67-19"><a href="#cb67-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">treat=</span><span class="fu">colMeans</span>(sum.treat[<span class="fu">c</span>(<span class="st">'cost'</span>, <span class="st">'dcost'</span>, <span class="st">'qaly'</span>, <span class="st">'dqaly'</span>)])</span>
+<span id="cb67-20"><a href="#cb67-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb67-21"><a href="#cb67-21" aria-hidden="true" tabindex="-1"></a>cea</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            cost     dcost     qaly    dqaly
+notreat 129365.3  80099.57 25.15816 17.06324
+treat   232484.6 143450.91 25.67840 17.41693</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co"># NHB (discounted)</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(cea[,<span class="st">'dqaly'</span>]) <span class="sc">-</span> <span class="fu">diff</span>(cea[,<span class="st">'dcost'</span>])<span class="sc">/</span>inputs<span class="sc">$</span>wtp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     treat 
+-0.2798167 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># NMB (discounted)</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(cea[,<span class="st">'dqaly'</span>])<span class="sc">*</span>inputs<span class="sc">$</span>wtp <span class="sc">-</span> <span class="fu">diff</span>(cea[,<span class="st">'dcost'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    treat 
+-27981.67 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ICER</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(cea[,<span class="st">'dcost'</span>])<span class="sc">/</span> <span class="fu">diff</span>(cea[,<span class="st">'dqaly'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   treat 
+179112.1 </code></pre>
+</div>
+</div>
 </section>
 <section id="aftermatter" class="level2">
 <h2 class="anchored" data-anchor-id="aftermatter">Aftermatter</h2>
+<p>The first point to be made is the application of new costs and qalys followed the same code pattern with each additional event. If the costs in the <code>inputs</code> were named the same as the <code>resources</code>, these could be applied with a loop. The continued cut and paste of a block of code is the cue to the coder that a function would be easier. It is a recommended exercise to code this and compare results. See <a href="https://en.wikipedia.org/wiki/Don%27t_repeat_yourself">DRY</a>. Hint: the inputs lists can contain lists or groupings of parameters to denote how they would be used.</p>
+<p>Secondly, the workflow of always keeping a model working with the tiniest steps possible is the fastest path to the goal. Checking each working version into git (and not renaming models like was done here, use git as it was intended), also allows going back and finding where a bug was introduced via <a href="https://git-scm.com/docs/git-bisect"><code>git biset</code></a>.</p>
+<p>While the benefits of DES are face validity, the ability to directly utilize hazard rates and survival curves, and deal with very complex patient states that lead to state explosion in Markov models; there are some hidden benefits as well: the ability to model the variability in patient population and model what response to treatment would be expected in a real world population. Here’s a plot of each individuals cost and qaly.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rbind</span>(sum.treat, sum.notreat)</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>x<span class="sc">$</span>group <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">'treat'</span>, <span class="st">'notreat'</span>), <span class="at">each=</span>inputs<span class="sc">$</span>N)</span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x, <span class="fu">aes</span>(<span class="at">x=</span>dqaly, <span class="at">y=</span>dcost, <span class="at">color=</span>group)) <span class="sc">+</span> </span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha=</span><span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sick_Sicker_Simmer_DES_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>This plot is odd due to the utilization of simple non realistic exponential rates.</p>
+<p>The capability of DES to include constrained resources was not included in this tutorial and would need a separate exploration. The fact that <code>simmer</code> has this capability means that it cannot treat patients as independent in evaluating events. This incurs a computational cost of <span class="math inline">\(\mathcal{O}(n \log n)\)</span>. There is a frameworks written by <a href="https://med.stanford.edu/profiles/fernando-alarid-escudero">Fernando Alarid-Escudero</a> utilizing <code>data.table</code> in R that removes the ability to model constrained resources and reduces the computational cost to <span class="math inline">\(\mathcal{O}(n)\)</span> for this type of modeling. The lessons in this tutorial still apply, but the memory layout of events is in a wide <code>data.table</code>.</p>
+<p>To get convergence for studying conditions that are rare events, we have found that we need over 1,000,000 patient trajectories to get convergence of estimators within acceptible statistical bounds. The R <code>simmer</code> framework functions with reasonable speed at no more that 10,000 patient trajectories and possibly less for complex models. We utilize <a href="https://github.com/vubiostat/accre_tutorial">ACCRE</a> to batch the jobs and get sufficient coverage. This is a major issue for performing a probability sensitivity analysis on a model as now a 1000 runs typically need of a 1,000,000 patient trajectories requiring 100,000 job runs! Planning for time to do this is required at project outset.</p>
+<p>Shawn Garbett <shawn dot="" garbett="" at="" vumc="" org=""></shawn></p>
 </section>
 
 </main>

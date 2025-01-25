@@ -31,8 +31,7 @@ inputs <- list(
     r.HD   =     0.005,  # Healthy to Dead rate / year     (H  -> D)
     hr.S1D =     3,      # Hazard ratio in S1 vs healthy 
     hr.S2D =    10,      # Hazard ratio in S2 vs healthy
-    hr.cor =     2,      # Hazard ratio of a condition giving the other condition.
-    
+ 
     # Annual Costs
     c.H    =  2000,      # Healthy individuals 
     c.S1   =  4000,      # Sick individuals in S1
@@ -49,7 +48,7 @@ inputs <- list(
     # Intervention Effect
     u.Trt  =     0.95,   # S1 Utility for treatment in S1
     
-    wtp    = 1e5,
+    wtp    =     1e5,    # 100k willingness to pay
     
     strategy = 'notreat' # Default strategy is no treatment
   )
