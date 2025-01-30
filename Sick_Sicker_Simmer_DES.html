@@ -565,66 +565,68 @@ qaly_arrivals &lt;- function(arrivals, inputs)
 }</code></pre>
 <p>Now a run is in order.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2</span>)</span>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-4.R'</span>)</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>       name start_time   end_time activity_time      resource replication
-1  patient2  0.0000000  0.7023209     0.7023209       healthy           1
-2  patient0  0.0000000  0.9776845     0.9776845       healthy           1
-3  patient1  0.0000000  4.4459842     4.4459842       healthy           1
-4  patient4  0.0000000  4.9674597     4.9674597       healthy           1
-5  patient3  0.0000000 12.2190344    12.2190344       healthy           1
-6  patient1 17.9052361 17.9052361     0.0000000         death           1
-7  patient1  0.0000000 17.9052361    17.9052361 time_in_model           1
-8  patient1  4.4459842 17.9052361    13.4592519         sick1           1
-9  patient2 19.9934967 19.9934967     0.0000000         death           1
-10 patient2  0.0000000 19.9934967    19.9934967 time_in_model           1
-11 patient2  0.7023209 19.9934967    19.2911758         sick1           1
-12 patient0  0.0000000 30.0000000    30.0000000 time_in_model           1
-13 patient4  0.0000000 30.0000000    30.0000000 time_in_model           1
-14 patient3  0.0000000 30.0000000    30.0000000 time_in_model           1
-15 patient0  0.9776845 30.0000000    29.0223155         sick1           1
-16 patient4  4.9674597 30.0000000    25.0325403         sick1           1
-17 patient3 12.2190344 30.0000000    17.7809656         sick1           1
-         cost     dcost       qaly      dqaly
-1    1404.642  1390.162  0.7023209  0.6950811
-2    1955.369  1927.385  0.9776845  0.9636924
-3    8891.968  8332.462  4.4459842  4.1662310
-4    9934.919  9239.963  4.9674597  4.6199813
-5   24438.069 20511.417 12.2190344 10.2557086
-6       0.000     0.000  0.0000000  0.0000000
-7       0.000     0.000  0.0000000  0.0000000
-8   53837.008 38947.307 10.7674015  7.7894613
-9       0.000     0.000  0.0000000  0.0000000
-10      0.000     0.000  0.0000000  0.0000000
-11  77164.703 57603.422 15.4329406 11.5206844
-12      0.000     0.000  0.0000000  0.0000000
-13      0.000     0.000  0.0000000  0.0000000
-14      0.000     0.000  0.0000000  0.0000000
-15 116089.262 75717.229 23.2178524 15.1434457
-16 100130.161 61092.073 20.0260322 12.2184146
-17  71123.862 38549.164 14.2247724  7.7098328</code></pre>
+<pre><code>       name  start_time    end_time activity_time      resource replication
+1  patient3  0.00000000  0.06698552    0.06698552       healthy           1
+2  patient4  0.00000000  0.51500444    0.51500444       healthy           1
+3  patient2  0.00000000  1.03479892    1.03479892       healthy           1
+4  patient1  0.00000000  1.39192072    1.39192072       healthy           1
+5  patient0  0.00000000  8.21944391    8.21944391       healthy           1
+6  patient4 11.06017048 11.06017048    0.00000000         death           1
+7  patient4  0.00000000 11.06017048   11.06017048 time_in_model           1
+8  patient4  0.51500444 11.06017048   10.54516604         sick1           1
+9  patient0 21.51698600 21.51698600    0.00000000         death           1
+10 patient0  0.00000000 21.51698600   21.51698600 time_in_model           1
+11 patient0  8.21944391 21.51698600   13.29754209         sick1           1
+12 patient3 27.22543337 27.22543337    0.00000000         death           1
+13 patient3  0.00000000 27.22543337   27.22543337 time_in_model           1
+14 patient3  0.06698552 27.22543337   27.15844785         sick1           1
+15 patient2  0.00000000 30.00000000   30.00000000 time_in_model           1
+16 patient1  0.00000000 30.00000000   30.00000000 time_in_model           1
+17 patient2  1.03479892 30.00000000   28.96520108         sick1           1
+18 patient1  1.39192072 30.00000000   28.60807928         sick1           1
+         cost      dcost        qaly       dqaly
+1     133.971   133.8385  0.06698552  0.06691925
+2    1030.009  1022.2086  0.51500444  0.51110432
+3    2069.598  2038.2663  1.03479892  1.01913314
+4    2783.841  2727.3503  1.39192072  1.36367517
+5   16438.888 14594.2785  8.21944391  7.29713927
+6       0.000     0.0000  0.00000000  0.00000000
+7       0.000     0.0000  0.00000000  0.00000000
+8   42180.664 35692.2209  8.43613283  7.13844418
+9       0.000     0.0000  0.00000000  0.00000000
+10      0.000     0.0000  0.00000000  0.00000000
+11  53190.168 34495.0557 10.63803367  6.89901115
+12      0.000     0.0000  0.00000000  0.00000000
+13      0.000     0.0000  0.00000000  0.00000000
+14 108633.791 74539.2546 21.72675828 14.90785093
+15      0.000     0.0000  0.00000000  0.00000000
+16      0.000     0.0000  0.00000000  0.00000000
+17 115860.804 75495.4658 23.17216086 15.09909315
+18 114432.317 74117.2976 22.88646342 14.82345953</code></pre>
 </div>
 </div>
 <p>The results are lot more complicated and harder to interpret. To bring some order to what’s happening what we can do is now randomly audit patients.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4</span>)</span>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">6</span>)</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>inputs<span class="sc">$</span>N, <span class="dv">1</span>) <span class="sc">-</span> <span class="dv">1</span> <span class="co"># Starts a zero</span></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> <span class="fu">paste0</span>(<span class="st">'patient'</span>,pn),]</span>
 <span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),] <span class="co"># For clarity</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>       name start_time   end_time activity_time      resource replication
-1  patient2  0.0000000  0.7023209     0.7023209       healthy           1
-10 patient2  0.0000000 19.9934967    19.9934967 time_in_model           1
-11 patient2  0.7023209 19.9934967    19.2911758         sick1           1
-9  patient2 19.9934967 19.9934967     0.0000000         death           1
-        cost     dcost       qaly      dqaly
-1   1404.642  1390.162  0.7023209  0.6950811
-10     0.000     0.000  0.0000000  0.0000000
-11 77164.703 57603.422 15.4329406 11.5206844
-9      0.000     0.000  0.0000000  0.0000000</code></pre>
+<pre><code>      name start_time   end_time activity_time      resource replication
+2 patient4  0.0000000  0.5150044     0.5150044       healthy           1
+7 patient4  0.0000000 11.0601705    11.0601705 time_in_model           1
+8 patient4  0.5150044 11.0601705    10.5451660         sick1           1
+6 patient4 11.0601705 11.0601705     0.0000000         death           1
+       cost     dcost      qaly     dqaly
+2  1030.009  1022.209 0.5150044 0.5111043
+7     0.000     0.000 0.0000000 0.0000000
+8 42180.664 35692.221 8.4361328 7.1384442
+6     0.000     0.000 0.0000000 0.0000000</code></pre>
 </div>
 </div>
 <p>The random audit (the set.seed is just so we can reproduce the result and discuss here, remove it to be truly random), shows that Patient trajectory 2 in this simulation is health for 3/4 of the year. His time in the model is cut short to just under 20 years. He spends most of that time in the S1 state until his death.</p>
@@ -633,16 +635,16 @@ qaly_arrivals &lt;- function(arrivals, inputs)
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> <span class="fu">sample</span>(results[results<span class="sc">$</span>resource<span class="sc">==</span><span class="st">'death'</span>,<span class="st">'name'</span>],<span class="dv">1</span>)</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>results[results<span class="sc">$</span>name <span class="sc">==</span> pn, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>      name start_time  end_time activity_time      resource replication
-3 patient1   0.000000  4.445984      4.445984       healthy           1
-6 patient1  17.905236 17.905236      0.000000         death           1
-7 patient1   0.000000 17.905236     17.905236 time_in_model           1
-8 patient1   4.445984 17.905236     13.459252         sick1           1
-       cost     dcost      qaly    dqaly
-3  8891.968  8332.462  4.445984 4.166231
-6     0.000     0.000  0.000000 0.000000
-7     0.000     0.000  0.000000 0.000000
-8 53837.008 38947.307 10.767402 7.789461</code></pre>
+<pre><code>       name start_time  end_time activity_time      resource replication
+5  patient0   0.000000  8.219444      8.219444       healthy           1
+9  patient0  21.516986 21.516986      0.000000         death           1
+10 patient0   0.000000 21.516986     21.516986 time_in_model           1
+11 patient0   8.219444 21.516986     13.297542         sick1           1
+       cost    dcost      qaly    dqaly
+5  16438.89 14594.28  8.219444 7.297139
+9      0.00     0.00  0.000000 0.000000
+10     0.00     0.00  0.000000 0.000000
+11 53190.17 34495.06 10.638034 6.899011</code></pre>
 </div>
 </div>
 <p>Thus tools to grab and look at trajectories containing specific events randomly auditing and verifying the expected costs and qualitys can be done.</p>
@@ -686,23 +688,27 @@ healthy &lt;- function(traj, inputs)
 <span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       name start_time  end_time activity_time      resource replication
-7  patient1   0.000000  4.899055     4.8990551       healthy           1
-34 patient1   0.000000 30.000000    30.0000000 time_in_model           1
-8  patient1   4.899055  5.247788     0.3487328         sick1           1
-20 patient1   5.247788 13.559917     8.3121288       healthy           1
-23 patient1  13.559917 15.528413     1.9684958         sick1           1
-26 patient1  15.528413 18.120708     2.5922960       healthy           1
-27 patient1  18.120708 18.488023     0.3673147         sick1           1
-38 patient1  18.488023 30.000000    11.5119768       healthy           1
-        cost      dcost       qaly     dqaly
-7   9798.110  9121.7168  4.8990551 4.5608584
-34     0.000     0.0000  0.0000000 0.0000000
-8   1394.931  1200.6767  0.2789863 0.2401353
-20 16624.258 12621.6089  8.3121288 6.3108045
-23  7873.983  5123.2911  1.5747966 1.0246582
-26  5184.592  3153.8437  2.5922960 1.5769218
-27  1469.259   855.3092  0.2938517 0.1710618
-38 23023.954 11299.1913 11.5119768 5.6495957</code></pre>
+9  patient1   0.000000  4.899055    4.89905511       healthy           1
+48 patient1   0.000000 30.000000   30.00000000 time_in_model           1
+13 patient1   4.899055  7.470293    2.57123764         sick1           1
+17 patient1   7.470293 11.542523    4.07223050       healthy           1
+18 patient1  11.542523 11.600571    0.05804809         sick1           1
+21 patient1  11.600571 12.498444    0.89787306       healthy           1
+24 patient1  12.498444 13.256838    0.75839345         sick1           1
+33 patient1  13.256838 20.532096    7.27525846       healthy           1
+36 patient1  20.532096 21.534997    1.00290072         sick1           1
+53 patient1  21.534997 30.000000    8.46500296       healthy           1
+         cost     dcost       qaly      dqaly
+9   9798.1102 9121.7168 4.89905511 4.56085838
+48     0.0000    0.0000 0.00000000 0.00000000
+13 10284.9506 8568.6555 2.05699011 1.71373110
+17  8144.4610 6153.0240 4.07223050 3.07651200
+18   232.1924  164.9307 0.04643847 0.03298614
+21  1795.7461 1257.6953 0.89787306 0.62884766
+24  3033.5738 2073.2443 0.60671476 0.41464887
+33 14550.5169 8847.8321 7.27525846 4.42391604
+36  4011.6029 2154.3758 0.80232057 0.43087517
+53 16930.0059 7925.1278 8.46500296 3.96256391</code></pre>
 </div>
 </div>
 <p>Now the patient bounces back and forth between healthy and sick. The costs and qalys stay the same. The model is nearly complete.</p>
@@ -780,24 +786,36 @@ sick2 &lt;- function(traj, inputs)
 <p>Let’s see if we can audit a trajectory with sick2.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-6.R'</span>)</span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2</span>)</span>
 <span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
 <span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> results<span class="sc">$</span>name[results<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'sick2'</span>][<span class="dv">1</span>]</span>
 <span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> pn,]</span>
 <span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>       name start_time   end_time activity_time      resource replication
-2  patient4  0.0000000  0.5150044     0.5150044       healthy           1
-26 patient4  0.0000000 22.8997743    22.8997743 time_in_model           1
-13 patient4  0.5150044  6.3379526     5.8229482         sick1           1
-27 patient4  6.3379526 22.8997743    16.5618216         sick2           1
-25 patient4 22.8997743 22.8997743     0.0000000         death           1
-         cost      dcost      qaly     dqaly
-2    1030.009   1022.209 0.5150044 0.5111043
-26      0.000      0.000 0.0000000 0.0000000
-13  23291.793  21074.263 4.6583586 4.2148526
-27 248427.325 162877.777 9.9370930 6.5151111
-25      0.000      0.000 0.0000000 0.0000000</code></pre>
+<pre><code>       name start_time  end_time activity_time      resource replication
+5  patient1   0.000000  4.445984     4.4459842       healthy           1
+28 patient1   0.000000 20.090316    20.0903164 time_in_model           1
+11 patient1   4.445984  5.635455     1.1894707         sick1           1
+14 patient1   5.635455 11.866599     6.2311438       healthy           1
+16 patient1  11.866599 12.265300     0.3987010         sick1           1
+19 patient1  12.265300 13.761215     1.4959153       healthy           1
+22 patient1  13.761215 15.572232     1.8110174         sick1           1
+23 patient1  15.572232 16.563925     0.9916925       healthy           1
+24 patient1  16.563925 17.330233     0.7663082         sick1           1
+29 patient1  17.330233 20.090316     2.7600832         sick2           1
+27 patient1  20.090316 20.090316     0.0000000         death           1
+        cost     dcost      qaly     dqaly
+5   8891.968  8332.462 4.4459842 4.1662310
+28     0.000     0.000 0.0000000 0.0000000
+11  4757.883  4099.466 0.9515765 0.8198931
+14 12462.288  9635.463 6.2311438 4.8177314
+16  1594.804  1116.391 0.3189608 0.2232783
+19  2991.831  2036.659 1.4959153 1.0183294
+22  7244.070  4696.285 1.4488140 0.9392570
+23  1983.385  1233.539 0.9916925 0.6167697
+24  3065.233  1857.459 0.6130465 0.3714918
+29 41401.249 23820.226 1.6560499 0.9528090
+27     0.000     0.000 0.0000000 0.0000000</code></pre>
 </div>
 </div>
 <p>This shows that base case of the Sick/Sicker model is now fully handled.</p>
@@ -892,49 +910,79 @@ healthy &lt;- function(traj, inputs)
 <p>And we can run.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-7.R'</span>)</span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2</span>)</span>
 <span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
 <span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> results<span class="sc">$</span>name[results<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'sick2'</span>][<span class="dv">1</span>]</span>
 <span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> pn,]</span>
 <span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>       name start_time   end_time activity_time      resource replication
-2  patient4  0.0000000  0.5150044     0.5150044       healthy           1
-26 patient4  0.0000000 22.8997743    22.8997743 time_in_model           1
-13 patient4  0.5150044  6.3379526     5.8229482         sick1           1
-27 patient4  6.3379526 22.8997743    16.5618216         sick2           1
-25 patient4 22.8997743 22.8997743     0.0000000         death           1
-         cost      dcost      qaly     dqaly
-2    1030.009   1022.209 0.5150044 0.5111043
-26      0.000      0.000 0.0000000 0.0000000
-13  23291.793  21074.263 4.6583586 4.2148526
-27 248427.325 162877.777 9.9370930 6.5151111
-25      0.000      0.000 0.0000000 0.0000000</code></pre>
+<pre><code>       name start_time  end_time activity_time      resource replication
+5  patient1   0.000000  4.445984     4.4459842       healthy           1
+28 patient1   0.000000 20.090316    20.0903164 time_in_model           1
+11 patient1   4.445984  5.635455     1.1894707         sick1           1
+14 patient1   5.635455 11.866599     6.2311438       healthy           1
+16 patient1  11.866599 12.265300     0.3987010         sick1           1
+19 patient1  12.265300 13.761215     1.4959153       healthy           1
+22 patient1  13.761215 15.572232     1.8110174         sick1           1
+23 patient1  15.572232 16.563925     0.9916925       healthy           1
+24 patient1  16.563925 17.330233     0.7663082         sick1           1
+29 patient1  17.330233 20.090316     2.7600832         sick2           1
+27 patient1  20.090316 20.090316     0.0000000         death           1
+        cost     dcost      qaly     dqaly
+5   8891.968  8332.462 4.4459842 4.1662310
+28     0.000     0.000 0.0000000 0.0000000
+11  4757.883  4099.466 0.9515765 0.8198931
+14 12462.288  9635.463 6.2311438 4.8177314
+16  1594.804  1116.391 0.3189608 0.2232783
+19  2991.831  2036.659 1.4959153 1.0183294
+22  7244.070  4696.285 1.4488140 0.9392570
+23  1983.385  1233.539 0.9916925 0.6167697
+24  3065.233  1857.459 0.6130465 0.3714918
+29 41401.249 23820.226 1.6560499 0.9528090
+27     0.000     0.000 0.0000000 0.0000000</code></pre>
 </div>
 </div>
 <p>Now with treatment.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2</span>)</span>
 <span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>inputs<span class="sc">$</span>strategy <span class="ot">&lt;-</span> <span class="st">'treat'</span></span>
 <span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs)</span>
 <span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>pn <span class="ot">&lt;-</span> results<span class="sc">$</span>name[results<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'sick2'</span>][<span class="dv">1</span>]</span>
 <span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>audit <span class="ot">&lt;-</span> results[results<span class="sc">$</span>name <span class="sc">==</span> pn,]</span>
 <span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>audit[<span class="fu">order</span>(audit<span class="sc">$</span>start_time, audit<span class="sc">$</span>end_time),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>       name start_time   end_time activity_time      resource replication
-2  patient4  0.0000000  0.5150044     0.5150044       healthy           1
-34 patient4  0.0000000 22.8997743    22.8997743 time_in_model           1
-17 patient4  0.5150044  6.3379526     5.8229482         sick1           1
-36 patient4  0.5150044 22.8997743    22.3847698         treat           1
-35 patient4  6.3379526 22.8997743    16.5618216         sick2           1
-33 patient4 22.8997743 22.8997743     0.0000000         death           1
-         cost      dcost      qaly     dqaly
-2    1030.009   1022.209 0.5150044 0.5111043
-34      0.000      0.000 0.0000000 0.0000000
-17  23291.793  21074.263 5.5318008 5.0051374
-36 268617.238 193525.011 0.0000000 0.0000000
-35 248427.325 162877.777 9.9370930 6.5151111
-33      0.000      0.000 0.0000000 0.0000000</code></pre>
+<pre><code>       name start_time  end_time activity_time      resource replication
+7  patient1   0.000000  4.445984     4.4459842       healthy           1
+38 patient1   0.000000 20.090316    20.0903164 time_in_model           1
+15 patient1   4.445984  5.635455     1.1894707         sick1           1
+16 patient1   4.445984  5.635455     1.1894707         treat           1
+19 patient1   5.635455 11.866599     6.2311438       healthy           1
+21 patient1  11.866599 12.265300     0.3987010         sick1           1
+22 patient1  11.866599 12.265300     0.3987010         treat           1
+26 patient1  12.265300 13.761215     1.4959153       healthy           1
+30 patient1  13.761215 15.572232     1.8110174         sick1           1
+31 patient1  13.761215 15.572232     1.8110174         treat           1
+32 patient1  15.572232 16.563925     0.9916925       healthy           1
+33 patient1  16.563925 17.330233     0.7663082         sick1           1
+40 patient1  16.563925 20.090316     3.5263914         treat           1
+39 patient1  17.330233 20.090316     2.7600832         sick2           1
+37 patient1  20.090316 20.090316     0.0000000         death           1
+        cost     dcost      qaly     dqaly
+7   8891.968  8332.462 4.4459842 4.1662310
+38     0.000     0.000 0.0000000 0.0000000
+15  4757.883  4099.466 1.1299971 0.9736231
+16 14273.648 12298.397 0.0000000 0.0000000
+19 12462.288  9635.463 6.2311438 4.8177314
+21  1594.804  1116.391 0.3787659 0.2651430
+22  4784.412  3349.174 0.0000000 0.0000000
+26  2991.831  2036.659 1.4959153 1.0183294
+30  7244.070  4696.285 1.7204666 1.1153677
+31 21732.209 14088.855 0.0000000 0.0000000
+32  1983.385  1233.539 0.9916925 0.6167697
+33  3065.233  1857.459 0.7279928 0.4411465
+40 42316.697 24628.558 0.0000000 0.0000000
+39 41401.249 23820.226 1.6560499 0.9528090
+37     0.000     0.000 0.0000000 0.0000000</code></pre>
 </div>
 </div>
 <p>Notice patient4 now has higher QALY under treatment, but also has treatment costs.</p>
@@ -996,8 +1044,8 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb67-21"><a href="#cb67-21" aria-hidden="true" tabindex="-1"></a>cea</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>            cost     dcost     qaly    dqaly
-notreat 129365.3  80099.57 25.15816 17.06324
-treat   232484.6 143450.91 25.67840 17.41693</code></pre>
+notreat 104647.9  67071.89 23.69394 16.26638
+treat   187331.4 119542.72 24.19165 16.60588</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -1005,19 +1053,19 @@ treat   232484.6 143450.91 25.67840 17.41693</code></pre>
 <span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(cea[,<span class="st">'dqaly'</span>]) <span class="sc">-</span> <span class="fu">diff</span>(cea[,<span class="st">'dcost'</span>])<span class="sc">/</span>inputs<span class="sc">$</span>wtp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     treat 
--0.2798167 </code></pre>
+-0.1852043 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># NMB (discounted)</span></span>
 <span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(cea[,<span class="st">'dqaly'</span>])<span class="sc">*</span>inputs<span class="sc">$</span>wtp <span class="sc">-</span> <span class="fu">diff</span>(cea[,<span class="st">'dcost'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>    treat 
--27981.67 </code></pre>
+-18520.43 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ICER</span></span>
 <span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(cea[,<span class="st">'dcost'</span>])<span class="sc">/</span> <span class="fu">diff</span>(cea[,<span class="st">'dqaly'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   treat 
-179112.1 </code></pre>
+154551.4 </code></pre>
 </div>
 </div>
 </section>
@@ -1038,7 +1086,7 @@ treat   232484.6 143450.91 25.67840 17.41693</code></pre>
 </div>
 </div>
 <p>This plot is odd due to the utilization of simple non realistic exponential rates.</p>
-<p>The capability of DES to include constrained resources was not included in this tutorial and would need a separate exploration. The fact that <code>simmer</code> has this capability means that it cannot treat patients as independent in evaluating events. This incurs a computational cost of <span class="math inline">\(\mathcal{O}(n \log n)\)</span>. There is a frameworks written by <a href="https://med.stanford.edu/profiles/fernando-alarid-escudero">Fernando Alarid-Escudero</a> utilizing <code>data.table</code> in R that removes the ability to model constrained resources and reduces the computational cost to <span class="math inline">\(\mathcal{O}(n)\)</span> for this type of modeling. The lessons in this tutorial still apply, but the memory layout of events is in a wide <code>data.table</code>.</p>
+<p>The capability of DES to include constrained resources was not included in this tutorial and would need a separate exploration. The fact that <code>simmer</code> has this capability means that it cannot treat patients as independent in evaluating events. Thus a key feature of <code>simmer</code> is not utilized in independent patient simulations. This feature incurs a computational cost of <span class="math inline">\(\mathcal{O}(n \log n)\)</span>. There is a frameworks written by <a href="https://med.stanford.edu/profiles/fernando-alarid-escudero">Fernando Alarid-Escudero</a> utilizing <code>data.table</code> in R that removes the ability to model constrained resources and reduces the computational cost to <span class="math inline">\(\mathcal{O}(n)\)</span> for this type of modeling. The lessons in this tutorial still apply, but the memory layout of events is in a wide <code>data.table</code>.</p>
 <p>To get convergence for studying conditions that are rare events, we have found that we need over 1,000,000 patient trajectories to get convergence of estimators within acceptible statistical bounds. The R <code>simmer</code> framework functions with reasonable speed at no more that 10,000 patient trajectories and possibly less for complex models. We utilize <a href="https://github.com/vubiostat/accre_tutorial">ACCRE</a> to batch the jobs and get sufficient coverage. This is a major issue for performing a probability sensitivity analysis on a model as now a 1000 runs typically need of a 1,000,000 patient trajectories requiring 100,000 job runs! Planning for time to do this is required at project outset.</p>
 <p>Shawn Garbett <shawn dot="" garbett="" at="" vumc="" org=""></shawn></p>
 </section>

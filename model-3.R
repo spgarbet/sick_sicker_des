@@ -61,7 +61,7 @@ terminate_simulation <- function(traj, inputs)
 event_registry <- list(
   list(name          = "Terminate at time horizon",
        attr          = "aTerminate",
-       time_to_event = function(inputs) inputs$horizon,
+       time_to_event = function(inputs) inputs$horizon-now(env),
        func          = terminate_simulation,
        reactive      = FALSE),
   list(name          = "Death",

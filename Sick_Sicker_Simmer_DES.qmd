@@ -548,7 +548,7 @@ qaly_arrivals <- function(arrivals, inputs)
 Now a run is in order. 
 
 ```{r}
-set.seed(2)
+set.seed(3)
 source('model-4.R')
 results <- des_run(inputs)
 results
@@ -556,7 +556,7 @@ results
 The results are lot more complicated and harder to interpret. To bring some order to what's happening what we can do is now randomly audit patients.
 
 ```{r}
-set.seed(4)
+set.seed(6)
 pn <- sample(1:inputs$N, 1) - 1 # Starts a zero
 audit <- results[results$name == paste0('patient',pn),]
 audit[order(audit$start_time, audit$end_time),] # For clarity
@@ -722,7 +722,7 @@ Let's see if we can audit a trajectory with sick2.
 
 ```{r}
 source('model-6.R')
-set.seed(3)
+set.seed(2)
 results <- des_run(inputs)
 pn <- results$name[results$resource == 'sick2'][1]
 audit <- results[results$name == pn,]
@@ -838,7 +838,7 @@ And we can run.
 
 ```{r}
 source('model-7.R')
-set.seed(3)
+set.seed(2)
 results <- des_run(inputs)
 pn <- results$name[results$resource == 'sick2'][1]
 audit <- results[results$name == pn,]
@@ -848,7 +848,7 @@ audit[order(audit$start_time, audit$end_time),]
 Now with treatment.
 
 ```{r}
-set.seed(3)
+set.seed(2)
 inputs$strategy <- 'treat'
 results <- des_run(inputs)
 pn <- results$name[results$resource == 'sick2'][1]
