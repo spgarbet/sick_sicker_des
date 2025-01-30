@@ -406,9 +406,11 @@ event_registry &lt;- list(
        attr          = "aDeath",
        time_to_event = years_till_death,
        func          = death,
-       reactive      = FALSE)
+       reactive      = TRUE)
 )</code></pre>
 <p>Go back and add the <code>death</code> counter, and source the event file and death is implemented.</p>
+<p>Here we specified “reactive” for the event. This means that when and event is triggered, this needs to redraw or reevaluate when this event will trigger. At this point in time it doesn’t affect the model, but the specification has differing death rates with hazard ratios based on the patient state. For example if the patient in a trajectory changes from healthy to sick their death rate changes based on a hazard ratio. This means that their time to death will change. Marking the event as reactive ensures that the reevaluation happens.</p>
+<p>The reactive flag doesn’t need to be used and the redraw of the event time could happen inside the event handling. However, this clutters up events and forces them to deal with other events – which might not be in the event registry table. But utilizing the flag it keeps the model modular, the downside is every reactive event get reevaluated whether it needs to be done for a given event.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'model-3.R'</span>)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
