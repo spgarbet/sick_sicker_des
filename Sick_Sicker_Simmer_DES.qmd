@@ -3,18 +3,20 @@ title: "Sick Sicker Simmer DES"
 author: "Shawn Garbett"
 format: html
 date: 2025-01-23
-editor: visual
+editor: source
 ---
 
 ## Goal
 
-Sick/Sicker implemented in DES using R. 
+Sick/Sicker implemented in DES using R.
 
 The Sick/Sicker model is a common reference model used by the Health Policy community as a learning example about methods. The [simmer](https://cran.r-project.org/package=simmer) R package provides a discrete event simulation (DES) framework for running DES simulations in the R environment. The purpose of this document is to show how to progressively build a DES Health Policy model, the Sick/Sicker model using these tools.
 
 > *"Practice yourself, for heaven's sake in little things, and then proceed to greater."* --Epictetus
 
 The structure of this is to provide the simplest possible series of steps to constructing a Sick/Sicker model using [simmer](https://cran.r-project.org/package=simmer)
+
+_Update_: See our new [Part 2](http://htmlpreview.github.io/?https://github.com/spgarbet/sick_sicker_des/master/Sick_Sicker_Simmer_Constrained.html).
 
 ## DES / Health Policy Terminology Mapping
 
@@ -42,20 +44,19 @@ Notes from Workshop:
 
 See also: [darthpack](https://darth-git.github.io/darthpack/articles/aa-introduction.html)
 
-## Model 1 (_Premiers pas_)
+## Model 1 (*Premiers pas*)
 
 Objective: A DES model that runs patients through a simulation till the time horizon is reached and does nothing else.
 
-[_The Little-Known Power of Going Slow to Go Fast_](https://medium.com/publishous/the-little-known-power-of-going-slow-to-go-fast-2ce0ea0b8bff)
+[*The Little-Known Power of Going Slow to Go Fast*](https://medium.com/publishous/the-little-known-power-of-going-slow-to-go-fast-2ce0ea0b8bff)
 
-Getting such a simple model running is an important step to see the basic framework of constructing a model. A classic beginner mistake is to attempt to code an entire model in one go without building it up slowly step by step.
-Debugging a massive pile of code is daunting task. Avoid doing this and keep your model running with each additional step taken in model construction. This framework provided allows a lot of modularity of adding and subtracting events. 
+Getting such a simple model running is an important step to see the basic framework of constructing a model. A classic beginner mistake is to attempt to code an entire model in one go without building it up slowly step by step. Debugging a massive pile of code is daunting task. Avoid doing this and keep your model running with each additional step taken in model construction. This framework provided allows a lot of modularity of adding and subtracting events.
 
 Further the ability to audit and see what happens to a single patient in a simulation is crucial to success. Without being able to see the individual and how they progress through a simulation and the ability to locate interesting trajectories it is near impossible to know when success has been achieved.
 
-The first step in this tutorial for simplicity is to include the DARTH rates of the Sick/Sicker model in `inputs.R`. 
+The first step in this tutorial for simplicity is to include the DARTH rates of the Sick/Sicker model in `inputs.R`.
 
-```
+```         
 inputs <- list(
     N      = 5,
   
@@ -92,20 +93,19 @@ inputs <- list(
     
     strategy = 'notreat' # Default strategy is to do nothing
   )
-
 ```
 
 This is mostly lifted from our example source and the model definition and reading up on Sick/Sicker is an exercise for the reader using the materials in the previous section.
 
-The next part is really simple. Including `main_loop.R` in ones code gives the essential framework to build a model using simmer. This code allows for an event registry that by defining a function that returns time_to_event and a function to deal with resulting state transition if that event fires. It deals with drawing the next event and firing it. This code has remained mostly unchanged for a decade across numerous projects. 
+The next part is really simple. Including `main_loop.R` in ones code gives the essential framework to build a model using simmer. This code allows for an event registry that by defining a function that returns time_to_event and a function to deal with resulting state transition if that event fires. It deals with drawing the next event and firing it. This code has remained mostly unchanged for a decade across numerous projects.
 
-Thus the main file to run our model we can now begin construction of `model-1.R`. The fragments of this file will be described below. 
+Thus the main file to run our model we can now begin construction of `model-1.R`. The fragments of this file will be described below.
 
-### Boilerplate 
+### Boilerplate
 
-First part is to load necessary bits: `simmer`, our `inputs` and the boilerplate `main_loop`. 
+First part is to load necessary bits: `simmer`, our `inputs` and the boilerplate `main_loop`.
 
-```
+```         
 library(simmer)
 
 source('inputs.R')     # Your Model Parameters
@@ -116,7 +116,7 @@ source('main_loop.R')  # Boilerplate code
 
 First is to define the resources or things we wish to track about a patient.
 
-```
+```         
 counters <- c(
   "time_in_model"
 )
@@ -126,11 +126,11 @@ This will be used later with a convenience function provided by `main_loop` to d
 
 ### Initialize our patient
 
-We need a function to define the starting state of a patient. This can be arbitrary complex as needed to define the attributes of the starting population of a study. 
+We need a function to define the starting state of a patient. This can be arbitrary complex as needed to define the attributes of the starting population of a study.
 
 **NOTE**: It is important when using simmer to mostly pass functions for defining things in a trajectory. This is a call back, and if not done properly it can result in puzzling behavior. If one passed to simmer the following: `sample(20:30,1)`, it would result in a single random draw applied to every single patient. For example, if 25 were draw every patient would be 25. Instead one needs to pass to simmer `function() sample(20:30,1)` to get a random draw for each patient resulting a uniform spread of this parameter. If every patient had the same attribute being assigned, it would be fine to leave off the `function()`, but this can lead to forgetting to do it in cases where it's needed and it doesn't hurt to leave it in on all calls.
 
-```
+```         
 initialize_patient <- function(traj, inputs)
 {
   traj                   |>
@@ -143,11 +143,11 @@ This function expects a patient trajectory and the inputs to be provided. Using 
 
 ### Release Resources on Exit
 
-When a patient leaves the simulation via any means it is helpful to have a function that examines the state or attributes of that patient/trajectory and releases any resources they used. 
+When a patient leaves the simulation via any means it is helpful to have a function that examines the state or attributes of that patient/trajectory and releases any resources they used.
 
 In this section, we know they've seized `time_in_model`, so they need to let that go when they exit.
 
-```
+```         
 cleanup_on_termination <- function(traj)
 {
   traj |> 
@@ -161,7 +161,7 @@ This function can get a lot more complex as patient state grows more complex.
 
 This routine terminates the trajectory and calls the above cleanup. These two pieces could easily have been one function, but keeping them separate has proven useful in practice, primarily for organizational purposes.
 
-```
+```         
 terminate_simulation <- function(traj, inputs)
 {
   traj |>
@@ -174,11 +174,11 @@ terminate_simulation <- function(traj, inputs)
 
 ### Event Registry
 
-Now we're approaching the heart of the model. The event registry. We're going to define a single event to terminate the patient trajectory when the defined time horizon is reached. For a full life simulation such a function isn't needed as a proper mortality model would have individuals simulated die at some point, however it's not bad to have something like this to prevent a run away simulation. 
+Now we're approaching the heart of the model. The event registry. We're going to define a single event to terminate the patient trajectory when the defined time horizon is reached. For a full life simulation such a function isn't needed as a proper mortality model would have individuals simulated die at some point, however it's not bad to have something like this to prevent a run away simulation.
 
-Here's how it looks for a single entry. 
+Here's how it looks for a single entry.
 
-```
+```         
 # Main Event registry
 event_registry <- list(
   list(name          = "Terminate at time horizon",
@@ -189,14 +189,13 @@ event_registry <- list(
 )
 ```
 
-The `name` field is for debugging purposes and may come up on a simmer trace. It's not used much in practice. The `attr` is the name of the attribute on a patient used to store the time to event. It needs to be unique and not correspond to any other attribute name defined on the
-patient. The `time_to_event` is a call back function that defines how long till the event occurs. Simulation time starts at 0 and proceeds forward. In this Sick/Sicker model we have chosen the cycle to each a year. Thus when time reaches 2.0, that's 2 years into the simulation for that patient--_not their_age_. The `func` is the callback function that will modify the state of the patient, in this case it's the terminate simulation function defined above. The `reactive` field is a logical TRUE/FALSE that defines whether all other events should be redraw if this event fires. In this case the patient trajectory is ending, so no events for them should be redrawn. 
+The `name` field is for debugging purposes and may come up on a simmer trace. It's not used much in practice. The `attr` is the name of the attribute on a patient used to store the time to event. It needs to be unique and not correspond to any other attribute name defined on the patient. The `time_to_event` is a call back function that defines how long till the event occurs. Simulation time starts at 0 and proceeds forward. In this Sick/Sicker model we have chosen the cycle to each a year. Thus when time reaches 2.0, that's 2 years into the simulation for that patient--*not their_age*. The `func` is the callback function that will modify the state of the patient, in this case it's the terminate simulation function defined above. The `reactive` field is a logical TRUE/FALSE that defines whether all other events should be redraw if this event fires. In this case the patient trajectory is ending, so no events for them should be redrawn.
 
 ## DES Simulation
 
 Now, to pull it together in a simmer simulation.
 
-```
+```         
 des_run <- function(inputs)
 {
   env  <<- simmer("SickSicker")
@@ -211,10 +210,9 @@ des_run <- function(inputs)
 }
 ```
 
-The first step is to create a global environment used to run simmer. 
-This is followed by creating a des definition of a trajectory (this function is in `main_loop`. It uses the things we've defined above. 
+The first step is to create a global environment used to run simmer. This is followed by creating a des definition of a trajectory (this function is in `main_loop`. It uses the things we've defined above.
 
-Then the env is given resources or counters, patients are generated into the simulation, the simulation is run for an amount of time (just past the horizon) and then the `wrap` makes sure all summaries are ready. 
+Then the env is given resources or counters, patients are generated into the simulation, the simulation is run for an amount of time (just past the horizon) and then the `wrap` makes sure all summaries are ready.
 
 `get_mon_arrival` returns us the trajectories of the patients in a data.frame. We will expand on this quite a bit later. It really the soul of understanding what's going on in a simulation and critical for auditing and validation of expectations about a model as we demonstrate later.
 
@@ -227,19 +225,19 @@ des_run(inputs)
 
 These are called 'arrivals' in DES parlance.
 
-There it is, 5 patients who are simulated independently for 30 years. One can see the name of the trajectory, which we've used 'patient0', the start_time and end_time for a resource--of each patient we've used one. They start the simulation at time 0 and end at time 30. The `activity_time` spent in the model is 30. The only resource used at this point is the only one we've defined, `time_in_model`. The replication is 1, is we were doing multiple runs and accumulating them. 
+There it is, 5 patients who are simulated independently for 30 years. One can see the name of the trajectory, which we've used 'patient0', the start_time and end_time for a resource--of each patient we've used one. They start the simulation at time 0 and end at time 30. The `activity_time` spent in the model is 30. The only resource used at this point is the only one we've defined, `time_in_model`. The replication is 1, is we were doing multiple runs and accumulating them.
 
-While simple, just getting a framework up and running is an accomplishment. Relax and get a cup of tea, the first step is over. 
+While simple, just getting a framework up and running is an accomplishment. Relax and get a cup of tea, the first step is over.
 
 ## Model 2
 
 Objective: Add in cost / quality accumulators
 
-At this point there's not much to accumulate, but once again we're taking really small steps toward our goal. The existing model code doesn't change much but we need to add accumulators for showing cost and quality. 
+At this point there's not much to accumulate, but once again we're taking really small steps toward our goal. The existing model code doesn't change much but we need to add accumulators for showing cost and quality.
 
 ### Discounting
 
-A small diversion is we need to be able to apply [discounting](https://en.wikipedia.org/wiki/Discounting) to our results. Thus a numerically stable and vectorized version of discounting is just the ticket. The file [`discount.R`](./discount.R) contains what's required. Other common versions utilize the power definition of discounting, this uses the "^" operator which limits the numerical stable range of the function. Our function uses the exponential formulation with a greater numerical stability. The function also does point discounting or integrated area discounted. 
+A small diversion is we need to be able to apply [discounting](https://en.wikipedia.org/wiki/Discounting) to our results. Thus a numerically stable and vectorized version of discounting is just the ticket. The file [`discount.R`](./discount.R) contains what's required. Other common versions utilize the power definition of discounting, this uses the "\^" operator which limits the numerical stable range of the function. Our function uses the exponential formulation with a greater numerical stability. The function also does point discounting or integrated area discounted.
 
 #### Examples
 
@@ -250,13 +248,13 @@ source('discount.R')
 discount_value(1, 1)
 ```
 
-Integrate the discounted value 1 over the time period from 0 to 1. This is the area under the discount curve over that time period. 
+Integrate the discounted value 1 over the time period from 0 to 1. This is the area under the discount curve over that time period.
 
 ```{r}
 discount_value(1, 0, 1)
 ```
 
-Vectorized R calls that can be used inside numerical optimizers is important for more complex models. Demonstration of discounting the value 1 over two ranges, [0,365] and [125,490] using a discount rate of 0.04, and units passed in are 365 days of a year. 
+Vectorized R calls that can be used inside numerical optimizers is important for more complex models. Demonstration of discounting the value 1 over two ranges, \[0,365\] and \[125,490\] using a discount rate of 0.04, and units passed in are 365 days of a year.
 
 ```{r}
 discount_value(1, c(0, 125), c(365, 490), 0.04, 365)
@@ -264,10 +262,9 @@ discount_value(1, c(0, 125), c(365, 490), 0.04, 365)
 
 ### Cost Model
 
-We need to define incured costs for our model. It should take the `data.frame` from `des_run` and add cost columns for the resources. We
-pass in the inputs as they might be needed. We will ignore the costs for healthy till we can add that state later.
+We need to define incured costs for our model. It should take the `data.frame` from `des_run` and add cost columns for the resources. We pass in the inputs as they might be needed. We will ignore the costs for healthy till we can add that state later.
 
-```
+```         
 cost_arrivals <- function(arrivals, inputs)
 {
   arrivals$cost  <- 0  # No costs yet
@@ -279,9 +276,9 @@ cost_arrivals <- function(arrivals, inputs)
 
 ### Utility or Quality of Life
 
-Our patients in the model are healthy and enjoy a full quality of life, measured in quality life years. We define their time in the model as a utility of 1 and then integrate how much utility they experience in their life. 
+Our patients in the model are healthy and enjoy a full quality of life, measured in quality life years. We define their time in the model as a utility of 1 and then integrate how much utility they experience in their life.
 
-```
+```         
 qaly_arrivals <- function(arrivals, inputs)
 {
   arrivals$qaly  <- 0  # No qaly yet
@@ -302,34 +299,35 @@ qaly_arrivals <- function(arrivals, inputs)
 
 ### Pull it together
 
-With those functions added, we can modify the last line of the `des_run` function in our model to apply them on what we get from the model. 
+With those functions added, we can modify the last line of the `des_run` function in our model to apply them on what we get from the model.
 
 ```{r}
 source('model-2.R')
 des_run(inputs)
 ```
+
 One can now see the integration of qaly and dqaly, which is the total amount of QALY an individual in the simulation accumulates.
 
-Not a very exciting model, but the foundation is solid. One can see exactly what's going on in this small sample. 
+Not a very exciting model, but the foundation is solid. One can see exactly what's going on in this small sample.
 
 ## Model 3
 
 Objective: A DES model that now includes the death event transition as defined by Sick/Sicker.
 
-The Sick/Sicker mortality model is a simple exponential draw. Not a very robust mortality model, but for demonstration purposes is sufficient. 
+The Sick/Sicker mortality model is a simple exponential draw. Not a very robust mortality model, but for demonstration purposes is sufficient.
 
 I prefer keeping events in files starting with `event_` for organization and quick identification purposes. We need an event for death, so let's use `event_death.R` and define the time_to_death draw function.
 
-```
+```         
 years_till_death <- function(inputs)
 {
   rexp(1, inputs$r.HD)
 }
 ```
 
-When a death occurs an update to the patient trajectory needs to be made. 
+When a death occurs an update to the patient trajectory needs to be made.
 
-```
+```         
 death <- function(traj, inputs)
 {
   traj |> branch(
@@ -342,9 +340,9 @@ death <- function(traj, inputs)
 }
 ```
 
-Next we add this to the `event_registry`. 
+Next we add this to the `event_registry`.
 
-```
+```         
 event_registry <- list(
   list(name          = "Terminate at time horizon",
        attr          = "aTerminate",
@@ -363,27 +361,25 @@ Go back and add the `death` counter, and source the event file and death is impl
 
 Here we specified "reactive" for the event. This means that when and event is triggered, this needs to redraw or reevaluate when this event will trigger. At this point in time it doesn't affect the model, but the specification has differing death rates with hazard ratios based on the patient state. For example if the patient in a trajectory changes from healthy to sick their death rate changes based on a hazard ratio. This means that their time to death will change. Marking the event as reactive ensures that the reevaluation happens.
 
-The reactive flag doesn't need to be used and the redraw of the event time could happen inside the event handling. However, this clutters up events and forces them to deal with other events -- which might not be in the event registry table. But utilizing the flag it keeps the model modular, the downside is every reactive event get reevaluated whether it needs to be done for a given event. 
+The reactive flag doesn't need to be used and the redraw of the event time could happen inside the event handling. However, this clutters up events and forces them to deal with other events -- which might not be in the event registry table. But utilizing the flag it keeps the model modular, the downside is every reactive event get reevaluated whether it needs to be done for a given event.
 
 ```{r}
 source('model-3.R')
 set.seed(1)
 des_run(inputs)
 ```
-This shows a death event occurring for patient 1. Note the ordering by patient isn't guaranteed. Patient 1 also doesn't get as much QALY as the other patients due to existing the model early. 
+
+This shows a death event occurring for patient 1. Note the ordering by patient isn't guaranteed. Patient 1 also doesn't get as much QALY as the other patients due to existing the model early.
 
 ## Model 4
 
 Objective: A DES model that now adds the Sick State transition
 
-This is the thick of it. We have a lot of proper model work now that the framework is up and running and the basic functions / layout is defined. This is a critical step in model construction and it cannot be understated how carefully this step must be considered and that is the definition of the state model. While the state diagram is provided for the Sick/Sicker when constructing a novel model, must look at existing literature and experts and carefully construct a state model of a patient. State modeling is a know
-combinatorial complex process, and it is very easy to make it too complicated and in construction it is almost certain to have missed transitions. A lot of coding work follows from the decision on state and
-changing it later carries a large cost in time. 
+This is the thick of it. We have a lot of proper model work now that the framework is up and running and the basic functions / layout is defined. This is a critical step in model construction and it cannot be understated how carefully this step must be considered and that is the definition of the state model. While the state diagram is provided for the Sick/Sicker when constructing a novel model, must look at existing literature and experts and carefully construct a state model of a patient. State modeling is a know combinatorial complex process, and it is very easy to make it too complicated and in construction it is almost certain to have missed transitions. A lot of coding work follows from the decision on state and changing it later carries a large cost in time.
 
-With the thoroughly reviewed and making sure it is the minimum to answer the question and corresponds to the literature, we proceed to implement the state model by defining integers that correspond to states. Ths isn't code
-but a map to the coding. Note that one for dead is not needed as this exits the simulation. Also, this coding is needed as `simmer` can only store numeric information as an attribute on a trajectory.
+With the thoroughly reviewed and making sure it is the minimum to answer the question and corresponds to the literature, we proceed to implement the state model by defining integers that correspond to states. Ths isn't code but a map to the coding. Note that one for dead is not needed as this exits the simulation. Also, this coding is needed as `simmer` can only store numeric information as an attribute on a trajectory.
 
-```
+```         
 0=H
 1=S1
 2=S2
@@ -391,7 +387,7 @@ but a map to the coding. Note that one for dead is not needed as this exits the 
 
 Next we need to modify the initialization of the patient to be healthy.
 
-```
+```         
 initialize_patient <- function(traj, inputs)
 {
   traj                   |>
@@ -404,7 +400,7 @@ initialize_patient <- function(traj, inputs)
 
 Being in Sick1 has a disutility to life and incurs costs we'd like to track and accumulate those measure for that state, thus a new counter is needed.
 
-```
+```         
 counters <- c(
   "time_in_model",
   "death",
@@ -415,8 +411,7 @@ counters <- c(
 
 Now 2 events or transitions are needed: `event_sick1` and `event_healthy` (the transition back). Here's `event_sick1`:
 
-
-```
+```         
 years_till_sick1 <- function(inputs)
 {
   state <- get_attribute(env, "State") 
@@ -436,12 +431,11 @@ sick1 <- function(traj, inputs)
   release('healthy')        |> # Track state change for tally later
   seize('sick1')
 }
-
 ```
 
-At this point we can drop the new event in our event registry and the model can be run as a check. 
+At this point we can drop the new event in our event registry and the model can be run as a check.
 
-```
+```         
   list(name          = "Sick1",
        attr          = "aSick1",
        time_to_event = years_till_sick1,
@@ -451,7 +445,7 @@ At this point we can drop the new event in our event registry and the model can 
 
 In constructions of this tutorial, the author encountered two errors due to typos at this point, and got this warning message:
 
-```
+```         
 Warning messages:
 1: In run_(.env$sim_obj, until) :
   'patient0': leaving without releasing 'sick1'
@@ -467,7 +461,7 @@ Warning messages:
 
 This is saying that the 5 trajectories seized the sick1 resource and when terminated didn't cleanup. We can go back and modify the cleanup.
 
-```
+```         
 cleanup_on_termination <- function(traj)
 {
   traj |> 
@@ -482,9 +476,9 @@ cleanup_on_termination <- function(traj)
 }
 ```
 
-The `event_death::time_to_death` needs to be modified to account for state as the hazard rate changes based on state. For this tutorial we used `event_death2.R`, to keep all the files in one directory. For a well run, best practices project, learn and use git and between each of this steps just `git` do it's job and keep track of all your versions. 
+The `event_death::time_to_death` needs to be modified to account for state as the hazard rate changes based on state. For this tutorial we used `event_death2.R`, to keep all the files in one directory. For a well run, best practices project, learn and use git and between each of this steps just `git` do it's job and keep track of all your versions.
 
-```
+```         
 years_till_death <- function(inputs)
 {
   state <- get_attribute(env, "State")
@@ -494,9 +488,9 @@ years_till_death <- function(inputs)
 }
 ```
 
-Next let's update the cost accumulation to use the inputs for these 2 states that exist. 
+Next let's update the cost accumulation to use the inputs for these 2 states that exist.
 
-```
+```         
 cost_arrivals <- function(arrivals, inputs)
 {
   arrivals$cost  <- 0  # No costs yet
@@ -520,7 +514,7 @@ cost_arrivals <- function(arrivals, inputs)
 
 Similarly update the QALY accumulation, but switch from using time in model to using the utilities defined in input.
 
-```
+```         
 
 qaly_arrivals <- function(arrivals, inputs)
 {
@@ -549,7 +543,7 @@ qaly_arrivals <- function(arrivals, inputs)
 }
 ```
 
-Now a run is in order. 
+Now a run is in order.
 
 ```{r}
 set.seed(3)
@@ -557,6 +551,7 @@ source('model-4.R')
 results <- des_run(inputs)
 results
 ```
+
 The results are lot more complicated and harder to interpret. To bring some order to what's happening what we can do is now randomly audit patients.
 
 ```{r}
@@ -566,7 +561,7 @@ audit <- results[results$name == paste0('patient',pn),]
 audit[order(audit$start_time, audit$end_time),] # For clarity
 ```
 
-The random audit (the set.seed is just so we can reproduce the result and discuss here, remove it to be truly random), shows that Patient trajectory 2 in this simulation is health for 3/4 of the year. His time in the model is cut short to just under 20 years. He spends most of that time in the S1 state until his death. 
+The random audit (the set.seed is just so we can reproduce the result and discuss here, remove it to be truly random), shows that Patient trajectory 2 in this simulation is health for 3/4 of the year. His time in the model is cut short to just under 20 years. He spends most of that time in the S1 state until his death.
 
 The ability to audit random patients is vital to model validation that it is performing as expected. One can do things like find a patient based on a desired event in a trajectory. Let's look for a patient who died.
 
@@ -579,11 +574,11 @@ Thus tools to grab and look at trajectories containing specific events randomly 
 
 ## Model 5
 
-Objective: Add the return to Healthy from Sick1. 
+Objective: Add the return to Healthy from Sick1.
 
 This is adding another event, `event_healthy` to our project.
 
-```
+```         
 
 years_till_healthy <- function(inputs)
 {
@@ -608,7 +603,7 @@ healthy <- function(traj, inputs)
 
 Source it and update the event registry.
 
-```
+```         
   list(name          = "Healthy",
        attr          = "aHealthy",
        time_to_event = years_till_healthy,
@@ -626,15 +621,15 @@ audit <- results[results$name == 'patient1',]
 audit[order(audit$start_time, audit$end_time),]
 ```
 
-Now the patient bounces back and forth between healthy and sick. The costs and qalys stay the same. The model is nearly complete. 
+Now the patient bounces back and forth between healthy and sick. The costs and qalys stay the same. The model is nearly complete.
 
 ## Model 6
 
 Objective: Add in the Sick2 state.
 
-Add a sick2 counter. 
+Add a sick2 counter.
 
-```
+```         
 counters <- c(
   "time_in_model",
   "death",
@@ -646,7 +641,7 @@ counters <- c(
 
 Create `event_sick2.R`
 
-```
+```         
 years_till_sick2 <- function(inputs)
 {
   state <- get_attribute(env, "State") 
@@ -670,7 +665,7 @@ sick2 <- function(traj, inputs)
 
 Make sure it's released on exit
 
-```
+```         
 cleanup_on_termination <- function(traj)
 {
   traj |> 
@@ -684,9 +679,10 @@ cleanup_on_termination <- function(traj)
   )
 }
 ```
+
 Modify costs
 
-```
+```         
   selector = arrivals$resource == 'sick2'
   arrivals$cost[selector] <- inputs$c.S2 *
     (arrivals$end_time[selector] - arrivals$start_time[selector])
@@ -697,7 +693,7 @@ Modify costs
 
 Modify QALY
 
-```
+```         
   selector <- arrivals$resource == 'sick2'
   arrivals$qaly[selector] <-
     inputs$u.S2*
@@ -711,7 +707,7 @@ Modify QALY
 
 Modify the `event_death` (here in `event_death3.R`)
 
-```
+```         
 years_till_death <- function(inputs)
 {
   state <- get_attribute(env, "State")
@@ -733,13 +729,13 @@ audit <- results[results$name == pn,]
 audit[order(audit$start_time, audit$end_time),]
 ```
 
-This shows that base case of the Sick/Sicker model is now fully handled. 
+This shows that base case of the Sick/Sicker model is now fully handled.
 
 ## Model 7
 
 Objective: Add treatment strategy to model.
 
-```
+```         
 counters <- c(
   "time_in_model",
   "death",
@@ -784,7 +780,7 @@ cleanup_on_termination <- function(traj, inputs)
 
 Update costing.
 
-```
+```         
   selector = arrivals$resource == 'treat'
   arrivals$cost[selector] <- inputs$c.Trt *
     (arrivals$end_time[selector] - arrivals$start_time[selector])
@@ -793,9 +789,9 @@ Update costing.
  
 ```
 
-And modify Quality for S1. 
+And modify Quality for S1.
 
-```
+```         
   uS1 <- if(inputs$strategy == 'treat') u.Trt else u.S1
   arrivals$qaly[selector] <-
     uS1*
@@ -806,9 +802,9 @@ And modify Quality for S1.
                      arrivals$end_time[selector])
 ```
 
-Modify both event_sick1 and event_healthy. 
+Modify both event_sick1 and event_healthy.
 
-```
+```         
 sick1 <- function(traj, inputs)
 {
   traj                      |> 
@@ -859,11 +855,12 @@ pn <- results$name[results$resource == 'sick2'][1]
 audit <- results[results$name == pn,]
 audit[order(audit$start_time, audit$end_time),]
 ```
-Notice patient4 now has higher QALY under treatment, but also has treatment costs. 
+
+Notice patient4 now has higher QALY under treatment, but also has treatment costs.
 
 ## Model 8
 
-Objective: Now compare models and do analysis. 
+Objective: Now compare models and do analysis.
 
 First crank up sample size and then create aggregate measures.
 
@@ -917,9 +914,9 @@ diff(cea[,'dcost'])/ diff(cea[,'dqaly'])
 
 The first point to be made is the application of new costs and qalys followed the same code pattern with each additional event. If the costs in the `inputs` were named the same as the `resources`, these could be applied with a loop. The continued cut and paste of a block of code is the cue to the coder that a function would be easier. It is a recommended exercise to code this and compare results. See [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself). Hint: the inputs lists can contain lists or groupings of parameters to denote how they would be used.
 
-Secondly, the workflow of always keeping a model working with the tiniest steps possible is the fastest path to the goal. Checking each working version into git (and not renaming models like was done here, use git as it was intended), also allows going back and finding where a bug was introduced via [`git biset`](https://git-scm.com/docs/git-bisect). 
+Secondly, the workflow of always keeping a model working with the tiniest steps possible is the fastest path to the goal. Checking each working version into git (and not renaming models like was done here, use git as it was intended), also allows going back and finding where a bug was introduced via [`git biset`](https://git-scm.com/docs/git-bisect).
 
-While the benefits of DES are face validity, the ability to directly utilize hazard rates and survival curves, and deal with very complex patient states that lead to state explosion in Markov models; there are some hidden benefits as well: the ability to model the variability in patient population and model what response to treatment would be expected in a real world population. Here's a plot of each individuals cost and qaly. 
+While the benefits of DES are face validity, the ability to directly utilize hazard rates and survival curves, and deal with very complex patient states that lead to state explosion in Markov models; there are some hidden benefits as well: the ability to model the variability in patient population and model what response to treatment would be expected in a real world population. Here's a plot of each individuals cost and qaly.
 
 ```{r}
 library(ggplot2)
@@ -930,11 +927,10 @@ ggplot(x, aes(x=dqaly, y=dcost, color=group)) +
   geom_point(alpha=0.2)
 ```
 
-This plot is odd due to the utilization of simple non realistic exponential rates. 
+This plot is odd due to the utilization of simple non realistic exponential rates.
 
-The capability of DES to include constrained resources was not included in this tutorial and would need a separate exploration. The fact that `simmer` has this capability means that it cannot treat patients as independent in evaluating events. Thus a key feature of `simmer` is not utilized in independent patient simulations. This feature incurs a computational cost of $\mathcal{O}(n \log n)$. There is a frameworks written by [Fernando Alarid-Escudero](https://med.stanford.edu/profiles/fernando-alarid-escudero) utilizing `data.table` in R that removes the ability to model constrained resources and reduces the computational cost to $\mathcal{O}(n)$ for this type of modeling. The lessons in this tutorial still apply, but the memory layout of events is in a wide `data.table`.  
+The capability of DES to include constrained resources was not included in this tutorial and would need a separate exploration. The fact that `simmer` has this capability means that it cannot treat patients as independent in evaluating events. Thus a key feature of `simmer` is not utilized in independent patient simulations. This feature incurs a computational cost of $\mathcal{O}(n \log n)$. There is a frameworks written by [Fernando Alarid-Escudero](https://med.stanford.edu/profiles/fernando-alarid-escudero) utilizing `data.table` in R that removes the ability to model constrained resources and reduces the computational cost to $\mathcal{O}(n)$ for this type of modeling. The lessons in this tutorial still apply, but the memory layout of events is in a wide `data.table`.
 
-To get convergence for studying conditions that are rare events, we have found that we need over 1,000,000 patient trajectories to get convergence of estimators within acceptible statistical bounds. The R `simmer` framework functions with reasonable speed at no more that 10,000 patient trajectories and possibly less for complex models. We utilize [ACCRE](https://github.com/vubiostat/accre_tutorial) to batch the jobs and get sufficient coverage. This is a major issue for performing a probability sensitivity analysis on a model as now a 1000 runs typically need of a 1,000,000 patient trajectories requiring 100,000 job runs! Planning for time to do this is required at project outset. 
+To get convergence for studying conditions that are rare events, we have found that we need over 1,000,000 patient trajectories to get convergence of estimators within acceptible statistical bounds. The R `simmer` framework functions with reasonable speed at no more that 10,000 patient trajectories and possibly less for complex models. We utilize [ACCRE](https://github.com/vubiostat/accre_tutorial) to batch the jobs and get sufficient coverage. This is a major issue for performing a probability sensitivity analysis on a model as now a 1000 runs typically need of a 1,000,000 patient trajectories requiring 100,000 job runs! Planning for time to do this is required at project outset.
 
 Shawn Garbett <shawn dot garbett at vumc dot org>
-
