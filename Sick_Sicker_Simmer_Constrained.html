@@ -101,7 +101,7 @@ window.Quarto = {
 <section id="goal" class="level2">
 <h2 class="anchored" data-anchor-id="goal">Goal</h2>
 <p>Sick/Sicker with resource constraints in DES.</p>
-<p>A continuation of * <a href="http://htmlpreview.github.io/?https://github.com/spgarbet/sick_sicker_des/master/Sick_Sicker_Simmer_DES.html">Part 1</a>.</p>
+<p>A continuation of <a href="http://htmlpreview.github.io/?https://github.com/spgarbet/sick_sicker_des/master/Sick_Sicker_Simmer_DES.html">Part 1</a>.</p>
 <p>The Sick/Simmer model constructed previously did not use the full power of what discrete event simulation has to offer. This will build on the previous work and include a demonstration of the effects of a resource constraint.</p>
 <blockquote class="blockquote">
 <p><em>“Art in nature is rhythmic and has a horror of constraints.”</em> –Robert Delaunay</p>
@@ -109,17 +109,32 @@ window.Quarto = {
 <section id="technical-details" class="level3">
 <h3 class="anchored" data-anchor-id="technical-details">Technical Details</h3>
 <p>One thing to be aware of is that if one were to execute each patient trajectory as a simulation outside of a discrete event simulation (DES) framework it would likely have much higher performance. A DES framework has to execute all trajectories at the same time, evaluate them all to check for any resource contention and this penalty is fixed whether or not the model has resource constraints. A large number of cost effectiveness studies utilizing DES do not have constrained resources. To put the problem in perspective, independent simulations are <span class="math inline">\(\mathcal{O}(n)\)</span> in complexity of execution. Meaning the total time/memory utilization is proportional to the number of individuals simulated. DES requires the fixed cost of resource contention checking, and has to manage this utilizing a heap and this makes the complexity <span class="math inline">\(\mathcal{O}(n \log n)\)</span>. This is a theoretical limitation based on complexity.</p>
-<p>In earlier unpublished <a href="https://github.com/spgarbet/sick_sicker_des">work</a> we[^1 Shawn Garbett, Fernando Alarid-Escudero, Cole Beck] quantified the differences using a Sick Sicker model.</p>
+<p>In earlier unpublished <a href="https://github.com/spgarbet/sick_sicker_des">work</a> we<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> quantified the differences using a Sick Sicker model.</p>
 <p><img src="des_versus_dt.png" class="img-fluid"></p>
-<p>This shows that in a practical case, when <span class="math inline">\(N &gt;= 10,000\)</span> the simmer based DES solution because impractical. For our in house models using simmer we batched them into units of 10,000 patients and ran on <a href="https://github.com/vubiostat/accre_tutorial">ACCRE</a>.</p>
-<p>If one needs a full DES due to resource constraints, this problem is not easily escaped–and the <span class="math inline">\(N\)</span> of simulation becomes the number contending for a finite resource.</p>
+<p>This shows that in a practical case, when <span class="math inline">\(N &gt;= 100,000\)</span> the simmer based DES solution because impractical. For our in house models using simmer we batched them into units of 100,000 patients and ran using the method outlined in our <a href="https://github.com/vubiostat/accre_tutorial">ACCRE</a> tutorial.</p>
+<p>If one needs a full DES due to resource constraints, this problem is not easily avoidable–and the <span class="math inline">\(N\)</span> of single DES simulation becomes the number contending for a finite resource.</p>
 </section>
-<section id="work-in-progress" class="level3">
-<h3 class="anchored" data-anchor-id="work-in-progress">WORK IN PROGRESS</h3>
 </section>
+<section id="modified-problem-statement" class="level2">
+<h2 class="anchored" data-anchor-id="modified-problem-statement">Modified Problem Statement</h2>
+<p>What if there were resource constraints (e.g.&nbsp;facilities) to get patients inducted onto medication and the process took time? We are doing to split the state of “Sick 1” or S1 into S1U “Sick 1 Untreated” and “Sick 1 Treated” and introduce treatment induction resource constraint, sometimes called a “tunnel state”. In this case there is a queue to enter the tunnel.</p>
+<p>The focus of the model now shifts from comparing treatment to no treatment, to doing a profile of the impact of investment on reduction of waiting.</p>
+<p>We copy <code>inputs.R</code> to <code>inputs2.R</code> (Please note, in practice renaming files like this should not be done and one would use git to track versions of a file like inputs, but for pedantic purposes we have all versions available in a flat archive) and make the following edits:</p>
+<pre><code>    strategy = 'notreat',# Default strategy is no treatment
+    
+    # Resource Constraint
+    n.induct = 10,       # Number of individuals who can be inducted in treatment
+    t.induct = 0.5,      # Number of years to induct treatment
+    c.facility = 5e5     # Cost to build a new facility</code></pre>
 </section>
 
-</main>
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Shawn Garbett, Fernando Alarid-Escudero, Cole Beck<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {

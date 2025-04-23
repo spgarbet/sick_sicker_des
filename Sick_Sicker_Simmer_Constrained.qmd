@@ -9,7 +9,7 @@ editor: source
 
 Sick/Sicker with resource constraints in DES.
 
-A continuation of * [Part 1](http://htmlpreview.github.io/?https://github.com/spgarbet/sick_sicker_des/master/Sick_Sicker_Simmer_DES.html).
+A continuation of [Part 1](http://htmlpreview.github.io/?https://github.com/spgarbet/sick_sicker_des/master/Sick_Sicker_Simmer_DES.html).
 
 The Sick/Simmer model constructed previously did not use the full power of
 what discrete event simulation has to offer. This will build on the previous
@@ -32,18 +32,43 @@ requires the fixed cost of resource contention checking, and has to manage this
 utilizing a heap and this makes the complexity $\mathcal{O}(n \log n)$. This is
 a theoretical limitation based on complexity.
 
-In earlier unpublished [work](https://github.com/spgarbet/sick_sicker_des) we[^1 Shawn Garbett, Fernando Alarid-Escudero, Cole Beck] quantified the differences using a Sick Sicker model.
+In earlier unpublished [work](https://github.com/spgarbet/sick_sicker_des) we^[Shawn Garbett, Fernando Alarid-Escudero, Cole Beck] quantified the differences using a Sick Sicker model.
 
 ![](des_versus_dt.png)
 
-This shows that in a practical case, when $N >= 10,000$ the 
+This shows that in a practical case, when $N >= 100,000$ the 
 simmer based DES solution because impractical. For our in house
-models using simmer we batched them into units of 10,000 
-patients and ran on 
-[ACCRE](https://github.com/vubiostat/accre_tutorial). 
+models using simmer we batched them into units of 100,000 
+patients and ran using the method outlined in our
+[ACCRE](https://github.com/vubiostat/accre_tutorial) tutorial.
 
 If one needs a full DES due to resource constraints, this problem is not
-easily escaped--and the $N$ of simulation becomes the number contending
+easily avoidable--and the $N$ of single DES simulation becomes the number contending
 for a finite resource.
 
-### WORK IN PROGRESS
+## Modified Problem Statement
+
+What if there were resource constraints (e.g. facilities) to get patients 
+inducted onto medication and the process took time? We are doing to split 
+the state of "Sick 1" or S1 into S1U "Sick 1 Untreated" and "Sick 1 Treated"
+and introduce treatment induction resource constraint, sometimes called 
+a "tunnel state". In this case there is a queue to enter the tunnel. 
+
+The focus of the model now shifts from comparing treatment to no treatment, to 
+doing a profile of the impact of investment on reduction of waiting. 
+
+We copy `inputs.R` to `inputs2.R` (Please note, in practice renaming files like
+this should not be done and one would use git to track versions of a file like
+inputs, but for pedantic purposes we have all versions available in a flat 
+archive) and make the following edits:
+
+
+```
+    strategy = 'notreat',# Default strategy is no treatment
+    
+    # Resource Constraint
+    n.induct = 10,       # Number of individuals who can be inducted in treatment
+    t.induct = 0.5,      # Number of years to induct treatment
+    c.facility = 5e5     # Cost to build a new facility
+```
+
