@@ -46,6 +46,9 @@ If one needs a full DES due to resource constraints, this problem is not
 easily avoidable--and the $N$ of single DES simulation becomes the number contending
 for a finite resource.
 
+A general review of [Queueing Systems](https://r-simmer.org/articles/simmer-06-queueing) 
+in simmer is helpful. 
+
 ## Modified Problem Statement
 
 What if there were resource constraints (e.g. facilities) to get patients 
@@ -57,18 +60,91 @@ a "tunnel state". In this case there is a queue to enter the tunnel.
 The focus of the model now shifts from comparing treatment to no treatment, to 
 doing a profile of the impact of investment on reduction of waiting. 
 
-We copy `inputs.R` to `inputs2.R` (Please note, in practice renaming files like
+We copy `inputs.R` to `inputs2.R` and `model-7.R` to `model-8.R`
+_Please note, in practice renaming files like
 this should not be done and one would use git to track versions of a file like
 inputs, but for pedantic purposes we have all versions available in a flat 
-archive) and make the following edits:
+archive_ and make the following edits to inputs2.R
 
 
 ```
     strategy = 'notreat',# Default strategy is no treatment
     
     # Resource Constraint
-    n.induct = 10,       # Number of individuals who can be inducted in treatment
-    t.induct = 0.5,      # Number of years to induct treatment
-    c.facility = 5e5     # Cost to build a new facility
+    n.capacity = 2       # Number of individuals who can receive treatment
 ```
 
+Further, we bumped the N value to 20. 
+
+We intend to severely limit the capacity of treatment to Sick individuals. 
+
+Further remove `"sick"` from the counter list in `model-7.R` and add
+
+```
+add_resource("treat", inputs$n.capacity) |>
+```
+
+to the `des_run` function.
+
+This means that the resource `treat` has a capacity to treat 2 patients at a
+time, and has infinite waiting room capacity. This will cause the `event_sick`
+function call to `seize("treat)` to pause if 2 patients are already
+receiving treatment. 
+
+The `sick1` event handling function is also overridden locally to show how
+long a patient spent waiting.
+
+```{r sim8}
+source("model-8.R")
+
+x = des_run(inputs)
+```
+
+This debug output demonstrates that 20 patients with a single treament center
+that can handle 2 individuals-- the resources constraint is having an effect
+on patient outcomes--as they are forced to wait years for treatment (years being
+the unit of simulation time in this example).
+
+Let's check on Death rates. 
+
+```{r sim8_2}
+source("model-8.R")
+inputs$N <- 100
+dr.constrained <- replicate(100,
+{
+  capture.output(x <- des_run(inputs), file=nullfile())
+  sum(x$resource == 'death')
+})
+
+```
+
+What did it look like before our changes?
+
+```{r sim7_1}
+source("model-7.R")
+inputs$N <- 100
+dr.original <- replicate(100,
+{
+  capture.output(x <- des_run(inputs), file=nullfile())
+  sum(x$resource == 'death')
+})
+t.test(dr.constrained, dr.original)
+```
+
+First of all note we had to run replicates of the simulation to determine
+effect size. Secondly, the t-test comparison between the runs shows
+a statistically discernable difference. 
+
+The face validity of the model is broken as a patient awaiting treatment 
+can no longer progress back to Healthy, Sick2 or Death until treatment is
+received This has prevented a lot of simulated deaths, but only
+by destroying the simulated rate of death.
+
+A strategy to let the original simulation proceed is required.
+
+## Clone and Synchronize
+
+Fortunately, `simmer` has tools to help deal with this. In this case it's 
+not as straightforward as we've already built a tool chain that doesn't
+account for resource contraints. We need to use the `clone` and `synchronize`
+operators and do so without disturbing the original even loop.

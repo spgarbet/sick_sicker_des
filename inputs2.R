@@ -17,7 +17,7 @@
 # Default parameters for a reference Sick Sicker Model
 
 inputs <- list(
-    N      = 5,
+    N      = 20,
   
     # Parameters
     horizon=    30,      # Time horizon
@@ -50,5 +50,8 @@ inputs <- list(
     
     wtp    =     1e5,    # 100k willingness to pay
     
-    strategy = 'notreat' # Default strategy is no treatment
+    strategy = 'treat',  # Default strategy is  treatment
+    
+    # Resource Constraint
+    n.capacity = 2       # Number of individuals who can receive treatment
   )

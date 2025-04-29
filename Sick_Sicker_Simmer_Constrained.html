@@ -21,6 +21,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -113,19 +147,106 @@ window.Quarto = {
 <p><img src="des_versus_dt.png" class="img-fluid"></p>
 <p>This shows that in a practical case, when <span class="math inline">\(N &gt;= 100,000\)</span> the simmer based DES solution because impractical. For our in house models using simmer we batched them into units of 100,000 patients and ran using the method outlined in our <a href="https://github.com/vubiostat/accre_tutorial">ACCRE</a> tutorial.</p>
 <p>If one needs a full DES due to resource constraints, this problem is not easily avoidable–and the <span class="math inline">\(N\)</span> of single DES simulation becomes the number contending for a finite resource.</p>
+<p>A general review of <a href="https://r-simmer.org/articles/simmer-06-queueing">Queueing Systems</a> in simmer is helpful.</p>
 </section>
 </section>
 <section id="modified-problem-statement" class="level2">
 <h2 class="anchored" data-anchor-id="modified-problem-statement">Modified Problem Statement</h2>
 <p>What if there were resource constraints (e.g.&nbsp;facilities) to get patients inducted onto medication and the process took time? We are doing to split the state of “Sick 1” or S1 into S1U “Sick 1 Untreated” and “Sick 1 Treated” and introduce treatment induction resource constraint, sometimes called a “tunnel state”. In this case there is a queue to enter the tunnel.</p>
 <p>The focus of the model now shifts from comparing treatment to no treatment, to doing a profile of the impact of investment on reduction of waiting.</p>
-<p>We copy <code>inputs.R</code> to <code>inputs2.R</code> (Please note, in practice renaming files like this should not be done and one would use git to track versions of a file like inputs, but for pedantic purposes we have all versions available in a flat archive) and make the following edits:</p>
+<p>We copy <code>inputs.R</code> to <code>inputs2.R</code> and <code>model-7.R</code> to <code>model-8.R</code> <em>Please note, in practice renaming files like this should not be done and one would use git to track versions of a file like inputs, but for pedantic purposes we have all versions available in a flat archive</em> and make the following edits to inputs2.R</p>
 <pre><code>    strategy = 'notreat',# Default strategy is no treatment
     
     # Resource Constraint
-    n.induct = 10,       # Number of individuals who can be inducted in treatment
-    t.induct = 0.5,      # Number of years to induct treatment
-    c.facility = 5e5     # Cost to build a new facility</code></pre>
+    n.capacity = 2       # Number of individuals who can receive treatment</code></pre>
+<p>Further, we bumped the N value to 20.</p>
+<p>We intend to severely limit the capacity of treatment to Sick individuals.</p>
+<p>Further remove <code>"sick"</code> from the counter list in <code>model-7.R</code> and add</p>
+<pre><code>add_resource("treat", inputs$n.capacity) |&gt;</code></pre>
+<p>to the <code>des_run</code> function.</p>
+<p>This means that the resource <code>treat</code> has a capacity to treat 2 patients at a time, and has infinite waiting room capacity. This will cause the <code>event_sick</code> function call to <code>seize("treat)</code> to pause if 2 patients are already receiving treatment.</p>
+<p>The <code>sick1</code> event handling function is also overridden locally to show how long a patient spent waiting.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"model-8.R"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> <span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>0.983342: patient4: Waited: 0
+1.06218: patient16: Waited: 0
+1.65432: patient13: Waited: 0.312748574873521
+4.41436: patient12: Waited: 2.94992200719813
+4.48968: patient10: Waited: 2.90399723351372
+4.72742: patient15: Waited: 2.22290310773117
+4.76081: patient5: Waited: 2.00397755977034
+4.81754: patient15: Waited: 0
+5.25386: patient8: Waited: 0.338941291965482
+5.29522: patient14: Waited: 0.299053463874445
+12.6387: patient6: Waited: 7.25796711938071
+13.6621: patient0: Waited: 7.94650211760366
+15.0093: patient1: Waited: 9.11488782092674
+17.293: patient9: Waited: 11.3097122453347
+17.6768: patient10: Waited: 11.405605319476
+17.691: patient13: Waited: 11.1044793581493
+18.0195: patient5: Waited: 10.7429123446958
+19.4529: patient7: Waited: 11.0830587376301
+20.2559: patient15: Waited: 9.54734779138931
+22.13: patient11: Waited: 9.78092849767897
+22.7766: patient3: Waited: 10.1548951112322
+22.7793: patient4: Waited: 8.94040874334609
+23.8323: patient12: Waited: 8.10024226455219
+26.6986: patient19: Waited: 10.6255320913789
+30: patient6: Waited: 13.1144994595049
+30: patient9: Waited: 11.3551074258309
+30: patient17: Waited: 11.2564548364557
+30: patient10: Waited: 7.88199848120843
+30: patient4: Waited: 5.60097967445115
+30: patient5: Waited: 4.76184807980997
+30: patient3: Waited: 2.8845981503576
+30: patient13: Waited: 2.07766821299923</code></pre>
+</div>
+</div>
+<p>This debug output demonstrates that 20 patients with a single treament center that can handle 2 individuals– the resources constraint is having an effect on patient outcomes–as they are forced to wait years for treatment (years being the unit of simulation time in this example).</p>
+<p>Let’s check on Death rates.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"model-8.R"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>inputs<span class="sc">$</span>N <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>dr.constrained <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">100</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">capture.output</span>(x <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs), <span class="at">file=</span><span class="fu">nullfile</span>())</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(x<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'death'</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>What did it look like before our changes?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"model-7.R"</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>inputs<span class="sc">$</span>N <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>dr.original <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">100</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">capture.output</span>(x <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs), <span class="at">file=</span><span class="fu">nullfile</span>())</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(x<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'death'</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">t.test</span>(dr.constrained, dr.original)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Welch Two Sample t-test
+
+data:  dr.constrained and dr.original
+t = -47.195, df = 145.45, p-value &lt; 2.2e-16
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -26.46368 -24.33632
+sample estimates:
+mean of x mean of y 
+     5.98     31.38 </code></pre>
+</div>
+</div>
+<p>First of all note we had to run replicates of the simulation to determine effect size. Secondly, the t-test comparison between the runs shows a statistically discernable difference.</p>
+<p>The face validity of the model is broken as a patient awaiting treatment can no longer progress back to Healthy, Sick2 or Death until treatment is received This has prevented a lot of simulated deaths, but only by destroying the simulated rate of death.</p>
+<p>A strategy to let the original simulation proceed is required.</p>
+</section>
+<section id="clone-and-synchronize" class="level2">
+<h2 class="anchored" data-anchor-id="clone-and-synchronize">Clone and Synchronize</h2>
+<p>Fortunately, <code>simmer</code> has tools to help deal with this. In this case it’s not as straightforward as we’ve already built a tool chain that doesn’t account for resource contraints. We need to use the <code>clone</code> and <code>synchronize</code> operators and do so without disturbing the original even loop.</p>
 </section>
 
 
