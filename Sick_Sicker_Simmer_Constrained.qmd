@@ -60,6 +60,8 @@ a "tunnel state". In this case there is a queue to enter the tunnel.
 The focus of the model now shifts from comparing treatment to no treatment, to 
 doing a profile of the impact of investment on reduction of waiting. 
 
+## A Naïve Solution
+
 We copy `inputs.R` to `inputs2.R` and `model-7.R` to `model-8.R`
 _Please note, in practice renaming files like
 this should not be done and one would use git to track versions of a file like
@@ -135,7 +137,8 @@ First of all note we had to run replicates of the simulation to determine
 effect size. Secondly, the t-test comparison between the runs shows
 a statistically discernable difference. 
 
-The face validity of the model is broken as a patient awaiting treatment 
+While we have implemented a resource constraint, the face validity of the model
+is broken as a patient awaiting treatment 
 can no longer progress back to Healthy, Sick2 or Death until treatment is
 received This has prevented a lot of simulated deaths, but only
 by destroying the simulated rate of death.
