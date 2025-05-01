@@ -149,5 +149,39 @@ A strategy to let the original simulation proceed is required.
 
 Fortunately, `simmer` has tools to help deal with this. In this case it's 
 not as straightforward as we've already built a tool chain that doesn't
-account for resource contraints. We need to use the `clone` and `synchronize`
-operators and do so without disturbing the original even loop.
+account for resource constraints. We need to use the `clone` and `synchronize`
+operators and do so without disturbing the original event loop.
+
+`clone` will split a trajectory, and attributes and resources are inherited.
+`synchronize` throws away all but one trajectory that reaches it. 
+
+The strategy is to clone the trajectory and let one escape back into our
+simulation engine, while the other seizes the treatment resource. This leads
+to the conundrum that the main loop needs to know about treatment and 
+should be able to release it. 
+
+Asynchronous coding is very difficult, but we're going to have to cross that
+bridge. To do this, one of the split threads will seize and release the
+treatment resource with limited access but it will rely on passing signals back
+and forth with it's sibling trajectory. `signal` and `trap` allow this to happen.
+The inverse trap is required to get a signal back to tell it to release the
+treatment and cleanup. 
+
+
+
+
+```{r sim9_1}
+source("model-9.R")
+inputs$N <- 100
+dr.constrained <- replicate(100,
+{
+  capture.output(x <- des_run(inputs), file=nullfile())
+  sum(x$resource == 'death')
+})
+t.test(dr.constrained, dr.original)
+```
+
+The death rate is still different, but in this case the deaths go up which 
+is in line with what we expected by restricting treatment. A good sign 
+that our modifications are working as intended.
+
