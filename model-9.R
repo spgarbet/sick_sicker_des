@@ -40,12 +40,53 @@ counters <- c(
   "sick2"
 )
 
-healthy <- function(traj, inputs)
+
+sick1 <- function(traj, inputs)
 {
-  traj                        |> 
-    set_attribute("State", 0) |> # 0 => Healthy (H)
-    seize('healthy')          |>
-    release('sick1')          |>
+  traj                                      |> 
+  set_attribute("State", 1)                 |> # 1 => Sick 1 (S1)
+  release('healthy')                        |> # Track state change for tally later
+  seize('sick1')                            |>
+  set_attribute("sS1", function() now(env)) |> 
+  branch(
+    function() (inputs$strategy == "treat")+1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment Strategy
+    trajectory() |>
+    clone(
+      n = 2,
+      
+      # This clone "escapes" and continues health state progression
+      trajectory() |>
+      trap('sieze_treat', 
+            trajectory() |> 
+            set_attribute("Treat", 1) |>
+            untrap('sieze_treat') 
+      ),
+  
+      # This clone waits patiently for treatment
+      trajectory() |>
+      seize('treat') |>
+      trap('release_treat', 
+           trajectory() |> 
+           release('treat') |>
+           untrap('release_treat') |>
+           branch(function() 1, continue=FALSE, trajectory())
+      ) |>
+      send('sieze_treat') |>
+      log_(function() {paste("Waited:", now(env) - get_attribute(env,"sS1"))}) |>
+      timeout(inputs$horizon) # Make sure last arrival
+      
+    ) |>
+    synchronize(wait=FALSE)
+  )
+}
+
+# A helper function to deal with releasing treatment via
+# a signal if needed to release
+release_treat <- function(.traj) 
+{
+  .traj |> 
     branch(
       function() get_attribute(env, "Treat") +1,
       continue = rep(TRUE, 2),
@@ -56,62 +97,26 @@ healthy <- function(traj, inputs)
     ) 
 }
 
-sick1 <- function(traj, inputs)
+healthy <- function(traj, inputs)
 {
-  traj                        |> 
-    set_attribute("State", 1) |> # 1 => Sick 1 (S1)
-    release('healthy')        |> # Track state change for tally later
-    seize('sick1')            |>
-    set_attribute("sS1", function() now(env)) |> 
-    branch(
-      function() (inputs$strategy == "treat")+1,
-      continue = rep(TRUE, 2),
-      trajectory(),  # No Treatment
-      trajectory() |>
-        clone(n = 2,
-              # This clone "escapes" and continues health state progression
-              trajectory() |>
-                trap('sieze_treat', 
-                      trajectory() |> 
-                      set_attribute("Treat", 1) |>
-                      untrap('sieze_treat') 
-                )
-              ,
-              # This clone waits patiently for treatment
-              trajectory() |>
-                seize('treat') |>
-                trap('release_treat', 
-                     trajectory() |> 
-                     release('treat') |>
-                     untrap('release_treat') |>
-                     branch(function() 1, continue=FALSE, trajectory())
-                ) |>
-                send('sieze_treat') |>
-                log_(function() {paste("Waited:", now(env) - get_attribute(env,"sS1"))}) |>
-                timeout(inputs$horizon) # Make sure last arrival
-        ) |>
-        synchronize(wait=FALSE)
-    )
+  traj                      |> 
+    set_attribute("State", 0) |> # 0 => Healthy (H)
+    seize('healthy')          |>
+    release('sick1')          |>
+    release_treat()
 }
 
 death <- function(traj, inputs)
 {
   traj |>
-  branch(
-    function() get_attribute(env, "Treat") +1,
-    continue = rep(TRUE, 2),
-    trajectory(),  # No Treatment
-    trajectory() |> 
-      set_attribute("Treat", 0) |>
-      send('release_treat')
-  ) |>
-  branch(
-    function() 1,
-    continue=c(FALSE), # False is patient death, had to use a branch to force termination
-    trajectory("Death") |>
-      mark("death")     |> # Must be in 'counters'
-      terminate_simulation(inputs)
-  )
+    release_treat() |>
+    branch(
+      function() 1,
+      continue=c(FALSE), # False is patient death, had to use a branch to force termination
+      trajectory("Death") |>
+        mark("death")     |> # Must be in 'counters'
+        terminate_simulation(inputs)
+    )
 }
   
 # Define starting state of patient

@@ -163,10 +163,112 @@ should be able to release it.
 Asynchronous coding is very difficult, but we're going to have to cross that
 bridge. To do this, one of the split threads will seize and release the
 treatment resource with limited access but it will rely on passing signals back
-and forth with it's sibling trajectory. `signal` and `trap` allow this to happen.
+and forth with it's sibling trajectory. `send` and `trap` allow this to happen.
 The inverse trap is required to get a signal back to tell it to release the
 treatment and cleanup. 
 
+```
+sick1 <- function(traj, inputs)
+{
+  traj                                      |> 
+  set_attribute("State", 1)                 |> # 1 => Sick 1 (S1)
+  release('healthy')                        |> # Track state change for tally later
+  seize('sick1')                            |>
+  set_attribute("sS1", function() now(env)) |> 
+  branch(
+    function() (inputs$strategy == "treat")+1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment Strategy
+    trajectory() |>
+    clone(
+      n = 2,
+      
+      # This clone "escapes" and continues health state progression
+      trajectory() |>
+      trap('sieze_treat', 
+            trajectory() |> 
+            set_attribute("Treat", 1) |>
+            untrap('sieze_treat') 
+      ),
+  
+      # This clone waits patiently for treatment
+      trajectory() |>
+      seize('treat') |>
+      trap('release_treat', 
+           trajectory() |> 
+           release('treat') |>
+           untrap('release_treat') |>
+           branch(function() 1, continue=FALSE, trajectory())
+      ) |>
+      send('sieze_treat') |>
+      log_(function() {paste("Waited:", now(env) - get_attribute(env,"sS1"))}) |>
+      timeout(inputs$horizon) # Make sure last arrival
+      
+    ) |>
+    synchronize(wait=FALSE)
+  )
+}
+```
+
+Now the rest of the events need to be modified to send the right signals.
+
+```
+# A helper function to deal with releasing treatment via
+# a signal if needed to release
+release_treat <- function(.traj) 
+{
+  .traj |> 
+  branch(
+    function() get_attribute(env, "Treat") +1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |> 
+      send('release_treat') |>
+      set_attribute("Treat", 0)
+  ) 
+}
+
+healthy <- function(traj, inputs)
+{
+  traj                      |> 
+  set_attribute("State", 0) |> # 0 => Healthy (H)
+  seize('healthy')          |>
+  release('sick1')          |>
+  release_treat()
+}
+
+death <- function(traj, inputs)
+{
+  traj |>
+  release_treat() |>
+  branch(
+    function() 1,
+    continue=c(FALSE), # False is patient death, had to use a branch to force termination
+    trajectory("Death") |>
+      mark("death")     |> # Must be in 'counters'
+      terminate_simulation(inputs)
+  )
+}
+
+```
+
+```{r}
+source("model-9.R")
+x=des_run(inputs)
+table(x$resource)
+
+library(dplyr)
+
+resource.limit <- 
+  x |> 
+  group_by(name) |> 
+  summarise(cost=sum(cost),
+            dcost=sum(dcost),
+            qaly=sum(qaly),
+            dqaly=sum(dqaly))
+
+colMeans(resource.limit[c('cost', 'dcost', 'qaly', 'dqaly')])
+```
 
 
 
@@ -185,3 +287,12 @@ The death rate is still different, but in this case the deaths go up which
 is in line with what we expected by restricting treatment. A good sign 
 that our modifications are working as intended.
 
+
+## Generating Results
+
+Imagine our goal would be to profile the effect of resource limits on dQALY. 
+A single simulation isn't enough, we have to run multiple simulation and average
+the results for each target resource. 
+
+
+TBD: Profile plot of resource limits from 2-20 for 100 patients. 

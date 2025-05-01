@@ -174,39 +174,37 @@ window.Quarto = {
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> <span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>0.20293: patient8: Waited: 0
-0.512222: patient1: Waited: 0
-1.11616: patient19: Waited: 0
-1.54354: patient6: Waited: 0
-2.37295: patient14: Waited: 0
-2.82262: patient18: Waited: 0.447645463166794
-3.42414: patient3: Waited: 0.920472981767104
-3.46599: patient1: Waited: 0.296309069480176
-4.24415: patient8: Waited: 0.972175251746485
-4.89362: patient9: Waited: 1.26514808442354
-4.9452: patient5: Waited: 1.28764783945557
-6.50553: patient3: Waited: 2.21313947381424
-8.33449: patient11: Waited: 4.00858294011601
-8.52994: patient13: Waited: 4.15014551525492
-9.43928: patient4: Waited: 4.87737263224013
-30: patient7: Waited: 24.6353847774181
-30: patient12: Waited: 24.9389672520144
-30: patient18: Waited: 24.4027299653056
-30: patient10: Waited: 24.1311746031363
-30: patient19: Waited: 23.8230094846406
-30: patient1: Waited: 22.6695235624176
-30: patient14: Waited: 22.6135137242841
-30: patient2: Waited: 20.7969867565055
-30: patient11: Waited: 20.4189430675756
-30: patient17: Waited: 20.3274895256398
-30: patient3: Waited: 20.2621280072115
-30: patient5: Waited: 19.7260204319197
-30: patient0: Waited: 18.9259739225744
-30: patient15: Waited: 16.7536818117537
-30: patient6: Waited: 15.3692495716691
-30: patient16: Waited: 15.1436346405206
-30: patient9: Waited: 13.7472766139413
-30: patient8: Waited: 13.0132717410746</code></pre>
+<pre><code>1.19759: patient12: Waited: 0
+1.75458: patient12: Waited: 0
+1.81973: patient14: Waited: 0
+2.88956: patient2: Waited: 0
+3.30249: patient19: Waited: 0
+4.3064: patient16: Waited: 0.861871524077387
+4.53222: patient4: Waited: 0
+4.71959: patient8: Waited: 0.181082742273044
+5.46898: patient1: Waited: 0.83958196286836
+6.3413: patient11: Waited: 1.67129283551338
+7.08808: patient17: Waited: 1.85194642851021
+7.35734: patient9: Waited: 2.03649657107694
+7.87407: patient14: Waited: 1.85283302334239
+26.5443: patient12: Waited: 20.512955319724
+28.5169: patient5: Waited: 21.6324729288
+29.2376: patient13: Waited: 22.2369820078
+29.3216: patient1: Waited: 21.7696902091528
+29.9989: patient16: Waited: 21.7410274755811
+30: patient6: Waited: 21.6139722059487
+30: patient18: Waited: 21.6372537367363
+30: patient4: Waited: 21.1656304289963
+30: patient3: Waited: 20.8979831700841
+30: patient8: Waited: 20.2991192382874
+30: patient0: Waited: 20.2865264677991
+30: patient11: Waited: 20.0037799651424
+30: patient2: Waited: 18.6392369847598
+30: patient10: Waited: 17.6546808586159
+30: patient7: Waited: 15.9503101131836
+30: patient9: Waited: 15.4575144353356
+30: patient19: Waited: 6.31551259004879
+30: patient13: Waited: 0.443671520824218</code></pre>
 </div>
 </div>
 <p>This debug output demonstrates that 20 patients with a single treament center that can handle 2 individuals– the resources constraint is having an effect on patient outcomes–as they are forced to wait years for treatment (years being the unit of simulation time in this example).</p>
@@ -235,13 +233,13 @@ window.Quarto = {
     Welch Two Sample t-test
 
 data:  dr.constrained and dr.original
-t = -47.487, df = 142.52, p-value &lt; 2.2e-16
+t = -52.301, df = 159.02, p-value &lt; 2.2e-16
 alternative hypothesis: true difference in means is not equal to 0
 95 percent confidence interval:
- -27.20731 -25.03269
+ -26.94031 -24.97969
 sample estimates:
 mean of x mean of y 
-     5.74     31.86 </code></pre>
+     5.73     31.69 </code></pre>
 </div>
 </div>
 <p>First of all note we had to run replicates of the simulation to determine effect size. Secondly, the t-test comparison between the runs shows a statistically discernable difference.</p>
@@ -250,7 +248,232 @@ mean of x mean of y
 </section>
 <section id="clone-and-synchronize" class="level2">
 <h2 class="anchored" data-anchor-id="clone-and-synchronize">Clone and Synchronize</h2>
-<p>Fortunately, <code>simmer</code> has tools to help deal with this. In this case it’s not as straightforward as we’ve already built a tool chain that doesn’t account for resource contraints. We need to use the <code>clone</code> and <code>synchronize</code> operators and do so without disturbing the original even loop.</p>
+<p>Fortunately, <code>simmer</code> has tools to help deal with this. In this case it’s not as straightforward as we’ve already built a tool chain that doesn’t account for resource constraints. We need to use the <code>clone</code> and <code>synchronize</code> operators and do so without disturbing the original event loop.</p>
+<p><code>clone</code> will split a trajectory, and attributes and resources are inherited. <code>synchronize</code> throws away all but one trajectory that reaches it.</p>
+<p>The strategy is to clone the trajectory and let one escape back into our simulation engine, while the other seizes the treatment resource. This leads to the conundrum that the main loop needs to know about treatment and should be able to release it.</p>
+<p>Asynchronous coding is very difficult, but we’re going to have to cross that bridge. To do this, one of the split threads will seize and release the treatment resource with limited access but it will rely on passing signals back and forth with it’s sibling trajectory. <code>send</code> and <code>trap</code> allow this to happen. The inverse trap is required to get a signal back to tell it to release the treatment and cleanup.</p>
+<pre><code>sick1 &lt;- function(traj, inputs)
+{
+  traj                                      |&gt; 
+  set_attribute("State", 1)                 |&gt; # 1 =&gt; Sick 1 (S1)
+  release('healthy')                        |&gt; # Track state change for tally later
+  seize('sick1')                            |&gt;
+  set_attribute("sS1", function() now(env)) |&gt; 
+  branch(
+    function() (inputs$strategy == "treat")+1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment Strategy
+    trajectory() |&gt;
+    clone(
+      n = 2,
+      
+      # This clone "escapes" and continues health state progression
+      trajectory() |&gt;
+      trap('sieze_treat', 
+            trajectory() |&gt; 
+            set_attribute("Treat", 1) |&gt;
+            untrap('sieze_treat') 
+      ),
+  
+      # This clone waits patiently for treatment
+      trajectory() |&gt;
+      seize('treat') |&gt;
+      trap('release_treat', 
+           trajectory() |&gt; 
+           release('treat') |&gt;
+           untrap('release_treat') |&gt;
+           branch(function() 1, continue=FALSE, trajectory())
+      ) |&gt;
+      send('sieze_treat') |&gt;
+      log_(function() {paste("Waited:", now(env) - get_attribute(env,"sS1"))}) |&gt;
+      timeout(inputs$horizon) # Make sure last arrival
+      
+    ) |&gt;
+    synchronize(wait=FALSE)
+  )
+}</code></pre>
+<p>Now the rest of the events need to be modified to send the right signals.</p>
+<pre><code># A helper function to deal with releasing treatment via
+# a signal if needed to release
+release_treat &lt;- function(.traj) 
+{
+  .traj |&gt; 
+  branch(
+    function() get_attribute(env, "Treat") +1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |&gt; 
+      send('release_treat') |&gt;
+      set_attribute("Treat", 0)
+  ) 
+}
+
+healthy &lt;- function(traj, inputs)
+{
+  traj                      |&gt; 
+  set_attribute("State", 0) |&gt; # 0 =&gt; Healthy (H)
+  seize('healthy')          |&gt;
+  release('sick1')          |&gt;
+  release_treat()
+}
+
+death &lt;- function(traj, inputs)
+{
+  traj |&gt;
+  release_treat() |&gt;
+  branch(
+    function() 1,
+    continue=c(FALSE), # False is patient death, had to use a branch to force termination
+    trajectory("Death") |&gt;
+      mark("death")     |&gt; # Must be in 'counters'
+      terminate_simulation(inputs)
+  )
+}
+</code></pre>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"model-9.R"</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>x<span class="ot">=</span><span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>0.56206: patient1: Waited: 0
+0.748492: patient2: Waited: 0
+1.64361: patient12: Waited: 0
+1.85792: patient0: Waited: 0
+2.35278: patient4: Waited: 0
+2.64446: patient16: Waited: 0
+3.72899: patient4: Waited: 0
+4.00928: patient14: Waited: 0
+4.19161: patient12: Waited: 0
+4.40949: patient16: Waited: 0
+4.64178: patient18: Waited: 0
+4.99039: patient5: Waited: 0
+5.13151: patient9: Waited: 0
+5.39367: patient19: Waited: 0
+6.10965: patient15: Waited: 0
+6.13519: patient9: Waited: 0
+6.67187: patient0: Waited: 0
+6.68338: patient11: Waited: 0
+7.02837: patient12: Waited: 0
+7.10515: patient5: Waited: 0
+7.58943: patient16: Waited: 0
+7.68087: patient7: Waited: 0
+7.81587: patient2: Waited: 0
+8.48459: patient17: Waited: 0
+8.9991: patient17: Waited: 0
+9.38651: patient19: Waited: 0
+9.80527: patient18: Waited: 0
+9.91319: patient2: Waited: 0
+10.0001: patient14: Waited: 0
+10.6902: patient3: Waited: 0
+10.7311: patient12: Waited: 0
+11.9328: patient18: Waited: 0
+12.5468: patient14: Waited: 0
+13.5788: patient7: Waited: 0
+13.7955: patient1: Waited: 0.191381735214406
+14.0568: patient10: Waited: 0
+14.1369: patient0: Waited: 0
+14.6479: patient12: Waited: 0
+15.6906: patient19: Waited: 0
+15.7727: patient0: Waited: 0
+15.8727: patient5: Waited: 0
+15.9612: patient10: Waited: 0
+16.7364: patient6: Waited: 0
+16.8457: patient3: Waited: 0
+17.2952: patient8: Waited: 0.273993157425174
+17.2952: patient17: Waited: 0.410364761682665
+17.2952: patient18: Waited: 0.240673485676098
+17.4318: patient16: Waited: 0
+17.6539: patient17: Waited: 0
+19.2895: patient13: Waited: 0
+20.4534: patient16: Waited: 0
+21.0368: patient0: Waited: 0
+21.9203: patient12: Waited: 0
+22.9859: patient2: Waited: 0
+23.2677: patient5: Waited: 0
+23.6944: patient3: Waited: 0
+24.1859: patient19: Waited: 0
+24.3052: patient0: Waited: 0
+24.9242: patient0: Waited: 0
+24.9425: patient13: Waited: 0
+26.6973: patient10: Waited: 0
+27.3284: patient17: Waited: 0
+27.7583: patient2: Waited: 0.275277588862295
+28.3503: patient12: Waited: 0
+28.3946: patient2: Waited: 0
+29.4624: patient9: Waited: 0
+29.6952: patient3: Waited: 0.132972452576766
+29.9435: patient10: Waited: 0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(x<span class="sc">$</span>resource)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+        death       healthy         sick1         sick2 time_in_model 
+            2            79            68             6            20 
+        treat 
+           68 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:simmer':
+
+    select</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>resource.limit <span class="ot">&lt;-</span> </span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span> </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(name) <span class="sc">|&gt;</span> </span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">cost=</span><span class="fu">sum</span>(cost),</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">dcost=</span><span class="fu">sum</span>(dcost),</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">qaly=</span><span class="fu">sum</span>(qaly),</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">dqaly=</span><span class="fu">sum</span>(dqaly))</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(resource.limit[<span class="fu">c</span>(<span class="st">'cost'</span>, <span class="st">'dcost'</span>, <span class="st">'qaly'</span>, <span class="st">'dqaly'</span>)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        cost        dcost         qaly        dqaly 
+101515.11222  64777.31122     26.49082     17.96920 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"model-9.R"</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>inputs<span class="sc">$</span>N <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>dr.constrained <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">100</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">capture.output</span>(x <span class="ot">&lt;-</span> <span class="fu">des_run</span>(inputs), <span class="at">file=</span><span class="fu">nullfile</span>())</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(x<span class="sc">$</span>resource <span class="sc">==</span> <span class="st">'death'</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="fu">t.test</span>(dr.constrained, dr.original)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Welch Two Sample t-test
+
+data:  dr.constrained and dr.original
+t = 8.0348, df = 196.04, p-value = 8.591e-14
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ 3.878382 6.401618
+sample estimates:
+mean of x mean of y 
+    36.83     31.69 </code></pre>
+</div>
+</div>
+<p>The death rate is still different, but in this case the deaths go up which is in line with what we expected by restricting treatment. A good sign that our modifications are working as intended.</p>
+</section>
+<section id="generating-results" class="level2">
+<h2 class="anchored" data-anchor-id="generating-results">Generating Results</h2>
+<p>Imagine our goal would be to profile the effect of resource limits on dQALY. A single simulation isn’t enough, we have to run multiple simulation and average the results for each target resource.</p>
+<p>TBD: Profile plot of resource limits from 2-20 for 100 patients.</p>
 </section>
 
 
