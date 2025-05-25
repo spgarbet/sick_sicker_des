@@ -1,0 +1,150 @@
+---
+title: "Discrete Event Simulation with Resource Constraints"
+author: "John Graves, Shawn Garbett"
+date: "May 2025"
+format: 
+  closeread-html:
+    css: msaz.css
+    code-tools: false
+    fig-format: svg
+    toc: false
+    linkcolor: tomato
+bibliography: references.bib    
+---
+
+
+
+<!-- https://github.com/lauralambert99/Scrolly_Telling/blob/main1/How_to.qmd -->
+<!-- https://laura-lambert-99.quarto.pub/steves_guide_to_scrollytelling/steves_guide_to_scrollytelling.html -->
+<!-- https://github.com/mschnetzer/scrollytell_arbeitszeit/blob/master/index.qmd -->
+
+# Overview of Discrete Event Simulation 
+
+Discrete event simulation. DES can also incorporate the timing and interdependency of events.6,14,15 Although its origins are in industrial engineering and operations research, DES is increasingly used in health technology assessments.3,5,14–16
+DES models are similar to microsimulation models in that they simulate individual patient trajectories. As such, they can also be computationally demanding. One advantage, however, is that DES extends the flexibilities of microsimulation. For example, a DES model can allow the probability of some future event to depend on the time spent in a given state. In addition, DES models can more easily incorporate interdependencies in the tim- ing of events and/or restrictions on available resources based on queuing or other constraints. An additional advantage is that DES models the timing of events and, unlike microsimulation, does not cycle through time peri- ods when no events occur. These advantages afford DES more modeling flexibility and computational efficiency.
+
+::: {.column-screen style="background-image:url(https://upload.wikimedia.org/wikipedia/commons/7/79/Eight_hour_campaign_in_Denmark_1912.jpg); background-size: 100vw; height: 300px; background-position: center +15%; background-repeat: no-repeat;"}
+:::
+<figcaption>"8 Stunden Arbeit - 8 Stunden Freizeit - 8 Stunden Schlaf": Demonstration für den Achtstundentag in Dänemark, 1912.<br>(Quelle: [Wikipedia](https://en.wikipedia.org/wiki/Eight-hour_day_movement#/media/File:Eight_hour_campaign_in_Denmark_1912.jpg))</figcaption>
+
+
+# Overview of Decision Problem
+
+We build on an existing progressive disease model in which healthy individuals develop a disease with two health states ("Sick" and "Sicker"; @alarid2023introductory). Individuals can also transition to an absorbing death state due to causes unrelated to the disease (i.e., "background" mortality), or due to disease-specific causes.
+@cr-modeldiag
+A state transition diagram is shown in @fig-model1. In the figure, nodes are health states and edges depict transitions among them. Edge labels are defined in terms of transition intensities (rates). Other key model parameters are summarized in @tbl-params.
+
+
+:::{.cr-section}
+:::{#cr-modeldiag}
+![State transition diagram for progressive disease mode (TK NEED TO REPLACE!)](images/state-transition-diagram-1.svg){#fig-model1}
+:::
+
+
+As depicted in @fig-model1, the underlying Markov model is time homogeneous---that is, transition rates do not vary as a function of age/time. This is merely a simplification that builds on an existing time-homogeneous model constructed for didactic purposes [@alarid2023introductory]. We do, however, index all formulas and other model-relevant objects with the subscript $t$ to allow for time-inhomogenous models. Our replication code is also written to accommodate time-inhomogeneous models. @cr-modeldiag
+:::
+
+We next convert this to a petri net diagram. A Petri net diagram is a mathematical modeling language used to represent distributed systems. It's a type of directed bipartite graph with two types of nodes:
+
+- Places (usually drawn as circles) - represent conditions or states
+- Transitions (usually drawn as rectangles or bars) - represent events or actions
+
+These nodes are connected by directed arcs (arrows), and places may contain tokens (typically drawn as black dots) that represent resources or control flow. @cr-petri 
+
+
+:::{#cr-petri}
+![Petri net diagram for progressive disease model (TK NEED TO REPLACE!)](images/petri-diagram.png)
+:::
+
+
+
+
+
+
+
+# Inputs
+
+:::{.cr-section}
+To start, we need to initialize input parameters. This is telling Quarto that we'd like it to run the stated code as well as what language that code is in. Our concept map will be using something called 'GraphViz', so we will use the '{dot}' extension. It will look like this: @cr-conceptmap1
+
+:::{#cr-conceptmap1}
+```{{r}}         
+inputs <- list(
+    N      = 5,
+  
+    # Parameters (1 cycle == 1 year)
+    horizon=    30,      # Time horizon in years
+    
+    d.r    =     0.03,   # Discount Rate
+    
+    r.HS1  =     0.15,   # Disease Onset Rate / year       (H  -> S1)
+    r.S1H  =     0.7,    # Recovery Rate / year            (S1 -> H)
+    r.S1S2 =     0.10,   # Disease Progression rate / year (S1 -> S2)
+    r.HD   =     0.005,  # Healthy to Dead rate / year     (H  -> D)
+    hr.S1D =     3,      # Hazard ratio in S1 vs healthy 
+    hr.S2D =    10,      # Hazard ratio in S2 vs healthy
+    hr.cor =     2,      # Hazard ratio of a condition giving the other condition.
+    
+    # Annual Costs
+    c.H    =  2000,      # Healthy individuals 
+    c.S1   =  4000,      # Sick individuals in S1
+    c.S2   = 15000,      # Sick individuals in S2
+    c.D    =     0,      # Dead individuals
+    c.Trt  = 12000,      # Additional Annual cost for S1 and S2
+    
+    # Utility Weights
+    u.H    =     1.00,   # Healthy
+    u.S1   =     0.80,   # S1
+    u.S2   =     0.60,   # S2
+    u.D    =     0.00,   # Dead
+    
+    # Intervention Effect
+    u.Trt  =     0.95,   # S1 Utility for treatment in S1
+    
+    wtp    = 1e5,
+    
+    strategy = 'notreat' # Default strategy is to do nothing
+  )
+```
+:::
+:::
+
+## Boilerplate
+
+:::{.cr-section}
+
+First part is to load necessary bits: `simmer`, our `inputs` and the boilerplate `main_loop`. @cr-boilerplate
+
+:::{#cr-boilerplate}
+```{{r}}
+library(simmer)
+library(here)
+source(here("inputs.R"))
+source(here("main_loop.R"))
+```
+:::
+:::
+
+## Counters
+:::{.cr-section}
+
+@cr-counters
+
+:::{#cr-counters}
+```{{r}}
+counters <- c(
+  "time_in_model"
+)
+```
+:::
+:::
+
+
+# References
+
+-   [A good resource](https://forum.posit.co/t/steves-guide-to-scrollytelling-closeread-prize/196488/2)
+
+-   [raw code](https://github.com/lauralambert99/Scrolly_Telling/blob/main1/How_to.qmd)
+
+-   [Backbone for this article](https://github.com/mschnetzer/scrollytell_arbeitszeit)
+
