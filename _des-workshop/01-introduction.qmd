@@ -16,7 +16,7 @@ author:
 date: today
 format: 
   closeread-html:
-    css: usj.css
+    css: des-styling.css
     code-tools: false
     fig-format: svg
     toc: false
@@ -26,9 +26,14 @@ editor_options:
   chunk_output_type: console
 ---
 
+
 # Introduction
 
-Discrete event simulation (DES) is a modeling framework that offers unique advantages for evaluating complex healthcare interventions and systems. DES explicitly models patient experience in a health care system based on a series of discrete events occurring over time, such as disease onset, treatment initiation, and other clinical outcomes. DES can also capture dynamic interactions between patients and system resources, making it particularly valuable for evaluating interventions that affect system capacity, waiting times, or resource utilization patterns.
+::: callout-important
+This text was AI-generated just to put in some filler for now; we'll want to go back and edit using our own language. 
+:::
+
+<span style="color:cornflowerblue">**Discrete event simulation (DES) **</span> is a modeling framework that offers unique advantages for evaluating complex healthcare interventions and systems. DES explicitly models patient experience in a health care system based on a series of discrete events occurring over time, such as disease onset, treatment initiation, and other clinical outcomes. DES can also capture dynamic interactions between patients and system resources, making it particularly valuable for evaluating interventions that affect system capacity, waiting times, or resource utilization patterns.
 
 ## Comparison with Microsimulation
 
@@ -681,4 +686,19 @@ indicates that the death event occurred for this patient, and the `start_time` c
 
 
 :::
+
+
+
+# Extra Stuff
+
+<span class="hl hl-blue">blue highlighted text</span> 
+<span class="hl hl-red">red highlighted text</span> 
+<span class="hl hl-cyan">cyan highlighted text</span> 
+<span class="hl hl-green">green highlighted text</span> 
+<span class="hl hl-brown">brown highlighted text</span> 
+
+Here's some <span style="color:cornflowerblue">**some bolded blue text**</span>
+How about some <span style="color:firebrick">**red bolded text**</span>
+How about some <span style="color:darkcyan">**cyan bolded text**</span> 
+
 
