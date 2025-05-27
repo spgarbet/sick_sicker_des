@@ -54,4 +54,6 @@ rsconnect/
 
 # metadata files created automatically by macOS Finder
 .DS_Store
-**/.DS_Store
+**.DS_Store**
+
+*_files/

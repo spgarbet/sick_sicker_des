@@ -61,8 +61,8 @@ body, section, header {
 
 /* Sticky column (usually contains visualizations/images) */
 .cr-section .sticky-col {
-  padding-left: 0px;
-  padding-right: 0px;
+  padding-left: 30px;
+  padding-right: 30px;
 }
 
 /* =================================================================
@@ -78,7 +78,7 @@ body, section, header {
 /* Narrative column (text content) in sidebar-left layout */
 .cr-section.sidebar-left .narrative-col {
   background-color: transparent;
-  font-family: "Roboto Slab";    /* Clean sans-serif for readability */
+  font-family: "Fira Sans";    /* Clean sans-serif for readability */
   min-width: 40svw;            /* 40% of viewport width minimum */
   padding-left: 80px;          /* Large left padding for text offset */
 }
@@ -96,8 +96,8 @@ body, section, header {
 .cr-section.overlay-center .narrative-col .narrative {
   background-color: rgba(0, 0, 0, 0.85);  /* Semi-transparent black background */
   color: rgb(255, 255, 255);               /* White text for contrast */
-  font-family: "Roboto Slab";             /* Elegant serif font */
-  font-size: 1rem;
+  font-family: "Crimson Text";             /* Elegant serif font */
+  font-size: 1.5rem;
   text-align: center;
   min-width: 50svw;                        /* 50% of viewport width minimum */
   position: absolute;                      /* Positioned absolutely for overlay */
@@ -288,6 +288,7 @@ body, section, header {
    
    1. TYPOGRAPHY: Multiple Google Fonts for different content types
       - Roboto Slab: Main content and headings
+      - Fira Sans: Sidebar narratives  
       - Crimson Text: Overlay narratives
       - Oswald: Info section
       - Barlow Condensed: Labels and mobile text

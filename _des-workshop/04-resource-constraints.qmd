@@ -1,0 +1,64 @@
+---
+title: "4. Constrained Treatment Resource"
+subtitle: "Discrete Event Simulation for Health Decision Modeling"
+author: 
+  - name: "John Graves"
+    affiliation: 
+      - "Vanderbilt University School of Medicine"
+      - "Vanderbilt Owen Gradute School of Management"
+      - "Vanderbilt University Medical Center"
+    email: "john.graves@vanderbilt.edu"
+  - name: "Shawn Garbett"
+    affiliation: 
+      - "Vanderbilt University School of Medicine"
+      - "Vanderbilt University Medical Center"    
+    email: "shawn.garbett@vumc.org"
+date: today
+format: 
+  closeread-html:
+    css: des-styling.css
+    code-tools: false
+    fig-format: svg
+    toc: false
+    linkcolor: tomato
+bibliography: references.bib    
+editor_options: 
+  chunk_output_type: console
+---
+
+
+# Introduction
+
+:::{.column-screen}
+
+
+:::{.cr-section layout="overlay-center"}
+
+@cr-model5 We start with model 5.
+
+And go to model 6 @cr-model6 
+
+Let's focus in on the constrained resource [@cr-model6]{pan-to="-25%, -20%" scale-by="2.5"}
+
+Waiting too long can kill you [@cr-model6]{pan-to="-30%, 30%" scale-by="4"}
+
+<!-- @cr-model6  -->
+
+But getting treated can cure you. [@cr-model6]{pan-to="-80%, 30%" scale-by="5"}
+
+@cr-model6
+
+[@cr-model6]{pan-to="100%, 100%" scale-by="3"}
+
+@cr-model6
+
+:::{#cr-model5}
+![](images/petri-model5.png)
+:::
+
+
+:::{#cr-model6}
+![](images/petri-model6.png)
+:::
+
+:::

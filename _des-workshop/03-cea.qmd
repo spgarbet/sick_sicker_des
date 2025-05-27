@@ -1,0 +1,41 @@
+---
+title: "2. Multiple Treatments"
+subtitle: "Discrete Event Simulation for Health Decision Modeling"
+author: 
+  - name: "John Graves"
+    affiliation: 
+      - "Vanderbilt University School of Medicine"
+      - "Vanderbilt Owen Gradute School of Management"
+      - "Vanderbilt University Medical Center"
+    email: "john.graves@vanderbilt.edu"
+  - name: "Shawn Garbett"
+    affiliation: 
+      - "Vanderbilt University School of Medicine"
+      - "Vanderbilt University Medical Center"    
+    email: "shawn.garbett@vumc.org"
+date: today
+format: 
+  closeread-html:
+    css: des-styling.css
+    code-tools: false
+    fig-format: svg
+    toc: false
+    linkcolor: tomato
+bibliography: references.bib    
+editor_options: 
+  chunk_output_type: console
+---
+
+
+:::{.column-screen}
+
+:::{.cr-section}
+
+@cr-ceapetri 
+
+:::{#cr-ceapetri}
+![](images/petri-cea.png){fig-align="center"}
+:::
+:::
+
+:::
