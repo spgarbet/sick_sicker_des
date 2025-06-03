@@ -25,7 +25,11 @@
    ================================================================= */
 
 /* Force white background on main layout elements */
-body, section, header {
+body, section, header, main, .quarto-layout-panel, .quarto-layout-row, .quarto-layout-cell {
+  background-color: white !important;
+}
+
+html {
   background-color: white !important;
 }
 
@@ -56,13 +60,32 @@ body, section, header {
 
 /* Base closeread section - transparent background */
 .cr-section {
-  background-color: transparent !important;
+  background-color: white !important;
+}
+.cr-section.sidebar-left,
+.cr-section.sidebar-right,
+.cr-section.overlay-left,
+.cr-section.overlay-right,
+.cr-section.overlay-center,
+.cr-section.focus {
+  background-color: white !important;
 }
 
-/* Sticky column (usually contains visualizations/images) */
+
 .cr-section .sticky-col {
+  background-color: white !important;
   padding-left: 30px;
   padding-right: 30px;
+}
+
+/* Narrative columns should be white (except where specifically overridden for overlays) */
+.cr-section .narrative-col {
+  background-color: white !important;
+}
+
+/* Override the narrative column background only for overlay-center where we want transparency */
+.cr-section.overlay-center .narrative-col {
+  background-color: transparent !important;
 }
 
 /* =================================================================
@@ -281,6 +304,20 @@ body, section, header {
   .tbl-note {
     font-size: 0.7rem;
   }
+}
+
+/* Target any other Quarto-specific containers that might have grey backgrounds */
+.quarto-container,
+.content-visible,
+.page-layout-article,
+.quarto-title-banner,
+div[data-bs-target] {
+  background-color: white !important;
+}
+
+/* Ensure any grid or flex containers are also white */
+.grid, .d-flex, .container-fluid {
+  background-color: white !important;
 }
 
 /* =================================================================

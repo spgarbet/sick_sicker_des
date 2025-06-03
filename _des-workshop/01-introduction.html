@@ -6,10 +6,12 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Your Name">
-<meta name="dcterms.date" content="2025-05-27">
+<meta name="author" content="John Graves">
+<meta name="author" content="Shawn Garbett">
+<meta name="author" content="Kun-Woo Kim">
+<meta name="dcterms.date" content="2025-06-03">
 
-<title>Petri-Net Diagrams for Progressive Disease Models</title>
+<title>1. Overview of Discrete Event Simulation</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -95,20 +97,49 @@ div.csl-indent {
 <meta cr-debug-mode="false">
 <meta cr-remove-header-space="false">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="_extensions/qmd-lab/closeread/closeread.css">
+<link rel="stylesheet" href="des-styling.css">
 </head>
 
 <body>
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-full">
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="01-introduction.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></div>
+
 <main class="content page-columns page-full column-body" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Petri-Net Diagrams for Progressive Disease Models</h1>
+<h1 class="title">1. Overview of Discrete Event Simulation</h1>
 <p class="subtitle lead">Discrete Event Simulation for Health Decision Modeling</p>
 </div>
 
@@ -142,6 +173,14 @@ div.csl-indent {
             Vanderbilt University Medical Center
           </p>
       </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Kun-Woo Kim </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Vanderbilt University
+          </p>
+      </div>
   </div>
 
 <div class="quarto-title-meta column-body">
@@ -150,7 +189,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 27, 2025</p>
+      <p class="date">June 3, 2025</p>
     </div>
   </div>
   
@@ -164,224 +203,832 @@ div.csl-indent {
 
 <section id="introduction" class="level1 page-columns page-full">
 <h1>Introduction</h1>
-<div class="callout callout-style-default callout-important callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Important
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>This text was AI-generated just to put in some filler for now; we’ll want to go back and edit using our own language.</p>
-</div>
-</div>
-<p><span style="color:cornflowerblue"><strong>Discrete event simulation (DES) </strong></span> is a modeling framework that offers unique advantages for evaluating complex healthcare interventions and systems. DES explicitly models patient experience in a health care system based on a series of discrete events occurring over time, such as disease onset, treatment initiation, and other clinical outcomes. DES can also capture dynamic interactions between patients and system resources, making it particularly valuable for evaluating interventions that affect system capacity, waiting times, or resource utilization patterns.</p>
-<section id="comparison-with-microsimulation" class="level2">
-<h2 class="anchored" data-anchor-id="comparison-with-microsimulation">Comparison with Microsimulation</h2>
-<p>While both DES and microsimulation model individual patients rather than population cohorts, they differ fundamentally in their temporal structure and scope <span class="citation" data-cites="graves2021comparison">(<a href="#ref-graves2021comparison" role="doc-biblioref">Graves et al. 2021</a>)</span>. Microsimulation follows individuals through predetermined time cycles, updating their characteristics and health states at regular intervals, with a primary focus on long-term disease progression and outcomes.</p>
-<p>DES, in contrast, models the actual sequence and timing of events as they occur, allowing practitioners to explicitly capture healthcare processes, resource constraints, and patient trajectories as they interact in a system (e.g., wait times for a bed or procedure). This makes DES especially suited for modeling the experience of disease—or its absence—while also accounting operational aspects of care delivery that may affect disease severity, progression, and costs.</p>
-</section>
+<!-- ::: callout-important -->
+<!-- This text was AI-generated just to put in some filler for now; we'll want to go back and edit using our own language.  -->
+<!-- ::: -->
+<p><span style="color:cornflowerblue"><strong>Discrete event simulation (DES) </strong></span> is a modeling framework offering unique advantages for evaluating health decision problems. DES explicitly models patients’ experience via trajectories that track a series of events occurring over time, such as disease onset, treatment initiation, and other clinical outcomes.</p>
+<p>What differentiates DES from other modeling approaches (e.g., discrete time Markov, microsimulation) is that DES can also capture dynamic interactions between patients and system resources—making it particularly valuable for evaluating strategies that affect system capacity, waiting times, or resource utilization.</p>
+<p>In what follows, we detail the concepts and execution of DES for health decision analysis. We begin with a conceptual overview of DES, and then build up a DES for a widely-used progressive disease model <span class="citation" data-cites="alarid2023introductory">(<a href="#ref-alarid2023introductory" role="doc-biblioref">Alarid-Escudero et al. 2023</a>)</span>.</p>
+<p>We will first build the model and demonstrate that it exactly matches outcomes and ICERs in <span class="citation" data-cites="alarid2023introductory">Alarid-Escudero et al. (<a href="#ref-alarid2023introductory" role="doc-biblioref">2023</a>)</span>. Once equivalence is established, we then build on the model to add a new strategy based on a new treatment with limited treatment capacity.</p>
 <section id="conceptual-framework" class="level2 page-columns page-full">
 <h2 class="anchored" data-anchor-id="conceptual-framework">Conceptual Framework</h2>
-<p>To illustrate these concepts more intuitively, consider a racing metaphor where each patient represents a race car navigating a complex circuit with multiple checkpoints, pit stops, and potential hazards.</p>
-<div class="column-screen" style="background-image:url(images/starting-line-cars2.png); background-size: 100vw; height: 600px; background-position: center bottom; background-repeat: no-repeat; opacity: 0.5">
-
-</div>
-<figcaption>
-Image generated by ChatGPT 4o
-</figcaption>
-<p>In this framework, each car follows its own unique journey (“trajectory”) through a race course, with discrete events corresponding to key moments like crossing timing markers, making scheduled pit stops for fuel and tire changes, or experiencing unexpected mechanical issues that require roadside assistance.</p>
-<p>The race organizers (i.e., the modeler) track not only each car’s total race time but also the precise timing and sequence of every significant event—when cars enter the pit lane, how long they wait for available mechanics, whether they experience delays due to track congestion, and how these operational realities affect both their race performance and resource consumption.</p>
-<div class="column-screen" style="background-image:url(images/scoreboard-race.png); background-size: 100vw; height: 600px; background-position: center -55%; background-repeat: no-repeat; opacity: 0.5">
-
-</div>
-<figcaption>
-Image generated by ChatGPT 4o
-</figcaption>
-<p>This racing analogy highlights the fundamental difference between DES and microsimulation approaches. While microsimulation might update each car’s position and characteristics at regular time intervals - checking their status every five minutes regardless of what’s happening on the track - DES models the actual sequence of racing events as they unfold in real-time. It captures the moment a car crosses the start line, navigates a challenging turn, requires emergency pit service, or encounters a yellow flag that affects the entire field. Just as race organizers need to understand how pit crew availability affects race outcomes, healthcare analysts use DES to model how resource constraints and operational dynamics influence patient experiences and clinical outcomes.</p>
-<div class="column-screen" style="background-image:url(images/finish-line-cars.png); background-size: 100vw; height: 400px; background-position: center +15%; background-repeat: no-repeat; opacity: 0.5">
-
-</div>
-<figcaption>
-Image generated by ChatGPT 4o
-</figcaption>
-<p>The competitive dynamics inherent in racing perfectly mirror the resource competition found in healthcare systems. When multiple cars need pit service simultaneously, queues form and strategic decisions must be made about service priority - much like patients competing for limited hospital beds, surgical slots, or specialist appointments. DES excels at modeling these interactions, capturing how a crash requiring track cleanup affects all subsequent cars, how limited pit crews create bottlenecks during busy periods, and how the timing of these events influences both individual race outcomes and overall resource utilization. However, this detailed operational focus comes with increased complexity in model development and validation, requiring precise information about pit stop procedures, crew availability, and track conditions that might not be readily available. While DES proves invaluable when interventions directly affect the racing infrastructure and competitive dynamics, microsimulation remains more practical for analyzing long-term driver career outcomes where the operational details of individual races are less critical to the overall assessment.</p>
-</section>
-</section>
-<section id="setup" class="level1">
-<h1>Setup</h1>
-<p>Our first task is to prepare our R session for the simulation.</p>
-<p>We begin by loading necessary libraries.</p>
 <div class="cr-section cr-column-screen sidebar-left">
 <div class="narrative-col">
-<div class="trigger new-trigger" data-focus-on="cr-libraries" data-highlight="1">
+<div class="trigger new-trigger" data-focus-on="cr-carrace">
 <div class="narrative">
-<p>Simmer is the most important</p>
+<p>A useful framework for understanding DES is a car race in which each patient represents a car navigating a complex circuit with multiple checkpoints, pit stops, and potential hazards.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-carrace2">
+<div class="narrative">
+<p>In this framework, each car follows its own unique journey (“trajectory”) through a race course, with discrete events corresponding to key moments like crossing timing markers, making pit stops for fuel and tire changes, or experiencing unexpected mechanical issues that require assistance.</p>
 </div>
 </div>
 </div>
 <div class="sticky-col">
 <div class="sticky-col-stack">
-<div id="cr-libraries" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="fu">library</span>(simmer)</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="fu">library</span>(here)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cr-carrace" class="sticky">
+<p><img src="images/starting-line-cars2.png" class="img-fluid"></p>
+</div>
+<div id="cr-carrace2" class="sticky">
+<p><img src="images/car-race.png" class="img-fluid"></p>
 </div>
 </div>
 </div>
 </div>
+<!-- ::: {.column-screen style="background-image:url(images/starting-line-cars2.png); background-size: 100vw; height: 600px; background-position: center bottom; background-repeat: no-repeat; opacity: 0.5"} -->
+<!-- ::: -->
+<!-- <figcaption>Image generated by ChatGPT 4o</figcaption> -->
+<p>In a DES, the modeler tracks not only each car’s total race time but also the precise timing and sequence of every significant event—when cars enter the pit lane, how long they wait for available mechanics, whether they experience delays due to track congestion—and how these operational realities affect both their race performance (i.e., costs, quality-adjusted health outcomes) and resource consumption.</p>
+<div class="column-screen" style="background-image:url(images/scoreboard-race.png); background-size: 100vw; height: 600px; background-position: center; background-repeat: no-repeat; opacity: 0.5">
+
 </div>
-</section>
-<section id="model-inputs" class="level1">
-<h1>Model Inputs</h1>
-<p>We next define model inputs.</p>
+<figcaption>
+Image generated by ChatGPT 4o
+</figcaption>
+<!-- ::: {.column-screen style="background-image:url(images/finish-line-cars.png); background-size: 100vw; height: 400px; background-position: center +15%; background-repeat: no-repeat; opacity: 0.5"} -->
+<!-- ::: -->
+<!-- <figcaption>Image generated by ChatGPT 4o</figcaption> -->
 <div class="cr-section cr-column-screen sidebar-left">
 <div class="narrative-col">
-<div class="trigger new-trigger" data-focus-on="cr-inputs">
+<div class="trigger">
 <div class="narrative">
-<p>Model inputs are shown </p>
+<p>To understand and construct a DES it’s important to define several concepts:</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table">
+<div class="narrative">
+<p><span style="color:#DF8F44FF"><strong>Tokens</strong></span> represent an individual entity (typically a patient) that flows through the simulation over time.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table">
+<div class="narrative">
+<p>Tokens take on attributes (e.g., age, gender) that are either fixed throughout the model, or that change as they make their way through the model.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table">
+<div class="narrative">
+<p>For example, suppose we aim to model different strategies for treating colon cancer. A token might represent a 67-year-old woman with Stage III colorectal cancer.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table2">
+<div class="narrative">
+<p>Now suppose we want to track this patient’s progression through diagnosis, treatment (e.g., surgery, chemo), remission, and potential relapse. These are examples of <span style="color:#00A1D5FF"><strong>events/transitions</strong></span> in a DES model.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table3">
+<div class="narrative">
+<p>The specific sequence of events a patient (“token”) experiences is tracked in a <span style="color:#B24745FF"><strong>trajectory</strong></span>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table4">
+<div class="narrative">
+<p><span style="color:#79AF97FF"><strong>Resources</strong></span> are the final key element of a DES, and can either be unconstrained and used by everyone, or subject to resource constraints.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>For example, the total amount of time a given patient spends in the model could be considered an unconstrained resource—one patient’s experience of time does not preclude another patient in the model from also experiencing the passage of time.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table4">
+<div class="narrative">
+<p>Conversely, in a resource-constrained DES we might want to put limits on the total number of patients who can receive treatment at one time. This both helps better represent real-world scenarios, and also facilitates additional policy strategy modeling (e.g., expansion of treatment slots, staffing, or hospital beds to reduce wait times).</p>
 </div>
 </div>
 </div>
 <div class="sticky-col">
 <div class="sticky-col-stack">
-<div id="cr-inputs" class="sticky">
+<div id="cr-table" class="sticky">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>inputs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb2-2"><a href="#cb2-2"></a>    <span class="at">N      =</span> <span class="dv">5</span>,</span>
-<span id="cb2-3"><a href="#cb2-3"></a>  </span>
-<span id="cb2-4"><a href="#cb2-4"></a>    <span class="co"># Parameters</span></span>
-<span id="cb2-5"><a href="#cb2-5"></a>    <span class="at">horizon=</span>    <span class="dv">30</span>,      <span class="co"># Time horizon</span></span>
-<span id="cb2-6"><a href="#cb2-6"></a>    </span>
-<span id="cb2-7"><a href="#cb2-7"></a>    <span class="co"># Cycle =&gt; 1 year</span></span>
-<span id="cb2-8"><a href="#cb2-8"></a>    <span class="at">d.r    =</span>     <span class="fl">0.03</span>,   <span class="co"># Discount Rate</span></span>
-<span id="cb2-9"><a href="#cb2-9"></a>    </span>
-<span id="cb2-10"><a href="#cb2-10"></a>    <span class="at">r.HS1  =</span>     <span class="fl">0.15</span>,   <span class="co"># Disease Onset Rate / year       (H  -&gt; S1)</span></span>
-<span id="cb2-11"><a href="#cb2-11"></a>    <span class="at">r.S1H  =</span>     <span class="fl">0.7</span>,    <span class="co"># Recovery Rate / year            (S1 -&gt; H)</span></span>
-<span id="cb2-12"><a href="#cb2-12"></a>    <span class="at">r.S1S2 =</span>     <span class="fl">0.10</span>,   <span class="co"># Disease Progression rate / year (S1 -&gt; S2)</span></span>
-<span id="cb2-13"><a href="#cb2-13"></a>    <span class="at">r.HD   =</span>     <span class="fl">0.005</span>,  <span class="co"># Healthy to Dead rate / year     (H  -&gt; D)</span></span>
-<span id="cb2-14"><a href="#cb2-14"></a>    <span class="at">hr.S1D =</span>     <span class="dv">3</span>,      <span class="co"># Hazard ratio in S1 vs healthy </span></span>
-<span id="cb2-15"><a href="#cb2-15"></a>    <span class="at">hr.S2D =</span>    <span class="dv">10</span>,      <span class="co"># Hazard ratio in S2 vs healthy</span></span>
-<span id="cb2-16"><a href="#cb2-16"></a> </span>
-<span id="cb2-17"><a href="#cb2-17"></a>    <span class="co"># Annual Costs</span></span>
-<span id="cb2-18"><a href="#cb2-18"></a>    <span class="at">c.H    =</span>  <span class="dv">2000</span>,      <span class="co"># Healthy individuals </span></span>
-<span id="cb2-19"><a href="#cb2-19"></a>    <span class="at">c.S1   =</span>  <span class="dv">4000</span>,      <span class="co"># Sick individuals in S1</span></span>
-<span id="cb2-20"><a href="#cb2-20"></a>    <span class="at">c.S2   =</span> <span class="dv">15000</span>,      <span class="co"># Sick individuals in S2</span></span>
-<span id="cb2-21"><a href="#cb2-21"></a>    <span class="at">c.D    =</span>     <span class="dv">0</span>,      <span class="co"># Dead individuals</span></span>
-<span id="cb2-22"><a href="#cb2-22"></a>    <span class="at">c.Trt  =</span> <span class="dv">12000</span>,      <span class="co"># Additional Annual cost for S1 and S2</span></span>
-<span id="cb2-23"><a href="#cb2-23"></a>    </span>
-<span id="cb2-24"><a href="#cb2-24"></a>    <span class="co"># Utility Weights</span></span>
-<span id="cb2-25"><a href="#cb2-25"></a>    <span class="at">u.H    =</span>     <span class="fl">1.00</span>,   <span class="co"># Healthy</span></span>
-<span id="cb2-26"><a href="#cb2-26"></a>    <span class="at">u.S1   =</span>     <span class="fl">0.80</span>,   <span class="co"># S1</span></span>
-<span id="cb2-27"><a href="#cb2-27"></a>    <span class="at">u.S2   =</span>     <span class="fl">0.60</span>,   <span class="co"># S2</span></span>
-<span id="cb2-28"><a href="#cb2-28"></a>    <span class="at">u.D    =</span>     <span class="fl">0.00</span>,   <span class="co"># Dead</span></span>
-<span id="cb2-29"><a href="#cb2-29"></a>    </span>
-<span id="cb2-30"><a href="#cb2-30"></a>    <span class="co"># Intervention Effect</span></span>
-<span id="cb2-31"><a href="#cb2-31"></a>    <span class="at">u.Trt  =</span>     <span class="fl">0.95</span>,   <span class="co"># S1 Utility for treatment in S1</span></span>
-<span id="cb2-32"><a href="#cb2-32"></a>    </span>
-<span id="cb2-33"><a href="#cb2-33"></a>    <span class="at">wtp    =</span>     <span class="fl">1e5</span>,    <span class="co"># 100k willingness to pay</span></span>
-<span id="cb2-34"><a href="#cb2-34"></a>    </span>
-<span id="cb2-35"><a href="#cb2-35"></a>    <span class="at">strategy =</span> <span class="st">'notreat'</span> <span class="co"># Default strategy is no treatment</span></span>
-<span id="cb2-36"><a href="#cb2-36"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="cr-section cr-column-screen sidebar-left">
-<div class="narrative-col">
-<div class="trigger new-trigger" data-focus-on="cr-boilerplate" data-highlight="1">
-<div class="narrative">
-<p>All inputs are summarized in a standalone script <code>inputs.R</code>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-boilerplate" data-highlight="2">
-<div class="narrative">
-<p><code>main_loop.R</code> contains some helper functions.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-boilerplate" data-highlight="3">
-<div class="narrative">
-<p>A small diversion is we need to be able to apply <a href="https://en.wikipedia.org/wiki/Discounting">discounting</a> to our results. Thus a numerically stable and vectorized version of discounting is just the ticket.The file <a href="./discount.R"><code>discount.R</code></a> contains what’s required. Other common versions utilize the power definition of discounting, this uses the “^” operator which limits the numerical stable range of the function. Our function uses the exponential formulation with a greater numerical stability. The function also does point discounting or integrated area discounted.</p>
-</div>
-</div>
-</div>
-<div class="sticky-col">
-<div class="sticky-col-stack">
-<div id="cr-boilerplate" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">'inputs.R'</span>))     <span class="co"># Model Parameters</span></span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">'main_loop.R'</span>))  <span class="co"># Helper functions</span></span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">'discount.R'</span>))   <span class="co"># Discounting functions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-<section id="petri-net-diagrams" class="level1">
-<h1>Petri Net Diagrams</h1>
-<p>A <span style="color:#007bdd"><strong>Petri Net diagram</strong></span> is a graphical modeling tool that represents the flow of resources, entities, and control through a DES over time. It’s particularly useful for modeling concurrent processes and shared resources.</p>
-<p><img src="images/petri-model5.png" class="img-fluid quarto-figure quarto-figure-center"> Petri nets offer a <strong>graphical grammar</strong> that aligns neatly with discrete-event simulation (DES):</p>
-<table class="caption-top table">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 20%">
-<col style="width: 57%">
+<col style="width: 26%">
+<col style="width: 44%">
+<col style="width: 29%">
 </colgroup>
 <thead>
 <tr class="header">
-<th>Element</th>
-<th>Symbol</th>
-<th>In our disease model…</th>
+<th style="text-align: left;">Concept</th>
+<th style="text-align: left;">Definition</th>
+<th style="text-align: left;">Examples</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><em>Place</em></td>
-<td>● (circle)</td>
-<td>Clinical states (<code>H</code>, <code>S1</code>, <code>S2</code>), queues, resources</td>
-</tr>
-<tr class="even">
-<td><em>Token</em></td>
-<td>⬤</td>
-<td>A single patient or a unit of resource capacity</td>
-</tr>
-<tr class="odd">
-<td><em>Transition</em></td>
-<td>▭ (bar/rectangle)</td>
-<td>Events: incidence, progression, death, censoring, resource release</td>
-</tr>
-<tr class="even">
-<td><em>Arc</em></td>
-<td>→</td>
-<td>Preconditions &amp; results of an event</td>
-</tr>
-<tr class="odd">
-<td><em>Marking</em></td>
-<td>Distribution of tokens</td>
-<td>Current cohort composition and resource utilisation</td>
+<td style="text-align: left;"><span style="color:#DF8F44FF"><strong>Tokens</strong></span></td>
+<td style="text-align: left;">Represent patients or units flowing through the simulation, carrying attributes.</td>
+<td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
 </tr>
 </tbody>
 </table>
-<div class="callout callout-style-default callout-tip callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Tip
 </div>
 </div>
-<div class="callout-body-container callout-body">
-<p>A transition <strong>fires</strong> only when every input place supplies at least one token —<br>
-perfect for competing-risk logic in progressive disease.</p>
+</div>
+<div id="cr-table2" class="sticky">
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 27%">
+<col style="width: 53%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Concept</th>
+<th style="text-align: left;">Definition</th>
+<th style="text-align: left;">Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span style="color:#DF8F44FF"><strong>Tokens</strong></span></td>
+<td style="text-align: left;">Represent patients or units flowing through the simulation, carrying attributes.</td>
+<td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span style="color:#00A1D5FF"><strong>Events/transitions</strong></span></td>
+<td style="text-align: left;">Discrete time points when system state changes; trigger resource use and transitions.</td>
+<td style="text-align: left;">- Disease incidence<br> - Disease progression<br> - Death from disease or background causes<br> - Enter treatment waiting list<br> - Acute event (e.g., hospitalization)</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
-<section id="why-petri-nets-for-health-economic-des" class="level2">
-<h2 class="anchored" data-anchor-id="why-petri-nets-for-health-economic-des">1 Why Petri Nets for Health-Economic DES?</h2>
+</div>
+<div id="cr-table3" class="sticky">
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 27%">
+<col style="width: 53%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Concept</th>
+<th style="text-align: left;">Definition</th>
+<th style="text-align: left;">Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span style="color:#DF8F44FF"><strong>Tokens</strong></span></td>
+<td style="text-align: left;">Represent patients or units flowing through the simulation, carrying attributes.</td>
+<td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span style="color:#00A1D5FF"><strong>Events/transitions</strong></span></td>
+<td style="text-align: left;">Discrete time points when system state changes; trigger resource use and transitions.</td>
+<td style="text-align: left;">- Disease incidence<br> - Disease progression<br> - Death from disease or background causes<br> - Enter treatment waiting list<br> - Acute event (e.g., hospitalization)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span style="color:#B24745FF"><strong>Trajectories</strong></span></td>
+<td style="text-align: left;">The sequence of events and states a token experiences during the simulation.</td>
+<td style="text-align: left;">Patient progresses from diagnosis → treatment → remission → relapse → death</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="cr-table4" class="sticky">
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 30%">
+<col style="width: 51%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Concept</th>
+<th style="text-align: left;">Definition</th>
+<th style="text-align: left;">Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span style="color:#DF8F44FF"><strong>Tokens</strong></span></td>
+<td style="text-align: left;">Represent patients or units flowing through the simulation, carrying attributes.</td>
+<td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span style="color:#00A1D5FF"><strong>Events/transitions</strong></span></td>
+<td style="text-align: left;">Discrete time points when system state changes; trigger resource use and transitions.</td>
+<td style="text-align: left;">- Disease incidence<br> - Disease progression<br> - Death from disease or background causes<br> - Enter treatment waiting list<br> - Acute event (e.g., hospitalization)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span style="color:#B24745FF"><strong>Trajectories</strong></span></td>
+<td style="text-align: left;">The sequence of events and states a token experiences during the simulation.</td>
+<td style="text-align: left;">Patient progresses from diagnosis → treatment → remission → relapse → death</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span style="color:#79AF97FF"><strong>Resources</strong></span></td>
+<td style="text-align: left;">Entities required or consumed by events; may be limited (constrained) or unlimited (unconstrained).</td>
+<td style="text-align: left;">- Total time in healthy state<br> - Total time in sick state<br> - Number of available hospital beds</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="visualizing-a-des" class="level1">
+<h1>Visualizing a DES</h1>
+<p>It is often useful to conceptualize a disease or health system process using a state transition diagram that captures mutually exclusive health states and possible transitions among them.</p>
+<div class="cr-section cr-column-screen sidebar-left">
+<div class="narrative-col">
+<div class="trigger new-trigger" data-focus-on="cr-bubble">
+<div class="narrative">
+<p>The state transition model here represents the underlying disease process for the didactic Markov cohort model in <span class="citation" data-cites="alarid2023introductory">Alarid-Escudero et al. (<a href="#ref-alarid2023introductory" role="doc-biblioref">2023</a>)</span>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-pan-to="50%,0%" data-focus-on="cr-bubble">
+<div class="narrative">
+<p>Patients start off healthy, and can then progress into progressive disease states (“Sick [S1],” “Sicker [S2]”)—all while facing risks of death due to background causes, and heightened risk of death while sick.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-bubble">
+<div class="narrative">
+
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>DES models are best visualized using a <span style="color:#007bdd"><strong>Petri Net diagram</strong></span>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-petri1">
+<div class="narrative">
+<p>Shown here is a Petri Net for the same progressive disease model.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-petri1">
+<div class="narrative">
+<p>In what follows, we will demonstrate how we conceptualized and constructed this Petri net diagram for a DES.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-petri2">
+<div class="narrative">
+<p>Doing so will allow us to expand the decision problem to consider an additional dimension—resource contention for a scarce treatment—that is difficult/impossible to capture in Markov and microsimulation modeling approaches.</p>
+</div>
+</div>
+</div>
+<div class="sticky-col">
+<div class="sticky-col-stack">
+<div id="cr-bubble" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/sick-sicker-bubble.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+<div id="cr-petri1" class="sticky">
+<p><img src="images/petri-model5.png" class="img-fluid"></p>
+</div>
+<div id="cr-petri2" class="sticky">
+<p><img src="images/petri-model6.png" class="img-fluid"></p>
+</div>
+</div>
+</div>
+</div>
+<section id="overview-of-petri-nets" class="level2">
+<h2 class="anchored" data-anchor-id="overview-of-petri-nets">Overview of Petri Nets</h2>
+<p>A Petri net diagram represents the flow of resources, entities, and control through a system over time. They are particularly useful for depicting concurrent processes and shared resources.</p>
+<p>A <span style="color:#007bdd"><strong>Petri Net</strong></span> consists of:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 34%">
+<col style="width: 19%">
+<col style="width: 45%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Element</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><img src="images/clipboard-3339342299.png" class="img-fluid"></td>
+<td style="text-align: center;"><strong>Place</strong></td>
+<td style="text-align: left;">Indicate system states or conditions (e.g., “Healthy,” “Sick,” “Under Treatment”).</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><img src="images/clipboard-3059554460.png" class="img-fluid"></td>
+<td style="text-align: center;"><strong>Transition</strong></td>
+<td style="text-align: left;">Signify events that may cause a change in state (e.g., “disease incidence,” “death,” “recovery”).</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><img src="images/clipboard-810075082.png" class="img-fluid" width="45"> <img src="images/clipboard-1758535931.png" class="img-fluid"></td>
+<td style="text-align: center;"><strong>Token</strong></td>
+<td style="text-align: left;">Represent individual entities (e.g., patients, hospital beds or available treatment slots) that flow through the net.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><img src="images/clipboard-1434672209.png" class="img-fluid"></td>
+<td style="text-align: center;"><strong>Arc</strong></td>
+<td style="text-align: left;">Show the flow between places and transitions.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="petri-net-for-the-progressive-disease-model" class="level1">
+<h1>Petri Net for the Progressive Disease Model</h1>
+<div class="cr-section cr-column-screen overlay-center">
+<div class="narrative-col">
+<div class="trigger new-trigger" data-focus-on="cr-model1">
+<div class="narrative">
+<p>We start with a simple model that follows patients for <span class="math inline">\(T\)</span> time units.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-scale-by="1.5" data-pan-to="65%, 20%" data-focus-on="cr-model1">
+<div class="narrative">
+<p>In this simple model, we have a population of “tokens” that start off in the healthy state.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-pan-to="-50%, -35%" data-focus-on="cr-model1">
+<div class="narrative">
+<p>To begin, we will assume this population can only experience one event:reaching the end of the simulation at some time T.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1">
+<div class="narrative">
+
+</div>
+</div>
+</div>
+<div class="sticky-col">
+<div class="sticky-col-stack">
+<div id="cr-model1" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/petri-model1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cr-section cr-column-screen sidebar-left">
+<div class="narrative-col">
+<div class="trigger new-trigger" data-focus-on="cr-inputs0">
+<div class="narrative">
+<p>Our first step is to define the parameters governing the simulation. In this case the list of parameters is small.</p>
+</div>
+</div>
+</div>
+<div class="sticky-col">
+<div class="sticky-col-stack">
+<div id="cr-inputs0" class="sticky">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>inputs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb1-2"><a href="#cb1-2"></a>    <span class="at">N       =</span> <span class="dv">1</span>,  <span class="co"># Total number of patients to simulate. </span></span>
+<span id="cb1-3"><a href="#cb1-3"></a>    <span class="at">horizon =</span> <span class="dv">30</span>  <span class="co"># Time horizon (years)</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cr-section cr-column-screen overlay-center">
+<div class="narrative-col">
+<div class="trigger new-trigger" data-focus-on="cr-model1_2">
+<div class="narrative">
+<p>We next need to step back and think about two concepts we defined above: <span style="color:#79AF97FF"><strong>resources</strong></span> and <span style="color:#00A1D5FF"><strong>events</strong></span>.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>Let’s think first about <span style="color:#9FA8DA"><strong>resources</strong></span>. Resources are elements that a patient may use or consume during their time in the simulation. We use the terms “use” and “consume” somewhat loosely here, because a resource could be something like a hospital bed that is needed for treatment—or it could simply be an element like time that is not constrained.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>In this very simple model, we need to conceptualize our first resource, which is <span style="color:#9FA8DA"><strong>time in model</strong></span>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1-resources0">
+<div class="narrative">
+<p>The image here shows a single patient trajectory over time. We begin tracking the patient at baseline (t=0) and follow them until the end of the time horizon has been met at 30 years.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1-resources1">
+<div class="narrative">
+<p>We can therefore define a resource called <span style="color:#9FA8DA"><strong>time in model</strong></span> that we track. In this case, it will trivially be 30 years for every simulated patient.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1-resources1-death">
+<div class="narrative">
+<p>But that does not always need to be the case! Suppose the patient dies at some time before t=30. In that case, their time in the model will be shorter.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>It’s also important to note that in this example patient trajectory, the resource <code>time_in_model</code> is unconstrained. That is, one simulated patient’s experience of time does not inhibit or limit another patient from also experiencing the elapse of time.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1-resources1">
+<div class="narrative">
+<p>Because the patient is followed for a defined time horizon, we can think of the resource as beginning at the initiation of the model, and ending after the time horizon is met.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1-resources2">
+<div class="narrative">
+<p>The way DES conceptualizes this idea is that the resource is “seized” upon initiation of the model, and then “released” upon exit from the model. These two time stamps can then be used to calculate the total time the resource was “used.”</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1-resources2">
+<div class="narrative">
+<p>Often, the seizure and/or release of resources is triggered by <span style="color:#F44336"><strong>events</strong></span>. We’ll cover how to handle events in just a bit.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-countertable0">
+<div class="narrative">
+
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>Resources are tracked in a <strong>counter</strong> object. In this very simple model, we only have a single resource to track: <code>time_in_model</code>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-counter0">
+<div class="narrative">
+<p>In R, the object <code>counters</code> is defined as a vector listing the various resources that we want to track in the model.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-counter0">
+<div class="narrative">
+
+</div>
+</div>
+</div>
+<div class="sticky-col">
+<div class="sticky-col-stack">
+<div id="cr-model1_2" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/petri-model1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+<div id="cr-model1-resources0" class="sticky">
+<p><img src="images/model1-resources0.png" class="img-fluid"></p>
+</div>
+<div id="cr-model1-resources1" class="sticky">
+<p><img src="images/model1-resources1.png" class="img-fluid"></p>
+</div>
+<div id="cr-model1-resources1-death" class="sticky">
+<p><img src="images/model1-resources1-death.png" class="img-fluid"></p>
+</div>
+<div id="cr-model1-resources1" class="sticky">
+<p><img src="images/model1-resources2.png" class="img-fluid"></p>
+</div>
+<div id="cr-model1-resources2" class="sticky">
+<p><img src="images/model1-resources2.png" class="img-fluid"></p>
+</div>
+<div id="cr-countertable0" class="sticky">
+<table class="caption-top table">
+<caption>DES Model Counters</caption>
+<thead>
+<tr class="header">
+<th>counter</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>time_in_model</td>
+<td>Time (years) patient is tracked in model</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="cr-counter0" class="sticky">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>counters <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb2-2"><a href="#cb2-2"></a>  <span class="st">"time_in_model"</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>Our next step is to define <span style="color:#F44336"><strong>events</strong></span>. In this simple model, we have two:</p>
+<ol type="1">
+<li>Model initiation</li>
+<li>Model exit after the specified horizon has been reached.</li>
+</ol>
+<div class="cr-section cr-column-screen overlay-center">
+<div class="narrative-col">
+<div class="trigger new-trigger" data-focus-on="cr-model1-event1">
+<div class="narrative">
+
+</div>
+</div>
+<div class="trigger new-trigger" data-scale-by="2" data-pan-to="50%, -60%" data-focus-on="cr-model1-event2">
+<div class="narrative">
+<p>Both of these events trigger resource seizure and/or release, in the sense that when a patient is initialized in the model, we want to start the clock on the <code>time_in_model</code> counter.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-scale-by="2" data-pan-to="-50%, -60%" data-focus-on="cr-model1-event2">
+<div class="narrative">
+<p>And similarly, when the patient reaches the event of exiting the model at the defined time horizon, we want to stop the clock on <code>time_in_model</code>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1-event2">
+<div class="narrative">
+
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>In the R/Simmer simulation environment, events are handled through functions that modify the trajectory of the patient.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-Rinitialize1">
+<div class="narrative">
+<p>Let’s start by defining an event for model initialization.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-highlight="1" data-focus-on="cr-Rinitialize1">
+<div class="narrative">
+<p><code>initialize_patient</code> is a function of both <strong>inputs</strong> (i.e., the parameters governing the model) and <strong>trajectories</strong>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-highlight="4" data-focus-on="cr-Rinitialize1">
+<div class="narrative">
+<p>It takes the patient’s trajectory and <strong>seizes</strong> the resource <code>time_in_model</code> that we defined above.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-scale-by="2" data-pan-to="50%, -60%" data-focus-on="cr-model1-event2">
+<div class="narrative">
+<p>Going back to the single patient trajectory, upon initilization of the patient we have “seized” the <code>time_in_model</code> resource for this patient.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-highlight="5" data-focus-on="cr-Rinitialize2">
+<div class="narrative">
+<p>Though we don’t need it for this very simple model, <code>initialize_patient</code> is also a good place to set initial attributes of patients, such as their age, gender, etc. We can then use (and update!) these attributes in the model so they can govern transitions and other events.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-Rinitialize2">
+<div class="narrative">
+
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>Let’s now construct a similar function <code>terminate_simulation()</code> that releases the resource <code>time_in_model</code> once a patient exits the model.</p>
+</div>
+</div>
+</div>
+<div class="sticky-col">
+<div class="sticky-col-stack">
+<div id="cr-model1-event1" class="sticky">
+<p><img src="images/model1-event1.png" class="img-fluid"></p>
+</div>
+<div id="cr-model1-event2" class="sticky">
+<p><img src="images/model1-event2.png" class="img-fluid"></p>
+</div>
+<div id="cr-Rinitialize1" class="sticky">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>initialize_patient <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
+<span id="cb3-2"><a href="#cb3-2"></a>{</span>
+<span id="cb3-3"><a href="#cb3-3"></a>  traj                   <span class="sc">|&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a>  <span class="fu">seize</span>(<span class="st">"time_in_model"</span>) </span>
+<span id="cb3-5"><a href="#cb3-5"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="cr-Rinitialize2" class="sticky">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>initialize_patient <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
+<span id="cb4-2"><a href="#cb4-2"></a>{</span>
+<span id="cb4-3"><a href="#cb4-3"></a>  traj                   <span class="sc">|&gt;</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a>  <span class="fu">seize</span>(<span class="st">"time_in_model"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a>  <span class="fu">set_attribute</span>(<span class="st">"AgeInitial"</span>, <span class="cf">function</span>() <span class="fu">sample</span>(<span class="dv">20</span><span class="sc">:</span><span class="dv">30</span>, <span class="dv">1</span>))</span>
+<span id="cb4-6"><a href="#cb4-6"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cr-section cr-column-screen sidebar-left">
+<div class="narrative-col">
+<div class="trigger new-trigger" data-highlight="4" data-focus-on="cr-Rcleanup0">
+<div class="narrative">
+
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>In this function, we take the patient’s trajectory and introduce a <strong>branch</strong>. You can think of this like a chance node in a decision tree—this puts our patient at a fork in the road, and each pathway has its own probability of being taken.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>In this case, however, the patient is exiting the model. So this is a trivial function with only one option that has a probability of one.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-highlight="5" data-focus-on="cr-Rcleanup0">
+<div class="narrative">
+<p>The option <code>continue</code> is also set to false—indicating that after this branch has been passed, the model will stop running.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>Branches are key coding elements of DES, and allow for updating event times and other aspects of the model that may change over time, or probabilistically due to the occurance of events. In the event a branch is used to update attributes or event times, you woulld set <code>continue=TRUE</code>.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>Branches will also be key for how we conceptualize and model resource constraints later on.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-highlight="7" data-focus-on="cr-Rcleanup0">
+<div class="narrative">
+<p>Once the patient has passed through the branch, we release the resource <code>time_in_model</code>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-highlight="1-5" data-focus-on="cr-Rcleanup1">
+<div class="narrative">
+<p>In our experience, it is often helpful to split this process into two parts: <span class="hl hl-cyan">A function that releases any resources on exit</span>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-highlight="7-15" data-focus-on="cr-Rcleanup1">
+<div class="narrative">
+<p>And a separate <span class="hl hl-cyan">function that terminates the simulation</span> .</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-Rcleanup2">
+<div class="narrative">
+
+</div>
+</div>
+</div>
+<div class="sticky-col">
+<div class="sticky-col-stack">
+<div id="cr-Rcleanup0" class="sticky">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>terminate_simulation <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
+<span id="cb5-2"><a href="#cb5-2"></a>{</span>
+<span id="cb5-3"><a href="#cb5-3"></a>  traj <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a>  <span class="fu">branch</span>( <span class="cf">function</span>() <span class="dv">1</span>, </span>
+<span id="cb5-5"><a href="#cb5-5"></a>          <span class="at">continue=</span><span class="cn">FALSE</span>,</span>
+<span id="cb5-6"><a href="#cb5-6"></a>          <span class="fu">trajectory</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb5-7"><a href="#cb5-7"></a>            <span class="fu">release</span>(<span class="st">"time_in_model"</span>)</span>
+<span id="cb5-8"><a href="#cb5-8"></a>        )</span>
+<span id="cb5-9"><a href="#cb5-9"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="cr-Rcleanup1" class="sticky">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>cleanup_on_termination <span class="ot">&lt;-</span> <span class="cf">function</span>(traj)</span>
+<span id="cb6-2"><a href="#cb6-2"></a>{</span>
+<span id="cb6-3"><a href="#cb6-3"></a>  traj <span class="sc">|&gt;</span> </span>
+<span id="cb6-4"><a href="#cb6-4"></a>  <span class="fu">release</span>(<span class="st">"time_in_model"</span>)</span>
+<span id="cb6-5"><a href="#cb6-5"></a>}</span>
+<span id="cb6-6"><a href="#cb6-6"></a></span>
+<span id="cb6-7"><a href="#cb6-7"></a>terminate_simulation <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
+<span id="cb6-8"><a href="#cb6-8"></a>{</span>
+<span id="cb6-9"><a href="#cb6-9"></a>  traj <span class="sc">|&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a>  <span class="fu">branch</span>( <span class="cf">function</span>() <span class="dv">1</span>, </span>
+<span id="cb6-11"><a href="#cb6-11"></a>          <span class="at">continue=</span><span class="cn">FALSE</span>,</span>
+<span id="cb6-12"><a href="#cb6-12"></a>          <span class="fu">trajectory</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb6-13"><a href="#cb6-13"></a>            <span class="fu">cleanup_on_termination</span>()</span>
+<span id="cb6-14"><a href="#cb6-14"></a>        )</span>
+<span id="cb6-15"><a href="#cb6-15"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="cr-Rcleanup1" class="sticky">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>cleanup_on_termination <span class="ot">&lt;-</span> <span class="cf">function</span>(traj)</span>
+<span id="cb7-2"><a href="#cb7-2"></a>{</span>
+<span id="cb7-3"><a href="#cb7-3"></a>  traj <span class="sc">|&gt;</span> </span>
+<span id="cb7-4"><a href="#cb7-4"></a>  <span class="fu">release</span>(<span class="st">"time_in_model"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="cr-Rcleanup2" class="sticky">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>terminate_simulation <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
+<span id="cb8-2"><a href="#cb8-2"></a>{</span>
+<span id="cb8-3"><a href="#cb8-3"></a>  traj <span class="sc">|&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a>  <span class="fu">branch</span>( <span class="cf">function</span>() <span class="dv">1</span>, </span>
+<span id="cb8-5"><a href="#cb8-5"></a>          <span class="at">continue=</span><span class="cn">FALSE</span>,</span>
+<span id="cb8-6"><a href="#cb8-6"></a>          <span class="fu">trajectory</span>() <span class="sc">|&gt;</span> <span class="fu">cleanup_on_termination</span>()</span>
+<span id="cb8-7"><a href="#cb8-7"></a>        )</span>
+<span id="cb8-8"><a href="#cb8-8"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="scratch" class="level1">
+<h1>Scratch</h1>
+<div class="cr-section cr-column-screen overlay-center">
+<div class="narrative-col">
+<div class="trigger">
+<div class="narrative">
+<p>The first thing we want to track is the trajectory of the patient through the model.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model1-init">
+<div class="narrative">
+<p>We need to initialize the patient</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model2">
+<div class="narrative">
+<p>We’ll next add in a death state.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<ol class="example" type="1">
+<li>Now we allow for two health states: healthy and sick.</li>
+</ol>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model4">
+<div class="narrative">
+<p>We can allow for an event transition back to the healthy state.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model5">
+<div class="narrative">
+<p>We add in progressive disease.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model6">
+<div class="narrative">
+<p>And finally, we add in a treatment with resource constraints (e.g., limited beds, surgical appointment spots, etc.)</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-model6">
+<div class="narrative">
+
+</div>
+</div>
+</div>
+<div class="sticky-col">
+<div class="sticky-col-stack">
+<div id="cr-model1-init" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/petri-model1_initialize.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+<div id="cr-model2" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/petri-model2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+<div id="cr-model3" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/petri-model3.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+<div id="cr-model4" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/petri-model4.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+<div id="cr-model5" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/petri-model5.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+<div id="cr-model6" class="sticky">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/petri-model6.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
 <p>Petri nets offer a <strong>graphical grammar</strong> that aligns neatly with discrete-event simulation (DES):</p>
 <table class="caption-top table">
 <colgroup>
@@ -404,7 +1051,7 @@ perfect for competing-risk logic in progressive disease.</p>
 </tr>
 <tr class="even">
 <td><em>Token</em></td>
-<td>⬤</td>
+<td></td>
 <td>A single patient or a unit of resource capacity</td>
 </tr>
 <tr class="odd">
@@ -416,11 +1063,6 @@ perfect for competing-risk logic in progressive disease.</p>
 <td><em>Arc</em></td>
 <td>→</td>
 <td>Preconditions &amp; results of an event</td>
-</tr>
-<tr class="odd">
-<td><em>Marking</em></td>
-<td>Distribution of tokens</td>
-<td>Current cohort composition and resource utilisation</td>
 </tr>
 </tbody>
 </table>
@@ -438,351 +1080,21 @@ Tip
 perfect for competing-risk logic in progressive disease.</p>
 </div>
 </div>
-<hr>
-</section>
-<section id="core-progressive-disease-net" class="level2">
-<h2 class="anchored" data-anchor-id="core-progressive-disease-net">2 Core Progressive-Disease Net</h2>
-<p>Below is DOT code you can render via the <strong>dot</strong> engine (Graphviz).<br>
-Tokens start in <code>H</code> at <em>t = 0</em>.</p>
-<div class="cell" data-layout-align="default">
-<div class="cell-output-display">
-<div>
-<p></p><figure class="figure"><p></p>
-<div>
-<svg width="672" height="480" viewbox="0.00 0.00 714.42 283.30" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 279.3)">
-<title>DiseaseNet</title>
-<polygon fill="white" stroke="transparent" points="-4,4 -4,-279.3 710.42,-279.3 710.42,4 -4,4"></polygon>
-<text text-anchor="middle" x="353.21" y="-258.7" font-family="Times,serif" font-size="14.00">Progressive disease • follow until T or death</text>
-<!-- H -->
-<g id="node1" class="node">
-<title>H</title>
-<ellipse fill="none" stroke="black" cx="39.5" cy="-49" rx="39.5" ry="39.5"></ellipse>
-<text text-anchor="middle" x="39.5" y="-52" font-family="Times,serif" font-size="10.00">H</text>
-<text text-anchor="middle" x="39.5" y="-40" font-family="Times,serif" font-size="10.00">(Healthy)</text>
-</g>
-<!-- tInc -->
-<g id="node7" class="node">
-<title>tInc</title>
-<polygon fill="none" stroke="black" points="165.96,-175 115.01,-175 115.01,-153 165.96,-153 165.96,-175"></polygon>
-<text text-anchor="middle" x="140.49" y="-161.3" font-family="Times,serif" font-size="9.00">Incidence</text>
-</g>
-<!-- H&#45;&gt;tInc -->
-<g id="edge1" class="edge">
-<title>H-&gt;tInc</title>
-<path fill="none" stroke="black" d="M65.99,-78.62C83.91,-99.43 107.37,-126.69 122.91,-144.74"></path>
-<polygon fill="black" stroke="black" points="120.67,-147.5 129.84,-152.79 125.97,-142.93 120.67,-147.5"></polygon>
-</g>
-<!-- tD0 -->
-<g id="node12" class="node">
-<title>tD0</title>
-<polygon fill="none" stroke="black" points="159.48,-96 121.5,-96 121.5,-74 159.48,-74 159.48,-96"></polygon>
-<text text-anchor="middle" x="140.49" y="-82.3" font-family="Times,serif" font-size="9.00">Death</text>
-</g>
-<!-- H&#45;&gt;tD0 -->
-<g id="edge3" class="edge">
-<title>H-&gt;tD0</title>
-<path fill="none" stroke="black" d="M76.8,-62.2C88.46,-66.44 101.17,-71.06 112.08,-75.03"></path>
-<polygon fill="black" stroke="black" points="110.92,-78.34 121.52,-78.46 113.31,-71.76 110.92,-78.34"></polygon>
-</g>
-<!-- tC0 -->
-<g id="node13" class="node">
-<title>tC0</title>
-<polygon fill="none" stroke="black" points="479.98,-22 437.98,-22 437.98,0 479.98,0 479.98,-22"></polygon>
-<text text-anchor="middle" x="458.98" y="-8.3" font-family="Times,serif" font-size="9.00">Censor</text>
-</g>
-<!-- H&#45;&gt;tC0 -->
-<g id="edge5" class="edge">
-<title>H-&gt;tC0</title>
-<path fill="none" stroke="black" d="M79.03,-45.49C161.56,-37.98 353.96,-20.47 428.1,-13.72"></path>
-<polygon fill="black" stroke="black" points="428.51,-17.2 438.16,-12.8 427.88,-10.23 428.51,-17.2"></polygon>
-</g>
-<!-- S1 -->
-<g id="node2" class="node">
-<title>S1</title>
-<ellipse fill="none" stroke="black" cx="245.48" cy="-203" rx="39.5" ry="39.5"></ellipse>
-<text text-anchor="middle" x="245.48" y="-206" font-family="Times,serif" font-size="10.00">S1</text>
-<text text-anchor="middle" x="245.48" y="-194" font-family="Times,serif" font-size="10.00">(Disease)</text>
-</g>
-<!-- tProg -->
-<g id="node8" class="node">
-<title>tProg</title>
-<polygon fill="none" stroke="black" points="383.73,-183 324.72,-183 324.72,-161 383.73,-161 383.73,-183"></polygon>
-<text text-anchor="middle" x="354.23" y="-169.3" font-family="Times,serif" font-size="9.00">Progression</text>
-</g>
-<!-- S1&#45;&gt;tProg -->
-<g id="edge7" class="edge">
-<title>S1-&gt;tProg</title>
-<path fill="none" stroke="black" d="M283.51,-192.24C293.63,-189.31 304.61,-186.12 314.8,-183.16"></path>
-<polygon fill="black" stroke="black" points="316.04,-186.44 324.67,-180.29 314.09,-179.72 316.04,-186.44"></polygon>
-</g>
-<!-- tRec -->
-<g id="node9" class="node">
-<title>tRec</title>
-<polygon fill="none" stroke="black" points="379.71,-55 328.74,-55 328.74,-33 379.71,-33 379.71,-55"></polygon>
-<text text-anchor="middle" x="354.23" y="-41.3" font-family="Times,serif" font-size="9.00">Recovery</text>
-</g>
-<!-- S1&#45;&gt;tRec -->
-<g id="edge9" class="edge">
-<title>S1-&gt;tRec</title>
-<path fill="none" stroke="black" d="M273.6,-175.2C279.07,-168.85 284.51,-161.92 288.98,-155 310.14,-122.25 303.58,-107.59 324.98,-75 327.78,-70.74 331.16,-66.48 334.6,-62.56"></path>
-<polygon fill="black" stroke="black" points="337.32,-64.76 341.56,-55.05 332.19,-60 337.32,-64.76"></polygon>
-</g>
-<!-- tD1 -->
-<g id="node10" class="node">
-<title>tD1</title>
-<polygon fill="none" stroke="black" points="477.97,-237 439.98,-237 439.98,-215 477.97,-215 477.97,-237"></polygon>
-<text text-anchor="middle" x="458.98" y="-223.3" font-family="Times,serif" font-size="9.00">Death</text>
-</g>
-<!-- S1&#45;&gt;tD1 -->
-<g id="edge11" class="edge">
-<title>S1-&gt;tD1</title>
-<path fill="none" stroke="black" d="M284.78,-207.17C326.6,-211.71 392.57,-218.89 429.86,-222.94"></path>
-<polygon fill="black" stroke="black" points="429.7,-226.45 440.02,-224.05 430.46,-219.49 429.7,-226.45"></polygon>
-</g>
-<!-- tC1 -->
-<g id="node14" class="node">
-<title>tC1</title>
-<polygon fill="none" stroke="black" points="576.22,-100 534.22,-100 534.22,-78 576.22,-78 576.22,-100"></polygon>
-<text text-anchor="middle" x="555.22" y="-86.3" font-family="Times,serif" font-size="9.00">Censor</text>
-</g>
-<!-- S1&#45;&gt;tC1 -->
-<g id="edge13" class="edge">
-<title>S1-&gt;tC1</title>
-<path fill="none" stroke="black" d="M278.28,-180.8C292.3,-171.41 309.16,-160.67 324.98,-152 365.44,-129.81 375.22,-122.07 419.48,-109 454.52,-98.65 496.34,-93.51 524,-91.06"></path>
-<polygon fill="black" stroke="black" points="524.53,-94.53 534.21,-90.22 523.96,-87.55 524.53,-94.53"></polygon>
-</g>
-<!-- S2 -->
-<g id="node3" class="node">
-<title>S2</title>
-<ellipse fill="none" stroke="black" cx="458.98" cy="-157" rx="39.5" ry="39.5"></ellipse>
-<text text-anchor="middle" x="458.98" y="-160" font-family="Times,serif" font-size="10.00">S2</text>
-<text text-anchor="middle" x="458.98" y="-148" font-family="Times,serif" font-size="10.00">(Progressed)</text>
-</g>
-<!-- tD2 -->
-<g id="node11" class="node">
-<title>tD2</title>
-<polygon fill="none" stroke="black" points="574.22,-187 536.23,-187 536.23,-165 574.22,-165 574.22,-187"></polygon>
-<text text-anchor="middle" x="555.22" y="-173.3" font-family="Times,serif" font-size="9.00">Death</text>
-</g>
-<!-- S2&#45;&gt;tD2 -->
-<g id="edge15" class="edge">
-<title>S2-&gt;tD2</title>
-<path fill="none" stroke="black" d="M497.77,-164.62C507.34,-166.55 517.44,-168.59 526.42,-170.39"></path>
-<polygon fill="black" stroke="black" points="525.84,-173.85 536.33,-172.39 527.22,-166.99 525.84,-173.85"></polygon>
-</g>
-<!-- tC2 -->
-<g id="node15" class="node">
-<title>tC2</title>
-<polygon fill="none" stroke="black" points="576.22,-143 534.22,-143 534.22,-121 576.22,-121 576.22,-143"></polygon>
-<text text-anchor="middle" x="555.22" y="-129.3" font-family="Times,serif" font-size="9.00">Censor</text>
-</g>
-<!-- S2&#45;&gt;tC2 -->
-<g id="edge17" class="edge">
-<title>S2-&gt;tC2</title>
-<path fill="none" stroke="black" d="M497.23,-147.12C506.32,-144.71 515.93,-142.16 524.62,-139.85"></path>
-<polygon fill="black" stroke="black" points="525.54,-143.23 534.3,-137.28 523.74,-136.46 525.54,-143.23"></polygon>
-</g>
-<!-- Dsec -->
-<g id="node4" class="node">
-<title>Dsec</title>
-<ellipse fill="none" stroke="black" cx="245.48" cy="-102" rx="39.5" ry="39.5"></ellipse>
-<ellipse fill="none" stroke="black" cx="245.48" cy="-102" rx="43.5" ry="43.5"></ellipse>
-<text text-anchor="middle" x="245.48" y="-105" font-family="Times,serif" font-size="10.00">D_sec</text>
-<text text-anchor="middle" x="245.48" y="-93" font-family="Times,serif" font-size="10.00">(Secular)</text>
-</g>
-<!-- Ddis -->
-<g id="node5" class="node">
-<title>Ddis</title>
-<ellipse fill="none" stroke="black" cx="659.2" cy="-207" rx="39.5" ry="39.5"></ellipse>
-<ellipse fill="none" stroke="black" cx="659.2" cy="-207" rx="43.5" ry="43.5"></ellipse>
-<text text-anchor="middle" x="659.2" y="-210" font-family="Times,serif" font-size="10.00">D_dis</text>
-<text text-anchor="middle" x="659.2" y="-198" font-family="Times,serif" font-size="10.00">(Disease)</text>
-</g>
-<!-- Tend -->
-<g id="node6" class="node">
-<title>Tend</title>
-<ellipse fill="none" stroke="black" cx="659.2" cy="-89" rx="43.43" ry="43.43"></ellipse>
-<ellipse fill="none" stroke="black" cx="659.2" cy="-89" rx="47.45" ry="47.45"></ellipse>
-<text text-anchor="middle" x="659.2" y="-92" font-family="Times,serif" font-size="10.00">T_end</text>
-<text text-anchor="middle" x="659.2" y="-80" font-family="Times,serif" font-size="10.00">(Admin censor)</text>
-</g>
-<!-- tInc&#45;&gt;S1 -->
-<g id="edge2" class="edge">
-<title>tInc-&gt;S1</title>
-<path fill="none" stroke="black" d="M166.16,-173.34C175.91,-177.04 187.45,-181.41 198.63,-185.64"></path>
-<polygon fill="black" stroke="black" points="197.72,-189.04 208.31,-189.31 200.2,-182.49 197.72,-189.04"></polygon>
-</g>
-<!-- tProg&#45;&gt;S2 -->
-<g id="edge8" class="edge">
-<title>tProg-&gt;S2</title>
-<path fill="none" stroke="black" d="M383.57,-167.86C391.69,-166.68 400.77,-165.35 409.72,-164.04"></path>
-<polygon fill="black" stroke="black" points="410.33,-167.49 419.72,-162.59 409.32,-160.57 410.33,-167.49"></polygon>
-</g>
-<!-- tRec&#45;&gt;H -->
-<g id="edge10" class="edge">
-<title>tRec-&gt;H</title>
-<path fill="none" stroke="black" d="M328.6,-44.39C277.14,-45.22 157.37,-47.13 89.58,-48.22"></path>
-<polygon fill="black" stroke="black" points="89.1,-44.72 79.16,-48.38 89.21,-51.72 89.1,-44.72"></polygon>
-</g>
-<!-- tD1&#45;&gt;Ddis -->
-<g id="edge12" class="edge">
-<title>tD1-&gt;Ddis</title>
-<path fill="none" stroke="black" d="M477.92,-224.28C506.44,-221.55 563.23,-216.1 605.48,-212.05"></path>
-<polygon fill="black" stroke="black" points="606,-215.52 615.62,-211.08 605.33,-208.55 606,-215.52"></polygon>
-</g>
-<!-- tD2&#45;&gt;Ddis -->
-<g id="edge16" class="edge">
-<title>tD2-&gt;Ddis</title>
-<path fill="none" stroke="black" d="M573.99,-181.4C583.44,-184.27 595.6,-187.97 607.71,-191.65"></path>
-<polygon fill="black" stroke="black" points="606.79,-195.03 617.37,-194.59 608.82,-188.33 606.79,-195.03"></polygon>
-</g>
-<!-- tD0&#45;&gt;Dsec -->
-<g id="edge4" class="edge">
-<title>tD0-&gt;Dsec</title>
-<path fill="none" stroke="black" d="M159.43,-87.96C168.7,-89.49 180.55,-91.45 192.44,-93.41"></path>
-<polygon fill="black" stroke="black" points="191.94,-96.87 202.37,-95.05 193.08,-89.97 191.94,-96.87"></polygon>
-</g>
-<!-- tC0&#45;&gt;Tend -->
-<g id="edge6" class="edge">
-<title>tC0-&gt;Tend</title>
-<path fill="none" stroke="black" d="M480.07,-18.91C509.2,-30.37 564.17,-52 605.37,-68.21"></path>
-<polygon fill="black" stroke="black" points="604.14,-71.49 614.73,-71.9 606.71,-64.98 604.14,-71.49"></polygon>
-</g>
-<!-- tC1&#45;&gt;Tend -->
-<g id="edge14" class="edge">
-<title>tC1-&gt;Tend</title>
-<path fill="none" stroke="black" d="M576.37,-89C583.79,-89 592.61,-89 601.67,-89"></path>
-<polygon fill="black" stroke="black" points="601.93,-92.5 611.93,-89 601.93,-85.5 601.93,-92.5"></polygon>
-</g>
-<!-- tC2&#45;&gt;Tend -->
-<g id="edge18" class="edge">
-<title>tC2-&gt;Tend</title>
-<path fill="none" stroke="black" d="M576.37,-123.5C584.99,-119.87 595.49,-115.44 606.06,-110.98"></path>
-<polygon fill="black" stroke="black" points="607.47,-114.19 615.32,-107.08 604.75,-107.74 607.47,-114.19"></polygon>
-</g>
-</g>
-</svg>
-</div>
-<p></p></figure><p></p>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="default">
-<div class="cell-output-display">
-<div>
-<p></p><figure class="figure"><p></p>
-<div>
-<svg width="672" height="480" viewbox="0.00 0.00 534.18 143.17" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 139.17)">
-<title>QueueNet</title>
-<polygon fill="white" stroke="transparent" points="-4,4 -4,-139.17 530.18,-139.17 530.18,4 -4,4"></polygon>
-<!-- Q -->
-<g id="node1" class="node">
-<title>Q</title>
-<ellipse fill="none" stroke="black" cx="106.31" cy="-67.66" rx="27.15" ry="27.15"></ellipse>
-<text text-anchor="middle" x="106.31" y="-64.66" font-family="Times,serif" font-size="10.00">Q_wait</text>
-</g>
-<!-- Seize -->
-<g id="node5" class="node">
-<title>Seize</title>
-<polygon fill="none" stroke="black" points="206.64,-78.66 170.64,-78.66 170.64,-56.66 206.64,-56.66 206.64,-78.66"></polygon>
-<text text-anchor="middle" x="188.64" y="-64.96" font-family="Times,serif" font-size="9.00">Seize</text>
-</g>
-<!-- Q&#45;&gt;Seize -->
-<g id="edge2" class="edge">
-<title>Q-&gt;Seize</title>
-<path fill="none" stroke="black" d="M134.06,-67.66C142.53,-67.66 151.9,-67.66 160.41,-67.66"></path>
-<polygon fill="black" stroke="black" points="160.58,-71.16 170.58,-67.66 160.58,-64.16 160.58,-71.16"></polygon>
-</g>
-<!-- R -->
-<g id="node2" class="node">
-<title>R</title>
-<ellipse fill="none" stroke="black" cx="489.67" cy="-98.66" rx="36.52" ry="36.52"></ellipse>
-<text text-anchor="middle" x="489.67" y="-101.66" font-family="Times,serif" font-size="10.00">R_cap</text>
-<text text-anchor="middle" x="489.67" y="-89.66" font-family="Times,serif" font-size="10.00">(init = 1)</text>
-</g>
-<!-- R&#45;&gt;Seize -->
-<g id="edge3" class="edge">
-<title>R-&gt;Seize</title>
-<path fill="none" stroke="black" d="M452.84,-96.69C405,-93.81 317.68,-87.67 243.64,-77.66 234.9,-76.48 225.44,-74.85 216.91,-73.25"></path>
-<polygon fill="black" stroke="black" points="217.56,-69.81 207.08,-71.34 216.23,-76.68 217.56,-69.81"></polygon>
-</g>
-<!-- Svc -->
-<g id="node3" class="node">
-<title>Svc</title>
-<ellipse fill="none" stroke="black" cx="276.3" cy="-32.66" rx="32.82" ry="32.82"></ellipse>
-<text text-anchor="middle" x="276.3" y="-29.66" font-family="Times,serif" font-size="10.00">InService</text>
-</g>
-<!-- Release -->
-<g id="node6" class="node">
-<title>Release</title>
-<polygon fill="none" stroke="black" points="389.94,-43.66 345.97,-43.66 345.97,-21.66 389.94,-21.66 389.94,-43.66"></polygon>
-<text text-anchor="middle" x="367.95" y="-29.96" font-family="Times,serif" font-size="9.00">Release</text>
-</g>
-<!-- Svc&#45;&gt;Release -->
-<g id="edge5" class="edge">
-<title>Svc-&gt;Release</title>
-<path fill="none" stroke="black" d="M309.16,-32.66C317.82,-32.66 327.18,-32.66 335.8,-32.66"></path>
-<polygon fill="black" stroke="black" points="335.85,-36.16 345.85,-32.66 335.85,-29.16 335.85,-36.16"></polygon>
-</g>
-<!-- Arrive -->
-<g id="node4" class="node">
-<title>Arrive</title>
-<polygon fill="none" stroke="black" points="41.98,-78.66 0.01,-78.66 0.01,-56.66 41.98,-56.66 41.98,-78.66"></polygon>
-<text text-anchor="middle" x="20.99" y="-64.96" font-family="Times,serif" font-size="9.00">Arrival</text>
-</g>
-<!-- Arrive&#45;&gt;Q -->
-<g id="edge1" class="edge">
-<title>Arrive-&gt;Q</title>
-<path fill="none" stroke="black" d="M42.16,-67.66C50.14,-67.66 59.57,-67.66 68.67,-67.66"></path>
-<polygon fill="black" stroke="black" points="68.71,-71.16 78.71,-67.66 68.71,-64.16 68.71,-71.16"></polygon>
-</g>
-<!-- Seize&#45;&gt;Svc -->
-<g id="edge4" class="edge">
-<title>Seize-&gt;Svc</title>
-<path fill="none" stroke="black" d="M206.97,-60.58C215.51,-57.09 226.16,-52.74 236.5,-48.51"></path>
-<polygon fill="black" stroke="black" points="237.91,-51.72 245.84,-44.7 235.26,-45.24 237.91,-51.72"></polygon>
-</g>
-<!-- Release&#45;&gt;R -->
-<g id="edge6" class="edge">
-<title>Release-&gt;R</title>
-<path fill="none" stroke="black" d="M387.5,-43.82C393.94,-47.64 401.23,-51.89 407.95,-55.66 420.87,-62.91 435.11,-70.59 447.97,-77.43"></path>
-<polygon fill="black" stroke="black" points="446.59,-80.65 457.06,-82.23 449.86,-74.46 446.59,-80.65"></polygon>
-</g>
-<!-- P_done -->
-<g id="node7" class="node">
-<title>P_done</title>
-<polygon fill="none" stroke="black" points="511.17,-31.66 468.17,-31.66 468.17,-9.66 511.17,-9.66 511.17,-31.66"></polygon>
-<text text-anchor="middle" x="489.67" y="-17.96" font-family="Times,serif" font-size="9.00">P_done</text>
-</g>
-<!-- Release&#45;&gt;P_done -->
-<g id="edge7" class="edge">
-<title>Release-&gt;P_done</title>
-<path fill="none" stroke="black" d="M390.11,-24.5C395.81,-22.67 402.04,-20.99 407.95,-20.06 424.21,-17.5 442.55,-17.42 457.63,-18.07"></path>
-<polygon fill="black" stroke="black" points="457.78,-21.59 467.96,-18.66 458.18,-14.6 457.78,-21.59"></polygon>
-<text text-anchor="middle" x="421.55" y="-41.66" font-family="Times,serif" font-size="14.00">Next</text>
-<text text-anchor="middle" x="421.55" y="-24.86" font-family="Times,serif" font-size="14.00">state</text>
-</g>
-</g>
-</svg>
-</div>
-<p></p></figure><p></p>
-</div>
-</div>
-</div>
-</section>
-</section>
-<section id="extra-stuff" class="level1">
-<h1>Extra Stuff</h1>
-<p><span class="hl hl-blue">blue highlighted text</span> <span class="hl hl-red">red highlighted text</span> <span class="hl hl-cyan">cyan highlighted text</span> <span class="hl hl-green">green highlighted text</span> <span class="hl hl-brown">brown highlighted text</span></p>
-<p>Here’s some <span style="color:cornflowerblue"><strong>some bolded blue text</strong></span> How about some <span style="color:firebrick"><strong>red bolded text</strong></span> How about some <span style="color:darkcyan"><strong>cyan bolded text</strong></span></p>
+<!-- # Extra Stuff -->
+<!-- <span class="hl hl-blue">blue highlighted text</span>  -->
+<!-- <span class="hl hl-red">red highlighted text</span>  -->
+<!-- <span class="hl hl-cyan">cyan highlighted text</span>  -->
+<!-- <span class="hl hl-green">green highlighted text</span>  -->
+<!-- <span class="hl hl-brown">brown highlighted text</span>  -->
+<!-- Here's some <span style="color:cornflowerblue">**some bolded blue text**</span> -->
+<!-- How about some <span style="color:firebrick">**red bolded text**</span> -->
+<!-- How about some <span style="color:darkcyan">**cyan bolded text**</span>  -->
 
 </section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
-<div id="ref-graves2021comparison" class="csl-entry" role="listitem">
-Graves, John, Shawn Garbett, Zilu Zhou, Jonathan S Schildcrout, and Josh Peterson. 2021. <span>“Comparison of Decision Modeling Approaches for Health Technology and Policy Evaluation.”</span> <em>Medical Decision Making</em> 41 (4): 453–64.
+<div id="ref-alarid2023introductory" class="csl-entry" role="listitem">
+Alarid-Escudero, Fernando, Eline Krijkamp, Eva A Enns, Alan Yang, MG Myriam Hunink, Petros Pechlivanoglou, and Hawre Jalal. 2023. <span>“An Introductory Tutorial on Cohort State-Transition Models in r Using a Cost-Effectiveness Analysis Example.”</span> <em>Medical Decision Making</em> 43 (1): 3–20.
 </div>
 </div></section></div></main>
 <!-- /main column -->
