@@ -40,6 +40,419 @@ source(here('main_loop.R'))  # Helper functions
 source(here('discount.R'))   # Discounting functions
 ```
 
+# Visualizing a DES
+
+It is often useful to conceptualize a disease or health system process using a state transition diagram that captures mutually exclusive health states and possible transitions among them. 
+
+
+:::{.cr-section}
+
+
+
+@cr-bubble The state transition model here represents the underlying disease process for the didactic Markov cohort model in @alarid2023introductory. 
+
+[@cr-bubble]{pan-to="50%,0%"} Patients start off healthy, and can then progress into progressive disease states ("Sick [S1]," "Sicker [S2]")---all while facing risks of death due to background causes, and heightened risk of death while sick.  
+
+@cr-bubble
+
+DES models are best visualized using a <span style="color:#007bdd">**Petri net diagram**</span>. 
+
+@cr-petri1  Shown here is a Petri net for the same progressive disease model.  
+
+In what follows, we will demonstrate how we conceptualized and constructed this Petri net diagram for a DES. @cr-petri1
+
+Doing so will allow us to expand the decision problem to consider an additional dimension---resource contention for a scarce treatment---that is difficult/impossible to capture in Markov and microsimulation modeling approaches. @cr-petri2
+
+:::{#cr-bubble}
+![](images/sick-sicker-bubble.png){fig-align="center"}
+:::
+
+:::{#cr-petri1}
+![](images/petri-model5.png)
+:::
+
+:::{#cr-petri2}
+![](images/petri-model6.png)
+:::
+
+
+:::
+# Progressive Disease Model
+
+
+:::{.cr-section layout="overlay-center"}
+
+@cr-model1  We start with a simple model that follows patients for $T$ time units. 
+
+In this simple model, we have a population of "tokens" that start off in the healthy state. [@cr-model1]{pan-to="65%, 20%" scale-by="1.5"}
+
+To begin, we will assume this population can only experience one event: [@cr-model1]{pan-to="-50%, -35%"} reaching the end of the simulation at some time T. 
+
+@cr-model1
+
+:::{#cr-model1}
+![](images/petri-model1.png){fig-align="center"}
+:::
+
+
+:::
+
+
+:::{.cr-section}
+
+Our first step is to define the parameters governing the simulation. In this case the list of parameters is small. @cr-inputs0
+
+:::{#cr-inputs0}
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+#| code-line-numbers: true
+#| 
+inputs <- list(
+    N       = 1,  # Total number of patients to simulate. 
+    horizon = 30  # Time horizon (years)
+)
+
+```
+:::
+:::
+
+:::{.cr-section layout="overlay-center"}
+
+:::{#cr-model1_2}
+![](images/petri-model1.png){fig-align="center"}
+:::
+
+@cr-model1_2 We next need to step back and think about two concepts we defined above: <span style="color:#79AF97FF">**resources**</span> and <span style="color:#00A1D5FF">**events**</span>. 
+
+Let's think first about <span style="color:#9FA8DA">**resources**</span>. Resources are elements that a patient may use or consume during their time in the simulation. We use the terms "use" and "consume" somewhat loosely here, because a resource could be something like a hospital bed that is needed for treatment---or it could simply be an element like time that is not constrained. 
+
+In this very simple model, we need to conceptualize our first resource, which is <span style="color:#9FA8DA">**time in model**</span>. 
+
+The image here shows a single patient trajectory over time. We begin tracking the patient at baseline (t=0) and follow them until the end of the time horizon has been met at 30 years. @cr-model1-resources0
+
+We can therefore define a resource called <span style="color:#9FA8DA">**time in model**</span> that we track. In this case, it will trivially be 30 years for every simulated patient.  @cr-model1-resources1 
+
+:::{#cr-model1-resources0}
+![](images/model1-resources0.png)
+:::
+
+:::{#cr-model1-resources1}
+![](images/model1-resources1.png)
+:::
+
+But that does not always need to be the case! Suppose the patient dies at some time before t=30. In that case, their time in the model will be shorter. @cr-model1-resources1-death
+
+:::{#cr-model1-resources1-death}
+![](images/model1-resources1-death.png)
+:::
+
+It's also important to note that in this example patient trajectory, the resource `time_in_model` is unconstrained. That is, one simulated patient's experience of time does not inhibit or limit another patient from also experiencing the elapse of time. 
+
+@cr-model1-resources1 Because the patient is followed for a defined time horizon, we can think of the resource as beginning at the initiation of the model, and ending after the time horizon is met. 
+
+@cr-model1-resources2 The way DES conceptualizes this idea is that the resource is "seized" upon initiation of the model, and then "released" upon exit from the model. These two time stamps can then be used to calculate the total time the resource was "used." 
+
+:::{#cr-model1-resources1}
+![](images/model1-resources2.png)
+:::
+
+@cr-model1-resources2 Often, the seizure and/or release of resources is triggered by <span style="color:#F44336">**events**</span>. We'll cover how to handle events in just a bit. 
+
+:::{#cr-model1-resources2}
+![](images/model1-resources2.png)
+:::
+
+
+@cr-countertable0 
+
+Resources are tracked in a **counter** object. In this very simple model, we only have a single resource to track: `time_in_model`.
+
+:::{#cr-countertable0}
+: DES Model Counters
+
+| counter | description |
+|---------|-------------|
+| time_in_model | Time (years) patient is tracked in model |
+:::
+
+
+
+In R, the object `counters` is defined as a vector listing the various resources that we want to track in the model. @cr-counter0 
+
+@cr-counter0
+
+:::{#cr-counter0}
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+#| code-line-numbers: true
+#| 
+counters <- c(
+  "time_in_model"
+)
+
+```
+:::
+
+:::
+
+Our next step is to define <span style="color:#F44336">**events**</span>. In this simple model, we have two:
+
+
+  1. Model initiation
+  2. Model exit after the specified horizon has been reached.
+
+
+
+
+:::{.cr-section layout="overlay-center"}
+
+@cr-model1-event1
+
+Both of these events trigger resource seizure and/or release, in the sense that when a patient is initialized in the model,
+we want to start the clock on the `time_in_model` counter. [@cr-model1-event2]{pan-to="50%, -60%" scale-by="2"}
+
+And similarly, when the patient reaches the event of exiting the model at the defined time horizon, we want to stop the clock on `time_in_model`.  [@cr-model1-event2]{pan-to="-50%, -60%" scale-by="2"}
+
+@cr-model1-event2
+
+:::{#cr-model1-event1}
+![](images/model1-event1.png)
+:::
+
+:::{#cr-model1-event2}
+![](images/model1-event2.png)
+:::
+
+
+In the R/Simmer simulation environment, events are handled through functions that modify the trajectory of the patient.
+
+Let's start by defining an event for model initialization. @cr-Rinitialize1
+
+:::{#cr-Rinitialize1}
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+#| code-line-numbers: true
+initialize_patient <- function(traj, inputs)
+{
+  traj                   |>
+  seize("time_in_model") 
+}
+```
+:::
+
+:::{#cr-Rinitialize2}
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+#| code-line-numbers: true
+initialize_patient <- function(traj, inputs)
+{
+  traj                   |>
+  seize("time_in_model") |>
+  set_attribute("AgeInitial", function() sample(20:30, 1))
+}
+```
+:::
+
+[@cr-Rinitialize1]{highlight="1"} `initialize_patient` is a function of both **inputs** (i.e., the parameters governing the model) and **trajectories**. 
+
+[@cr-Rinitialize1]{highlight="3"} It takes the patient's trajectory and **seizes** the resource `time_in_model` that we defined above. [@cr-Rinitialize1]{highlight="4"}
+
+[@cr-model1-event2]{pan-to="50%, -60%" scale-by="2"} Going back to the single patient trajectory, upon initilization of the patient we have "seized" the `time_in_model` resource for this patient. 
+
+[@cr-Rinitialize2]{highlight="5"} Though we don't need it for this very simple model, `initialize_patient` is also a good place to set initial attributes of patients, such as their age, gender, etc. We can then use (and update!) these attributes in the model so they can govern transitions and other events. 
+
+@cr-Rinitialize2
+
+
+Let's now construct a similar function `terminate_simulation()` that releases the resource `time_in_model` once a patient exits the model. 
+
+
+:::
+
+
+:::{.cr-section}
+
+:::{#cr-Rcleanup0}
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+#| code-line-numbers: true
+
+terminate_simulation <- function(traj, inputs)
+{
+  traj |>
+  branch( function() 1, 
+          continue=FALSE,
+          trajectory() |> 
+            release("time_in_model")
+        )
+}
+```
+:::
+
+[@cr-Rcleanup0]{highlight="4"} 
+
+In this function, we take the patient's trajectory and introduce a **branch**. You can think of this like a chance node in a decision tree---this puts our patient at a fork in the road, and each pathway has its own probability of being taken.
+
+In this case, however, the patient is exiting the model. So this is a trivial function with only one option that has a probability of one. 
+
+[@cr-Rcleanup0]{highlight="5"} The option `continue` is also set to false---indicating that after this branch has been passed, the model will stop running.  
+
+Branches are key coding elements of DES, and allow for updating event times and other aspects of the model that may change over time, or probabilistically due to the occurance of events. In the event a branch is used to update attributes or event times, you woulld set `continue=TRUE`. 
+
+Branches will also be key for how we conceptualize and model resource constraints later on.
+
+
+[@cr-Rcleanup0]{highlight="7"} Once the patient has passed through the branch, we release the resource `time_in_model`. 
+
+
+@cr-Rcleanup1 In our experience, it is often helpful to split this process into two parts: <span class="hl hl-cyan">A function that releases any resources on exit</span>. [@cr-Rcleanup1]{highlight="1-5"} 
+
+
+[@cr-Rcleanup1]{highlight="7-15"} And a separate <span class="hl hl-cyan">function that terminates the simulation</span> . 
+
+
+:::{#cr-Rcleanup1}
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+#| code-line-numbers: true
+
+cleanup_on_termination <- function(traj)
+{
+  traj |> 
+  release("time_in_model")
+}
+
+terminate_simulation <- function(traj, inputs)
+{
+  traj |>
+  branch( function() 1, 
+          continue=FALSE,
+          trajectory() |> 
+            cleanup_on_termination()
+        )
+}
+```
+:::
+
+
+:::{#cr-Rcleanup1}
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+#| code-line-numbers: true
+
+cleanup_on_termination <- function(traj)
+{
+  traj |> 
+  release("time_in_model")
+}
+```
+:::
+
+
+@cr-Rcleanup2
+
+:::{#cr-Rcleanup2}
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+#| code-line-numbers: true
+
+terminate_simulation <- function(traj, inputs)
+{
+  traj |>
+  branch( function() 1, 
+          continue=FALSE,
+          trajectory() |> cleanup_on_termination()
+        )
+}
+```
+:::
+
+
+:::
+
+
+# Scratch
+
+:::{.cr-section layout="overlay-center"}
+The first thing we want to track is the trajectory of the patient through the model. 
+
+We need to initialize the patient @cr-model1-init
+
+@cr-model2  We'll next add in a death state. 
+
+@cr-model3. Now we allow for two health states: healthy and sick. 
+
+@cr-model4  We can allow for an event transition back to the healthy state.
+
+@cr-model5 We add in progressive disease. 
+
+@cr-model6 And finally, we add in a treatment with resource constraints (e.g., limited beds, surgical appointment spots, etc.)
+
+@cr-model6 
+
+
+
+
+:::{#cr-model1-init}
+![](images/petri-model1_initialize.png){fig-align="center"}
+:::
+
+
+:::{#cr-model2}
+![](images/petri-model2.png){fig-align="center"}
+:::
+
+:::{#cr-model3}
+![](images/petri-model3.png){fig-align="center"}
+:::
+
+:::{#cr-model4}
+![](images/petri-model4.png){fig-align="center"}
+:::
+
+:::{#cr-model5}
+![](images/petri-model5.png){fig-align="center"}
+:::
+
+:::{#cr-model6}
+![](images/petri-model6.png){fig-align="center"}
+:::
+
+:::
+
+
+Petri nets offer a **graphical grammar** that aligns neatly with discrete-event
+simulation (DES):
+
+| Element | Symbol | In our disease model… |
+|---------|--------|-----------------------|
+| *Place* | ● (circle) | Clinical states (`H`, `S1`, `S2`), queues, resources |
+| *Token* | | A single patient or a unit of resource capacity |
+| *Transition* | ▭ (bar/rectangle) | Events: incidence, progression, death, censoring, resource release |
+| *Arc* | → | Preconditions & results of an event |
+
+<div class="callout-tip">
+A transition **fires** only when every input place supplies at least one token —  
+perfect for competing-risk logic in progressive disease.
+</div>
+
+
 # Model 1
 
 

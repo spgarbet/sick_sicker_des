@@ -11,7 +11,7 @@
 <meta name="author" content="Kun-Woo Kim">
 <meta name="dcterms.date" content="2025-06-03">
 
-<title>1. Overview of Discrete Event Simulation</title>
+<title>Discrete Event Simulation for Health Decision Modeling</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,40 +23,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 /* CSS for citations */
 div.csl-bib-body { }
@@ -97,35 +63,6 @@ div.csl-indent {
 <meta cr-debug-mode="false">
 <meta cr-remove-header-space="false">
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 <link rel="stylesheet" href="_extensions/qmd-lab/closeread/closeread.css">
 <link rel="stylesheet" href="des-styling.css">
@@ -139,8 +76,8 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">1. Overview of Discrete Event Simulation</h1>
-<p class="subtitle lead">Discrete Event Simulation for Health Decision Modeling</p>
+<h1 class="title">Discrete Event Simulation for Health Decision Modeling</h1>
+<p class="subtitle lead">1. Conceptual Overview</p>
 </div>
 
 
@@ -209,19 +146,18 @@ window.Quarto = {
 <p><span style="color:cornflowerblue"><strong>Discrete event simulation (DES) </strong></span> is a modeling framework offering unique advantages for evaluating health decision problems. DES explicitly models patients’ experience via trajectories that track a series of events occurring over time, such as disease onset, treatment initiation, and other clinical outcomes.</p>
 <p>What differentiates DES from other modeling approaches (e.g., discrete time Markov, microsimulation) is that DES can also capture dynamic interactions between patients and system resources—making it particularly valuable for evaluating strategies that affect system capacity, waiting times, or resource utilization.</p>
 <p>In what follows, we detail the concepts and execution of DES for health decision analysis. We begin with a conceptual overview of DES, and then build up a DES for a widely-used progressive disease model <span class="citation" data-cites="alarid2023introductory">(<a href="#ref-alarid2023introductory" role="doc-biblioref">Alarid-Escudero et al. 2023</a>)</span>.</p>
-<p>We will first build the model and demonstrate that it exactly matches outcomes and ICERs in <span class="citation" data-cites="alarid2023introductory">Alarid-Escudero et al. (<a href="#ref-alarid2023introductory" role="doc-biblioref">2023</a>)</span>. Once equivalence is established, we then build on the model to add a new strategy based on a new treatment with limited treatment capacity.</p>
-<section id="conceptual-framework" class="level2 page-columns page-full">
-<h2 class="anchored" data-anchor-id="conceptual-framework">Conceptual Framework</h2>
+<section id="conceptual-overview" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="conceptual-overview">Conceptual Overview</h2>
 <div class="cr-section cr-column-screen sidebar-left">
 <div class="narrative-col">
 <div class="trigger new-trigger" data-focus-on="cr-carrace">
 <div class="narrative">
-<p>A useful framework for understanding DES is a car race in which each patient represents a car navigating a complex circuit with multiple checkpoints, pit stops, and potential hazards.</p>
+<p>A useful framework for understanding DES is a car race in which each patient represents a driver navigating a complex circuit with multiple checkpoints, pit stops, and potential hazards.</p>
 </div>
 </div>
 <div class="trigger new-trigger" data-focus-on="cr-carrace2">
 <div class="narrative">
-<p>In this framework, each car follows its own unique journey (“trajectory”) through a race course, with discrete events corresponding to key moments like crossing timing markers, making pit stops for fuel and tire changes, or experiencing unexpected mechanical issues that require assistance.</p>
+<p>In this framework, each driver follows its own unique journey (“trajectory”) through a race course, with discrete events corresponding to key moments like crossing timing markers, making pit stops for fuel and tire changes, or experiencing unexpected mechanical issues that require assistance.</p>
 </div>
 </div>
 </div>
@@ -240,7 +176,7 @@ window.Quarto = {
 <!-- ::: -->
 <!-- <figcaption>Image generated by ChatGPT 4o</figcaption> -->
 <p>In a DES, the modeler tracks not only each car’s total race time but also the precise timing and sequence of every significant event—when cars enter the pit lane, how long they wait for available mechanics, whether they experience delays due to track congestion—and how these operational realities affect both their race performance (i.e., costs, quality-adjusted health outcomes) and resource consumption.</p>
-<div class="column-screen" style="background-image:url(images/scoreboard-race.png); background-size: 100vw; height: 600px; background-position: center; background-repeat: no-repeat; opacity: 0.5">
+<div class="column-screen" style="background-image:url(images/scoreboard-race.png); background-size: 100vw; height: 600px; background-position: center top; background-repeat: no-repeat; opacity: 0.5">
 
 </div>
 <figcaption>
@@ -261,6 +197,26 @@ Image generated by ChatGPT 4o
 <p><span style="color:#DF8F44FF"><strong>Tokens</strong></span> represent an individual entity (typically a patient) that flows through the simulation over time.</p>
 </div>
 </div>
+<div class="trigger">
+<div class="narrative">
+<p>When it comes to visualizing a DES–we’ll cover this in a bit when we provide an overview of Petri net diagrams—it’s common to use solid shapes like squares and circles.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-petri-token2">
+<div class="narrative">
+<p>A patient, for example, might be represented by a solid black circle …</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-scale-by="2" data-focus-on="cr-petri-token1">
+<div class="narrative">
+<p>… while a hospital might be represented by a solid red rectangle.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-petri-token-queue">
+<div class="narrative">
+<p>In that way, we can both conceptualize and model instances where hospital capacity is constrained, creating queues and wait times that delay time to treatment.</p>
+</div>
+</div>
 <div class="trigger new-trigger" data-focus-on="cr-table">
 <div class="narrative">
 <p>Tokens take on attributes (e.g., age, gender) that are either fixed throughout the model, or that change as they make their way through the model.</p>
@@ -271,34 +227,53 @@ Image generated by ChatGPT 4o
 <p>For example, suppose we aim to model different strategies for treating colon cancer. A token might represent a 67-year-old woman with Stage III colorectal cancer.</p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-table2">
+<div class="trigger new-trigger" data-focus-on="cr-petri-place">
 <div class="narrative">
-<p>Now suppose we want to track this patient’s progression through diagnosis, treatment (e.g., surgery, chemo), remission, and potential relapse. These are examples of <span style="color:#00A1D5FF"><strong>events/transitions</strong></span> in a DES model.</p>
+<p>Tokens reside in <span style="color:#6A6599FF"><strong>Places, </strong></span>which indicate system states or conditions (e.g., “Healthy,” “Sick,” “Dead”)</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-petri-place">
+<div class="narrative">
+<p>For many health decision models, places are simply health states.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-scale-by="2" data-pan-to="-25%, -50%" data-focus-on="cr-model6place">
+<div class="narrative">
+<p>But for a resource-constrained model like we will build, places could also represent hospitals, treatment slots, etc.</p>
 </div>
 </div>
 <div class="trigger new-trigger" data-focus-on="cr-table3">
 <div class="narrative">
-<p>The specific sequence of events a patient (“token”) experiences is tracked in a <span style="color:#B24745FF"><strong>trajectory</strong></span>.</p>
+<p>Now suppose we want to track this patient’s progression through diagnosis, treatment (e.g., surgery, chemo), remission, and potential relapse. These are examples of <span style="color:#00A1D5FF"><strong>events/transitions</strong></span> in a DES model.</p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-table4">
+<div class="trigger new-trigger" data-focus-on="cr-petri-transition">
 <div class="narrative">
-<p><span style="color:#79AF97FF"><strong>Resources</strong></span> are the final key element of a DES, and can either be unconstrained and used by everyone, or subject to resource constraints.</p>
+<p>Transitions are often denoted by bars or rectangles that denote discrete system state changes.</p>
 </div>
 </div>
-<div class="trigger">
+<div class="trigger new-trigger" data-scale-by="3" data-pan-to="100%, 15%" data-focus-on="cr-model6place">
 <div class="narrative">
-<p>For example, the total amount of time a given patient spends in the model could be considered an unconstrained resource—one patient’s experience of time does not preclude another patient in the model from also experiencing the passage of time.</p>
+<p>For example, disease incidence–that is, the transition from healthy to sick—would be captured by a transition.</p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-table4">
+<div class="trigger new-trigger" data-focus-on="cr-petri-arc">
 <div class="narrative">
-<p>Conversely, in a resource-constrained DES we might want to put limits on the total number of patients who can receive treatment at one time. This both helps better represent real-world scenarios, and also facilitates additional policy strategy modeling (e.g., expansion of treatment slots, staffing, or hospital beds to reduce wait times).</p>
+<p>The flow between <span style="color:#6A6599FF"><strong>places</strong></span> and <span style="color:#00A1D5FF"><strong>transitions</strong></span> is denoted by an <strong>arc</strong>.</p>
 </div>
 </div>
 </div>
 <div class="sticky-col">
 <div class="sticky-col-stack">
+<div id="cr-petri-token-queue" class="sticky">
+<p><img src="images/petri-token-queue.png" class="img-fluid"></p>
+</div>
+<div id="cr-petri-token1" class="sticky">
+<p><img src="images/clipboard-810075082.png" class="img-fluid"></p>
+</div>
+<div id="cr-petri-token2" class="sticky">
+<p><img src="images/clipboard-1758535931.png" class="img-fluid"></p>
+</div>
 <div id="cr-table" class="sticky">
 <div class="cell">
 <div class="cell-output-display">
@@ -331,9 +306,9 @@ Image generated by ChatGPT 4o
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 19%">
-<col style="width: 27%">
-<col style="width: 53%">
+<col style="width: 26%">
+<col style="width: 44%">
+<col style="width: 29%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -349,14 +324,26 @@ Image generated by ChatGPT 4o
 <td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><span style="color:#00A1D5FF"><strong>Events/transitions</strong></span></td>
-<td style="text-align: left;">Discrete time points when system state changes; trigger resource use and transitions.</td>
-<td style="text-align: left;">- Disease incidence<br> - Disease progression<br> - Death from disease or background causes<br> - Enter treatment waiting list<br> - Acute event (e.g., hospitalization)</td>
+<td style="text-align: left;"><span style="color:#6A6599FF"><strong>Places</strong></span></td>
+<td style="text-align: left;">Indicate system states or conditions (e.g., “Healthy,” “Sick,” “Under Treatment”)</td>
+<td style="text-align: left;">Sick disease state</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
+</div>
+<div id="cr-petri-place" class="sticky">
+<p><img src="images/petri-place.png" class="img-fluid"></p>
+</div>
+<div id="cr-model6place" class="sticky">
+<p><img src="images/petri-model6.png" class="img-fluid"></p>
+</div>
+<div id="cr-petri-transition" class="sticky">
+<p><img src="images/clipboard-3059554460.png" class="img-fluid"></p>
+</div>
+<div id="cr-petri-arc" class="sticky">
+<p><img src="images/clipboard-1434672209.png" class="img-fluid"></p>
 </div>
 <div id="cr-table3" class="sticky">
 <div class="cell">
@@ -381,56 +368,14 @@ Image generated by ChatGPT 4o
 <td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;"><span style="color:#6A6599FF"><strong>Places</strong></span></td>
+<td style="text-align: left;">Indicate system states or conditions (e.g., “Healthy,” “Sick,” “Under Treatment”)</td>
+<td style="text-align: left;">Sick disease state</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;"><span style="color:#00A1D5FF"><strong>Events/transitions</strong></span></td>
 <td style="text-align: left;">Discrete time points when system state changes; trigger resource use and transitions.</td>
 <td style="text-align: left;">- Disease incidence<br> - Disease progression<br> - Death from disease or background causes<br> - Enter treatment waiting list<br> - Acute event (e.g., hospitalization)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><span style="color:#B24745FF"><strong>Trajectories</strong></span></td>
-<td style="text-align: left;">The sequence of events and states a token experiences during the simulation.</td>
-<td style="text-align: left;">Patient progresses from diagnosis → treatment → remission → relapse → death</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div id="cr-table4" class="sticky">
-<div class="cell">
-<div class="cell-output-display">
-<table class="caption-top table table-sm table-striped small">
-<colgroup>
-<col style="width: 18%">
-<col style="width: 30%">
-<col style="width: 51%">
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Concept</th>
-<th style="text-align: left;">Definition</th>
-<th style="text-align: left;">Examples</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><span style="color:#DF8F44FF"><strong>Tokens</strong></span></td>
-<td style="text-align: left;">Represent patients or units flowing through the simulation, carrying attributes.</td>
-<td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><span style="color:#00A1D5FF"><strong>Events/transitions</strong></span></td>
-<td style="text-align: left;">Discrete time points when system state changes; trigger resource use and transitions.</td>
-<td style="text-align: left;">- Disease incidence<br> - Disease progression<br> - Death from disease or background causes<br> - Enter treatment waiting list<br> - Acute event (e.g., hospitalization)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><span style="color:#B24745FF"><strong>Trajectories</strong></span></td>
-<td style="text-align: left;">The sequence of events and states a token experiences during the simulation.</td>
-<td style="text-align: left;">Patient progresses from diagnosis → treatment → remission → relapse → death</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><span style="color:#79AF97FF"><strong>Resources</strong></span></td>
-<td style="text-align: left;">Entities required or consumed by events; may be limited (constrained) or unlimited (unconstrained).</td>
-<td style="text-align: left;">- Total time in healthy state<br> - Total time in sick state<br> - Number of available hospital beds</td>
 </tr>
 </tbody>
 </table>
@@ -440,71 +385,35 @@ Image generated by ChatGPT 4o
 </div>
 </div>
 </div>
-</section>
-</section>
-<section id="visualizing-a-des" class="level1">
-<h1>Visualizing a DES</h1>
-<p>It is often useful to conceptualize a disease or health system process using a state transition diagram that captures mutually exclusive health states and possible transitions among them.</p>
+<p>These visual tools can be combined into a <strong>Petri net</strong> diagram that represents the flow of resources, entities, and control through a system over time. Petri nets are particularly useful for depicting concurrent processes and shared resources.</p>
 <div class="cr-section cr-column-screen sidebar-left">
 <div class="narrative-col">
-<div class="trigger new-trigger" data-focus-on="cr-bubble">
+<div class="trigger new-trigger" data-focus-on="cr-petrigif">
 <div class="narrative">
-<p>The state transition model here represents the underlying disease process for the didactic Markov cohort model in <span class="citation" data-cites="alarid2023introductory">Alarid-Escudero et al. (<a href="#ref-alarid2023introductory" role="doc-biblioref">2023</a>)</span>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-pan-to="50%,0%" data-focus-on="cr-bubble">
-<div class="narrative">
-<p>Patients start off healthy, and can then progress into progressive disease states (“Sick [S1],” “Sicker [S2]”)—all while facing risks of death due to background causes, and heightened risk of death while sick.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-bubble">
-<div class="narrative">
-
+<p>Formally, a Petri net is a directed bipartite graph that describes a distributed system.</p>
 </div>
 </div>
 <div class="trigger">
 <div class="narrative">
-<p>DES models are best visualized using a <span style="color:#007bdd"><strong>Petri Net diagram</strong></span>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-petri1">
-<div class="narrative">
-<p>Shown here is a Petri Net for the same progressive disease model.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-petri1">
-<div class="narrative">
-<p>In what follows, we will demonstrate how we conceptualized and constructed this Petri net diagram for a DES.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-petri2">
-<div class="narrative">
-<p>Doing so will allow us to expand the decision problem to consider an additional dimension—resource contention for a scarce treatment—that is difficult/impossible to capture in Markov and microsimulation modeling approaches.</p>
+<p>In the example shown to the right, each transition moves a token through the system.</p>
 </div>
 </div>
 </div>
 <div class="sticky-col">
 <div class="sticky-col-stack">
-<div id="cr-bubble" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/sick-sicker-bubble.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
+<div id="cr-petrigif" class="sticky">
+<img src="images/Animated_Petri_net_commons.gif" class="img-fluid">
+<figcaption>
+Source: <a href="https://en.wikipedia.org/wiki/Petri_net">Wikipedia</a>
+</figcaption>
 </div>
 </div>
-<div id="cr-petri1" class="sticky">
-<p><img src="images/petri-model5.png" class="img-fluid"></p>
 </div>
-<div id="cr-petri2" class="sticky">
+</div>
+<p>Our ultimate objective is to build up a DES based on the following Petri net diagram for the progressive disease model with resource constraints.</p>
+<div class="column-screen">
 <p><img src="images/petri-model6.png" class="img-fluid"></p>
 </div>
-</div>
-</div>
-</div>
-<section id="overview-of-petri-nets" class="level2">
-<h2 class="anchored" data-anchor-id="overview-of-petri-nets">Overview of Petri Nets</h2>
-<p>A Petri net diagram represents the flow of resources, entities, and control through a system over time. They are particularly useful for depicting concurrent processes and shared resources.</p>
-<p>A <span style="color:#007bdd"><strong>Petri Net</strong></span> consists of:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 34%">
@@ -541,543 +450,136 @@ Image generated by ChatGPT 4o
 </tr>
 </tbody>
 </table>
-</section>
-</section>
-<section id="petri-net-for-the-progressive-disease-model" class="level1">
-<h1>Petri Net for the Progressive Disease Model</h1>
-<div class="cr-section cr-column-screen overlay-center">
-<div class="narrative-col">
-<div class="trigger new-trigger" data-focus-on="cr-model1">
-<div class="narrative">
-<p>We start with a simple model that follows patients for <span class="math inline">\(T\)</span> time units.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-scale-by="1.5" data-pan-to="65%, 20%" data-focus-on="cr-model1">
-<div class="narrative">
-<p>In this simple model, we have a population of “tokens” that start off in the healthy state.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-pan-to="-50%, -35%" data-focus-on="cr-model1">
-<div class="narrative">
-<p>To begin, we will assume this population can only experience one event:reaching the end of the simulation at some time T.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1">
-<div class="narrative">
-
-</div>
-</div>
-</div>
-<div class="sticky-col">
-<div class="sticky-col-stack">
-<div id="cr-model1" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/petri-model1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-</div>
-</div>
 <div class="cr-section cr-column-screen sidebar-left">
 <div class="narrative-col">
-<div class="trigger new-trigger" data-focus-on="cr-inputs0">
+<div class="trigger new-trigger" data-focus-on="cr-table4">
 <div class="narrative">
-<p>Our first step is to define the parameters governing the simulation. In this case the list of parameters is small.</p>
+<p>Once we have represented the system, we need some way to record the experience of each token (i.e., patient) in the system. This is accomplished via a <span style="color:#B24745FF"><strong>trajectory</strong></span></p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table4">
+<div class="narrative">
+<p>A <span style="color:#B24745FF"><strong>trajectory</strong></span> captures the specific sequence of events a patient experiences.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table5">
+<div class="narrative">
+<p>As the token/patient progresses through the model, they “consume” <span style="color:#79AF97FF"><strong>resources</strong></span>.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table5">
+<div class="narrative">
+<p>You can think of <span style="color:#79AF97FF"><strong>resources</strong></span> as things we want to track, such as time in the model, time in the healthy state, waiting times for treatment, etc.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>In that sense, <span style="color:#79AF97FF"><strong>resources</strong></span> can be either subject to constraints, or not.</p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>A patient’s experience of time in a place or health state, for example, can be thought of as unconstrained resource: one patient’s experience of time does not preclude another patient in the model from also experiencing the passage of time.</p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-table5">
+<div class="narrative">
+<p>Conversely, in a resource-constrained DES we might want to put limits on the total number of patients who can receive treatment at one time. This both helps better represent real-world scenarios, and also facilitates additional policy strategy modeling (e.g., expansion of treatment slots, staffing, or hospital beds to reduce wait times).</p>
 </div>
 </div>
 </div>
 <div class="sticky-col">
 <div class="sticky-col-stack">
-<div id="cr-inputs0" class="sticky">
+<div id="cr-table4" class="sticky">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>inputs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb1-2"><a href="#cb1-2"></a>    <span class="at">N       =</span> <span class="dv">1</span>,  <span class="co"># Total number of patients to simulate. </span></span>
-<span id="cb1-3"><a href="#cb1-3"></a>    <span class="at">horizon =</span> <span class="dv">30</span>  <span class="co"># Time horizon (years)</span></span>
-<span id="cb1-4"><a href="#cb1-4"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="cr-section cr-column-screen overlay-center">
-<div class="narrative-col">
-<div class="trigger new-trigger" data-focus-on="cr-model1_2">
-<div class="narrative">
-<p>We next need to step back and think about two concepts we defined above: <span style="color:#79AF97FF"><strong>resources</strong></span> and <span style="color:#00A1D5FF"><strong>events</strong></span>.</p>
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>Let’s think first about <span style="color:#9FA8DA"><strong>resources</strong></span>. Resources are elements that a patient may use or consume during their time in the simulation. We use the terms “use” and “consume” somewhat loosely here, because a resource could be something like a hospital bed that is needed for treatment—or it could simply be an element like time that is not constrained.</p>
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>In this very simple model, we need to conceptualize our first resource, which is <span style="color:#9FA8DA"><strong>time in model</strong></span>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1-resources0">
-<div class="narrative">
-<p>The image here shows a single patient trajectory over time. We begin tracking the patient at baseline (t=0) and follow them until the end of the time horizon has been met at 30 years.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1-resources1">
-<div class="narrative">
-<p>We can therefore define a resource called <span style="color:#9FA8DA"><strong>time in model</strong></span> that we track. In this case, it will trivially be 30 years for every simulated patient.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1-resources1-death">
-<div class="narrative">
-<p>But that does not always need to be the case! Suppose the patient dies at some time before t=30. In that case, their time in the model will be shorter.</p>
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>It’s also important to note that in this example patient trajectory, the resource <code>time_in_model</code> is unconstrained. That is, one simulated patient’s experience of time does not inhibit or limit another patient from also experiencing the elapse of time.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1-resources1">
-<div class="narrative">
-<p>Because the patient is followed for a defined time horizon, we can think of the resource as beginning at the initiation of the model, and ending after the time horizon is met.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1-resources2">
-<div class="narrative">
-<p>The way DES conceptualizes this idea is that the resource is “seized” upon initiation of the model, and then “released” upon exit from the model. These two time stamps can then be used to calculate the total time the resource was “used.”</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1-resources2">
-<div class="narrative">
-<p>Often, the seizure and/or release of resources is triggered by <span style="color:#F44336"><strong>events</strong></span>. We’ll cover how to handle events in just a bit.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-countertable0">
-<div class="narrative">
-
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>Resources are tracked in a <strong>counter</strong> object. In this very simple model, we only have a single resource to track: <code>time_in_model</code>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-counter0">
-<div class="narrative">
-<p>In R, the object <code>counters</code> is defined as a vector listing the various resources that we want to track in the model.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-counter0">
-<div class="narrative">
-
-</div>
-</div>
-</div>
-<div class="sticky-col">
-<div class="sticky-col-stack">
-<div id="cr-model1_2" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/petri-model1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-<div id="cr-model1-resources0" class="sticky">
-<p><img src="images/model1-resources0.png" class="img-fluid"></p>
-</div>
-<div id="cr-model1-resources1" class="sticky">
-<p><img src="images/model1-resources1.png" class="img-fluid"></p>
-</div>
-<div id="cr-model1-resources1-death" class="sticky">
-<p><img src="images/model1-resources1-death.png" class="img-fluid"></p>
-</div>
-<div id="cr-model1-resources1" class="sticky">
-<p><img src="images/model1-resources2.png" class="img-fluid"></p>
-</div>
-<div id="cr-model1-resources2" class="sticky">
-<p><img src="images/model1-resources2.png" class="img-fluid"></p>
-</div>
-<div id="cr-countertable0" class="sticky">
-<table class="caption-top table">
-<caption>DES Model Counters</caption>
-<thead>
-<tr class="header">
-<th>counter</th>
-<th>description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>time_in_model</td>
-<td>Time (years) patient is tracked in model</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="cr-counter0" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>counters <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb2-2"><a href="#cb2-2"></a>  <span class="st">"time_in_model"</span></span>
-<span id="cb2-3"><a href="#cb2-3"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<p>Our next step is to define <span style="color:#F44336"><strong>events</strong></span>. In this simple model, we have two:</p>
-<ol type="1">
-<li>Model initiation</li>
-<li>Model exit after the specified horizon has been reached.</li>
-</ol>
-<div class="cr-section cr-column-screen overlay-center">
-<div class="narrative-col">
-<div class="trigger new-trigger" data-focus-on="cr-model1-event1">
-<div class="narrative">
-
-</div>
-</div>
-<div class="trigger new-trigger" data-scale-by="2" data-pan-to="50%, -60%" data-focus-on="cr-model1-event2">
-<div class="narrative">
-<p>Both of these events trigger resource seizure and/or release, in the sense that when a patient is initialized in the model, we want to start the clock on the <code>time_in_model</code> counter.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-scale-by="2" data-pan-to="-50%, -60%" data-focus-on="cr-model1-event2">
-<div class="narrative">
-<p>And similarly, when the patient reaches the event of exiting the model at the defined time horizon, we want to stop the clock on <code>time_in_model</code>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1-event2">
-<div class="narrative">
-
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>In the R/Simmer simulation environment, events are handled through functions that modify the trajectory of the patient.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-Rinitialize1">
-<div class="narrative">
-<p>Let’s start by defining an event for model initialization.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-highlight="1" data-focus-on="cr-Rinitialize1">
-<div class="narrative">
-<p><code>initialize_patient</code> is a function of both <strong>inputs</strong> (i.e., the parameters governing the model) and <strong>trajectories</strong>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-highlight="4" data-focus-on="cr-Rinitialize1">
-<div class="narrative">
-<p>It takes the patient’s trajectory and <strong>seizes</strong> the resource <code>time_in_model</code> that we defined above.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-scale-by="2" data-pan-to="50%, -60%" data-focus-on="cr-model1-event2">
-<div class="narrative">
-<p>Going back to the single patient trajectory, upon initilization of the patient we have “seized” the <code>time_in_model</code> resource for this patient.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-highlight="5" data-focus-on="cr-Rinitialize2">
-<div class="narrative">
-<p>Though we don’t need it for this very simple model, <code>initialize_patient</code> is also a good place to set initial attributes of patients, such as their age, gender, etc. We can then use (and update!) these attributes in the model so they can govern transitions and other events.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-Rinitialize2">
-<div class="narrative">
-
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>Let’s now construct a similar function <code>terminate_simulation()</code> that releases the resource <code>time_in_model</code> once a patient exits the model.</p>
-</div>
-</div>
-</div>
-<div class="sticky-col">
-<div class="sticky-col-stack">
-<div id="cr-model1-event1" class="sticky">
-<p><img src="images/model1-event1.png" class="img-fluid"></p>
-</div>
-<div id="cr-model1-event2" class="sticky">
-<p><img src="images/model1-event2.png" class="img-fluid"></p>
-</div>
-<div id="cr-Rinitialize1" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>initialize_patient <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
-<span id="cb3-2"><a href="#cb3-2"></a>{</span>
-<span id="cb3-3"><a href="#cb3-3"></a>  traj                   <span class="sc">|&gt;</span></span>
-<span id="cb3-4"><a href="#cb3-4"></a>  <span class="fu">seize</span>(<span class="st">"time_in_model"</span>) </span>
-<span id="cb3-5"><a href="#cb3-5"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-<div id="cr-Rinitialize2" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>initialize_patient <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
-<span id="cb4-2"><a href="#cb4-2"></a>{</span>
-<span id="cb4-3"><a href="#cb4-3"></a>  traj                   <span class="sc">|&gt;</span></span>
-<span id="cb4-4"><a href="#cb4-4"></a>  <span class="fu">seize</span>(<span class="st">"time_in_model"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb4-5"><a href="#cb4-5"></a>  <span class="fu">set_attribute</span>(<span class="st">"AgeInitial"</span>, <span class="cf">function</span>() <span class="fu">sample</span>(<span class="dv">20</span><span class="sc">:</span><span class="dv">30</span>, <span class="dv">1</span>))</span>
-<span id="cb4-6"><a href="#cb4-6"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="cr-section cr-column-screen sidebar-left">
-<div class="narrative-col">
-<div class="trigger new-trigger" data-highlight="4" data-focus-on="cr-Rcleanup0">
-<div class="narrative">
-
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>In this function, we take the patient’s trajectory and introduce a <strong>branch</strong>. You can think of this like a chance node in a decision tree—this puts our patient at a fork in the road, and each pathway has its own probability of being taken.</p>
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>In this case, however, the patient is exiting the model. So this is a trivial function with only one option that has a probability of one.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-highlight="5" data-focus-on="cr-Rcleanup0">
-<div class="narrative">
-<p>The option <code>continue</code> is also set to false—indicating that after this branch has been passed, the model will stop running.</p>
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>Branches are key coding elements of DES, and allow for updating event times and other aspects of the model that may change over time, or probabilistically due to the occurance of events. In the event a branch is used to update attributes or event times, you woulld set <code>continue=TRUE</code>.</p>
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<p>Branches will also be key for how we conceptualize and model resource constraints later on.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-highlight="7" data-focus-on="cr-Rcleanup0">
-<div class="narrative">
-<p>Once the patient has passed through the branch, we release the resource <code>time_in_model</code>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-highlight="1-5" data-focus-on="cr-Rcleanup1">
-<div class="narrative">
-<p>In our experience, it is often helpful to split this process into two parts: <span class="hl hl-cyan">A function that releases any resources on exit</span>.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-highlight="7-15" data-focus-on="cr-Rcleanup1">
-<div class="narrative">
-<p>And a separate <span class="hl hl-cyan">function that terminates the simulation</span> .</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-Rcleanup2">
-<div class="narrative">
-
-</div>
-</div>
-</div>
-<div class="sticky-col">
-<div class="sticky-col-stack">
-<div id="cr-Rcleanup0" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>terminate_simulation <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
-<span id="cb5-2"><a href="#cb5-2"></a>{</span>
-<span id="cb5-3"><a href="#cb5-3"></a>  traj <span class="sc">|&gt;</span></span>
-<span id="cb5-4"><a href="#cb5-4"></a>  <span class="fu">branch</span>( <span class="cf">function</span>() <span class="dv">1</span>, </span>
-<span id="cb5-5"><a href="#cb5-5"></a>          <span class="at">continue=</span><span class="cn">FALSE</span>,</span>
-<span id="cb5-6"><a href="#cb5-6"></a>          <span class="fu">trajectory</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb5-7"><a href="#cb5-7"></a>            <span class="fu">release</span>(<span class="st">"time_in_model"</span>)</span>
-<span id="cb5-8"><a href="#cb5-8"></a>        )</span>
-<span id="cb5-9"><a href="#cb5-9"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-<div id="cr-Rcleanup1" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>cleanup_on_termination <span class="ot">&lt;-</span> <span class="cf">function</span>(traj)</span>
-<span id="cb6-2"><a href="#cb6-2"></a>{</span>
-<span id="cb6-3"><a href="#cb6-3"></a>  traj <span class="sc">|&gt;</span> </span>
-<span id="cb6-4"><a href="#cb6-4"></a>  <span class="fu">release</span>(<span class="st">"time_in_model"</span>)</span>
-<span id="cb6-5"><a href="#cb6-5"></a>}</span>
-<span id="cb6-6"><a href="#cb6-6"></a></span>
-<span id="cb6-7"><a href="#cb6-7"></a>terminate_simulation <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
-<span id="cb6-8"><a href="#cb6-8"></a>{</span>
-<span id="cb6-9"><a href="#cb6-9"></a>  traj <span class="sc">|&gt;</span></span>
-<span id="cb6-10"><a href="#cb6-10"></a>  <span class="fu">branch</span>( <span class="cf">function</span>() <span class="dv">1</span>, </span>
-<span id="cb6-11"><a href="#cb6-11"></a>          <span class="at">continue=</span><span class="cn">FALSE</span>,</span>
-<span id="cb6-12"><a href="#cb6-12"></a>          <span class="fu">trajectory</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb6-13"><a href="#cb6-13"></a>            <span class="fu">cleanup_on_termination</span>()</span>
-<span id="cb6-14"><a href="#cb6-14"></a>        )</span>
-<span id="cb6-15"><a href="#cb6-15"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-<div id="cr-Rcleanup1" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>cleanup_on_termination <span class="ot">&lt;-</span> <span class="cf">function</span>(traj)</span>
-<span id="cb7-2"><a href="#cb7-2"></a>{</span>
-<span id="cb7-3"><a href="#cb7-3"></a>  traj <span class="sc">|&gt;</span> </span>
-<span id="cb7-4"><a href="#cb7-4"></a>  <span class="fu">release</span>(<span class="st">"time_in_model"</span>)</span>
-<span id="cb7-5"><a href="#cb7-5"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-<div id="cr-Rcleanup2" class="sticky">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>terminate_simulation <span class="ot">&lt;-</span> <span class="cf">function</span>(traj, inputs)</span>
-<span id="cb8-2"><a href="#cb8-2"></a>{</span>
-<span id="cb8-3"><a href="#cb8-3"></a>  traj <span class="sc">|&gt;</span></span>
-<span id="cb8-4"><a href="#cb8-4"></a>  <span class="fu">branch</span>( <span class="cf">function</span>() <span class="dv">1</span>, </span>
-<span id="cb8-5"><a href="#cb8-5"></a>          <span class="at">continue=</span><span class="cn">FALSE</span>,</span>
-<span id="cb8-6"><a href="#cb8-6"></a>          <span class="fu">trajectory</span>() <span class="sc">|&gt;</span> <span class="fu">cleanup_on_termination</span>()</span>
-<span id="cb8-7"><a href="#cb8-7"></a>        )</span>
-<span id="cb8-8"><a href="#cb8-8"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-<section id="scratch" class="level1">
-<h1>Scratch</h1>
-<div class="cr-section cr-column-screen overlay-center">
-<div class="narrative-col">
-<div class="trigger">
-<div class="narrative">
-<p>The first thing we want to track is the trajectory of the patient through the model.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model1-init">
-<div class="narrative">
-<p>We need to initialize the patient</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model2">
-<div class="narrative">
-<p>We’ll next add in a death state.</p>
-</div>
-</div>
-<div class="trigger">
-<div class="narrative">
-<ol class="example" type="1">
-<li>Now we allow for two health states: healthy and sick.</li>
-</ol>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model4">
-<div class="narrative">
-<p>We can allow for an event transition back to the healthy state.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model5">
-<div class="narrative">
-<p>We add in progressive disease.</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model6">
-<div class="narrative">
-<p>And finally, we add in a treatment with resource constraints (e.g., limited beds, surgical appointment spots, etc.)</p>
-</div>
-</div>
-<div class="trigger new-trigger" data-focus-on="cr-model6">
-<div class="narrative">
-
-</div>
-</div>
-</div>
-<div class="sticky-col">
-<div class="sticky-col-stack">
-<div id="cr-model1-init" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/petri-model1_initialize.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-<div id="cr-model2" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/petri-model2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-<div id="cr-model3" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/petri-model3.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-<div id="cr-model4" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/petri-model4.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-<div id="cr-model5" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/petri-model5.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-<div id="cr-model6" class="sticky">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/petri-model6.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-</div>
-</div>
-<p>Petri nets offer a <strong>graphical grammar</strong> that aligns neatly with discrete-event simulation (DES):</p>
-<table class="caption-top table">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 20%">
-<col style="width: 57%">
+<col style="width: 19%">
+<col style="width: 27%">
+<col style="width: 53%">
 </colgroup>
 <thead>
 <tr class="header">
-<th>Element</th>
-<th>Symbol</th>
-<th>In our disease model…</th>
+<th style="text-align: left;">Concept</th>
+<th style="text-align: left;">Definition</th>
+<th style="text-align: left;">Examples</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><em>Place</em></td>
-<td>● (circle)</td>
-<td>Clinical states (<code>H</code>, <code>S1</code>, <code>S2</code>), queues, resources</td>
+<td style="text-align: left;"><span style="color:#DF8F44FF"><strong>Tokens</strong></span></td>
+<td style="text-align: left;">Represent patients or units flowing through the simulation, carrying attributes.</td>
+<td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
 </tr>
 <tr class="even">
-<td><em>Token</em></td>
-<td></td>
-<td>A single patient or a unit of resource capacity</td>
+<td style="text-align: left;"><span style="color:#6A6599FF"><strong>Places</strong></span></td>
+<td style="text-align: left;">Indicate system states or conditions (e.g., “Healthy,” “Sick,” “Under Treatment”)</td>
+<td style="text-align: left;">Sick disease state</td>
 </tr>
 <tr class="odd">
-<td><em>Transition</em></td>
-<td>▭ (bar/rectangle)</td>
-<td>Events: incidence, progression, death, censoring, resource release</td>
+<td style="text-align: left;"><span style="color:#00A1D5FF"><strong>Events/transitions</strong></span></td>
+<td style="text-align: left;">Discrete time points when system state changes; trigger resource use and transitions.</td>
+<td style="text-align: left;">- Disease incidence<br> - Disease progression<br> - Death from disease or background causes<br> - Enter treatment waiting list<br> - Acute event (e.g., hospitalization)</td>
 </tr>
 <tr class="even">
-<td><em>Arc</em></td>
-<td>→</td>
-<td>Preconditions &amp; results of an event</td>
+<td style="text-align: left;"><span style="color:#B24745FF"><strong>Trajectories</strong></span></td>
+<td style="text-align: left;">The sequence of events and states a token experiences during the simulation.</td>
+<td style="text-align: left;">Patient progresses from diagnosis → treatment → remission → relapse → death</td>
 </tr>
 </tbody>
 </table>
-<div class="callout callout-style-default callout-tip callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Tip
 </div>
 </div>
-<div class="callout-body-container callout-body">
-<p>A transition <strong>fires</strong> only when every input place supplies at least one token —<br>
-perfect for competing-risk logic in progressive disease.</p>
+</div>
+<div id="cr-table5" class="sticky">
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 30%">
+<col style="width: 51%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Concept</th>
+<th style="text-align: left;">Definition</th>
+<th style="text-align: left;">Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span style="color:#DF8F44FF"><strong>Tokens</strong></span></td>
+<td style="text-align: left;">Represent patients or units flowing through the simulation, carrying attributes.</td>
+<td style="text-align: left;">A 67-year-old woman with Stage III colorectal cancer.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span style="color:#6A6599FF"><strong>Places</strong></span></td>
+<td style="text-align: left;">Indicate system states or conditions (e.g., “Healthy,” “Sick,” “Under Treatment”)</td>
+<td style="text-align: left;">Sick disease state</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span style="color:#00A1D5FF"><strong>Events/transitions</strong></span></td>
+<td style="text-align: left;">Discrete time points when system state changes; trigger resource use and transitions.</td>
+<td style="text-align: left;">- Disease incidence<br> - Disease progression<br> - Death from disease or background causes<br> - Enter treatment waiting list<br> - Acute event (e.g., hospitalization)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span style="color:#B24745FF"><strong>Trajectories</strong></span></td>
+<td style="text-align: left;">The sequence of events and states a token experiences during the simulation.</td>
+<td style="text-align: left;">Patient progresses from diagnosis → treatment → remission → relapse → death</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span style="color:#79AF97FF"><strong>Resources</strong></span></td>
+<td style="text-align: left;">Entities required or consumed by events; may be limited (constrained) or unlimited (unconstrained).</td>
+<td style="text-align: left;">- Total time in healthy state<br> - Total time in sick state<br> - Number of available hospital beds</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 <!-- # Extra Stuff -->
@@ -1090,6 +592,7 @@ perfect for competing-risk logic in progressive disease.</p>
 <!-- How about some <span style="color:firebrick">**red bolded text**</span> -->
 <!-- How about some <span style="color:darkcyan">**cyan bolded text**</span>  -->
 
+</section>
 </section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
