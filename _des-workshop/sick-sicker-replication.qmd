@@ -33,8 +33,11 @@ editor_options:
 ```{r}
 library(tidyverse)
 library(simmer)
-source('discount.R')
-source('main_loop.R')  # Boilerplate code
+library(here)
+library(flextable)
+source(here('discount.R'))
+source(here('main_loop.R'))  # Boilerplate code
+source(here('cea-table-functions.R'))
 ```
 
 # Define Parameters
@@ -63,7 +66,7 @@ inputs <- list(
     c.S2   = 15000,      # Sick individuals in S2
     c.D    =     0,      # Dead individuals
     c.TrtA  = 12000,     # Additional Annual cost for S1 and S2
-    c.TrtAB = 13000,      # Cost of treatment B
+    c.TrtB = 13000,      # Cost of treatment B
     
     # Utility Weights
     u.H    =     1.00,   # Healthy
@@ -76,7 +79,8 @@ inputs <- list(
     
     wtp    =     1e5,    # 100k willingness to pay
     
-    strategy = 'notreat' # Default strategy is no treatment
+    treatA = FALSE,
+    treatB = FALSE
   )
 
 ```
@@ -90,7 +94,8 @@ counters <- c(
   "healthy",
   "sick1",
   "sick2",
-  "treat"
+  "A",
+  "B"
 )
 ```
 
@@ -105,7 +110,8 @@ initialize_patient <- function(traj, inputs)
   set_attribute("AgeInitial", function() 25) |>
   set_attribute("State", 0) |> # Patients start healthy
   seize("healthy")       |>
-  set_attribute("Treat", function() inputs$strategy == 'treat')
+  set_attribute("trtA", function() inputs$treatA == TRUE) |>
+  set_attribute("trtB", function() inputs$treatB == TRUE)
 }
 
 ```
@@ -126,12 +132,19 @@ cleanup_on_termination <- function(traj, inputs)
       trajectory() |> release("sick1"),
       trajectory() |> release("sick2") 
   ) |>
-  branch( # Assigned to treatment and not healthy
-    function() (get_attribute(env, "Treat")  && 
+  branch( # Assigned to treatment A and not healthy
+    function() (get_attribute(env, "trtA")  && 
                 get_attribute(env, "State")) + 1,
     continue = rep(TRUE, 2),
     trajectory(),  # No Treatment
-    trajectory() |> release('treat')
+    trajectory() |> release('A')
+  ) |>
+  branch( # Assigned to treatment B and not healthy
+    function() (get_attribute(env, "trtB")  && 
+                get_attribute(env, "State")) + 1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |> release('B')
   )
 }
 
@@ -194,10 +207,16 @@ sick1 <- function(traj, inputs)
   release('healthy')        |> # Track state change for tally later
   seize('sick1')            |>
   branch( 
-    function() get_attribute(env, "Treat")+1,
+    function() get_attribute(env, "trtA")+1,
     continue = rep(TRUE, 2),
     trajectory(),  # No Treatment
-    trajectory() |> seize('treat')
+    trajectory() |> seize('A')
+  )                         |>
+  branch( 
+    function() get_attribute(env, "trtB")+1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |> seize('B')
   )
 }
 ```
@@ -224,10 +243,16 @@ healthy <- function(traj, inputs)
   seize('healthy')          |>
   release('sick1')          |>
   branch(
-    function() get_attribute(env, "Treat") +1,
+    function() get_attribute(env, "trtA") +1,
     continue = rep(TRUE, 2),
     trajectory(),  # No Treatment
-    trajectory() |> release('treat')
+    trajectory() |> release('A')
+  )                         |>
+  branch(
+    function() get_attribute(env, "trtB") +1,
+    continue = rep(TRUE, 2),
+    trajectory(),  # No Treatment
+    trajectory() |> release('B')
   )
 }
 ```
@@ -238,9 +263,14 @@ healthy <- function(traj, inputs)
 years_till_sick2 <- function(inputs)
 {
   state <- get_attribute(env, "State") 
-  if(state == 1) # 1 => Sick1
+  onB <- get_attribute(env, "trtB")
+  
+  if(state == 1 && !(onB)) # 1 => Sick1
   {
     rexp(1,inputs$r.S1S2)
+  } else if (state == 1 && onB) 
+  {
+    rexp(1,inputs$r.S1S2 * inputs$hr.S1S2.TrtB)
   } else
   {
     inputs$horizon+1 # Past end of simulation time
@@ -255,7 +285,6 @@ sick2 <- function(traj, inputs)
   seize('sick2')
 }
 ```
-
 
 ## Event Registry
 
@@ -319,10 +348,16 @@ cost_arrivals <- function(arrivals, inputs)
   arrivals$dcost[selector] <- discount_value(inputs$c.S2,
     arrivals$start_time[selector], arrivals$end_time[selector])
  
-  selector = arrivals$resource == 'treat'
+  selector = arrivals$resource == 'A'
   arrivals$cost[selector] <- inputs$c.TrtA *
     (arrivals$end_time[selector] - arrivals$start_time[selector])
   arrivals$dcost[selector] <- discount_value(inputs$c.TrtA,
+    arrivals$start_time[selector], arrivals$end_time[selector])
+  
+  selector = arrivals$resource == 'B'
+  arrivals$cost[selector] <- inputs$c.TrtB *
+    (arrivals$end_time[selector] - arrivals$start_time[selector])
+  arrivals$dcost[selector] <- discount_value(inputs$c.TrtB,
     arrivals$start_time[selector], arrivals$end_time[selector])
  
   arrivals
@@ -348,7 +383,7 @@ qaly_arrivals <- function(arrivals, inputs)
                      arrivals$end_time[selector])
   
   selector <- arrivals$resource == 'sick1'
-  uS1 <- if(inputs$strategy == 'treat') inputs$u.TrtA else inputs$u.S1
+  uS1 <- if(inputs$treatA) inputs$u.TrtA else inputs$u.S1
   arrivals$qaly[selector] <-
     uS1*
      (arrivals$end_time[selector] - arrivals$start_time[selector])
@@ -391,18 +426,68 @@ des_run <- function(inputs)
 }
 ```
 
-
 ```{r}
-inputs$strategy <- 'notreat'
+# Standard of Care (no treatments)
 set.seed(23)
-results.notreat <- des_run(inputs)
+run.SoC <- des_run(modifyList(inputs, list(treatA = FALSE, treatB = FALSE)))
 
-results.notreat %>% 
-  as_tibble()  %>% 
-  group_by(name) %>% 
-  summarise_at(vars(dcost,dqaly),sum) %>% 
-  ungroup() %>% 
+#- Treatment A
+set.seed(23)
+run.A <- des_run(modifyList(inputs, list(treatA = TRUE, treatB = FALSE)))
+
+#- Treatment B
+set.seed(23)
+run.B <-  des_run(modifyList(inputs, list(treatA = FALSE, treatB = TRUE)))
+
+# Treatment A + B
+set.seed(23)
+run.AB <- des_run(modifyList(inputs, list(treatA = TRUE, treatB = TRUE)))
+
+aggregate_run <- function(run) {
+  run |>
+  as_tibble()  |> 
+  group_by(name) |> 
+  summarise_at(vars(dcost,dqaly),sum) |> 
+  ungroup() |> 
   summarise_at(vars(dcost,dqaly),mean)
+}
+
+result.SoC <- run.SoC |> aggregate_run() |> mutate(strategy = "SoC")
+result.A <- run.A |> aggregate_run() |> mutate(strategy = "A")
+result.B <- run.B |> aggregate_run() |> mutate(strategy = "B")
+result.AB <- run.AB |> aggregate_run() |> mutate(strategy = "AB")
+
+
+# Note: non-DES results are calcualted in index.qmd in the matrix-cea-tutorial repo; 
+# these results are based on deterministic models based on 
+# 1. replicating the original paper (note: does not use matrix embedding for
+# transition probabilities)
+# 2. embedding via rate matrix
+# 3. Markov chain with rewards methods
+
+res_cost <- list(
+  "DES" = c(result.SoC$dcost, result.A$dcost, result.B$dcost, result.AB$dcost),
+  "Embedded" = c(147036.6 ,271907.9 ,243650.1, 353744.0),
+  `Markov Chains With Rewards` = c(140716.8 ,259005.0, 232415.1, 332194.9),
+  "Replication" = c(151579.9, 284804.5, 259100.4, 378875.2)
+)
+
+res_effect <- list(
+  "DES"  = c(result.SoC$dqaly, result.A$dqaly, result.B$dqaly, result.AB$dqaly),
+  "Embedded" = c(21.02288, 21.73058 ,22.56671, 23.42227),
+  `Markov Chains With Rewards` = c(20.91890, 21.59932, 22.38365, 23.20440),
+  "Replication" = c(20.71133, 21.49866, 22.18447, 23.13684)
+)
+
+res_strategies <- list(
+  "DES"  = c("SoC", "A", "B", "AB"),
+  "Embedded" = c("SoC", "A", "B", "AB"),
+  `Markov Chains With Rewards` = c("SoC", "A", "B", "AB"),
+  "Replication" = c("SoC", "A", "B", "AB")
+)
+
+create_cea_table(cost = res_cost, effect = res_effect, strategies = res_strategies)
+
 ```
 
 ```{r}
