@@ -146,5 +146,10 @@ des <- function(env, inputs)
       continue=TRUE,
       trajectory("main_loop") |> process_events(env, inputs)
     ) |> 
-    rollback(target=1, times=100) # Process up to 100 events per person
+    # note: this function has been updated, occasionally causing errors 
+    # The rollback() function in simmer uses the argument target (not target =) and times (not times =), and in 
+    # newer versions, the signature is rollback(.trj, target, times = Inf, check = NULL, ..., tag) 
+    # The orignal code was using the old syntax with named arguments target = 1, times = 100, but the 
+    # function expects positional arguments. the simple fix below resolves this
+    rollback(1, 100) # Process up to 100 events per person
 }

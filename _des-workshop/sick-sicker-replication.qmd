@@ -41,7 +41,7 @@ source('main_loop.R')  # Boilerplate code
 
 ```{r}
 inputs <- list(
-    N      = 100,
+    N      = 1e4,
   
     # Parameters
     horizon=    75,      # Time horizon
@@ -393,12 +393,6 @@ des_run <- function(inputs)
 
 
 ```{r}
-
-# # A tibble: 1 × 2
-#     dcost dqaly
-#     <dbl> <dbl>
-# 1 147711.  25.7
-
 inputs$strategy <- 'notreat'
 set.seed(23)
 results.notreat <- des_run(inputs)
@@ -410,7 +404,6 @@ results.notreat %>%
   ungroup() %>% 
   summarise_at(vars(dcost,dqaly),mean)
 ```
-
 
 ```{r}
 
