@@ -428,19 +428,19 @@ des_run <- function(inputs)
 
 ```{r}
 # Standard of Care (no treatments)
-set.seed(23)
+set.seed(123)
 run.SoC <- des_run(modifyList(inputs, list(treatA = FALSE, treatB = FALSE)))
 
 #- Treatment A
-set.seed(23)
+set.seed(123)
 run.A <- des_run(modifyList(inputs, list(treatA = TRUE, treatB = FALSE)))
 
 #- Treatment B
-set.seed(23)
+set.seed(123)
 run.B <-  des_run(modifyList(inputs, list(treatA = FALSE, treatB = TRUE)))
 
 # Treatment A + B
-set.seed(23)
+set.seed(123)
 run.AB <- des_run(modifyList(inputs, list(treatA = TRUE, treatB = TRUE)))
 
 aggregate_run <- function(run) {
