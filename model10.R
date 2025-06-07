@@ -1,5 +1,81 @@
-# A working model with a waiting time for treatment A
-
+#############################################################################
+# DISEASE MODEL WITH DIRECT WAIT TIME SIMULATION - NO CLONING NEEDED
+#############################################################################
+#
+# MODEL DESCRIPTION:
+# This model simulates disease progression with treatment delays by directly
+# scheduling treatment availability at predetermined future times, rather than
+# using resource contention within the simmer environment.
+#
+# KEY ASSUMPTIONS:
+# - Treatment wait times are predetermined and deterministic (e.g., 365 days)
+# - Wait times represent policy/system delays, not resource competition
+# - Individual patients don't compete for treatment slots
+# - Disease progression continues normally during predetermined wait periods
+# - Treatment availability is scheduled as a future event, not resource-limited
+#
+# WHY NO CLONING IS NEEDED:
+# 1. DETERMINISTIC SCHEDULING: Wait times are known in advance
+#    - Patient becomes sick → calculates exact future treatment availability
+#    - No uncertainty about when treatment will become available
+#    - timeWhenCanGetA = now(env) + wait_days/365 (predetermined)
+#
+# 2. EVENT-DRIVEN WAIT MANAGEMENT: Wait is handled through event timing
+#    - "Get Treatment A" event scheduled for specific future time
+#    - Event system naturally handles competing risks during wait period
+#    - No need for parallel processes - events compete sequentially
+#
+# 3. FLAG-BASED STATE TRACKING: Simple boolean logic manages waiting status
+#    - waitingForA flag indicates patient is in waiting period
+#    - Event fires when predetermined time arrives
+#    - Competing events (death, progression) can interrupt waiting naturally
+#
+# 4. NO RESOURCE CONTENTION: Treatment availability is not capacity-limited
+#    - Each patient gets their own predetermined wait time
+#    - No queue competition between patients
+#    - Wait time represents external constraints, not internal capacity limits
+#
+# TECHNICAL APPROACH:
+# - Direct time calculation: timeWhenCanGetA = now(env) + predetermined_delay
+# - Event registry includes "Get Treatment A" with time_to_event function
+# - Competing events during wait period handled by standard event timing
+# - Boolean flags (waitingForA, hasA) track treatment status simply
+#
+# ADVANTAGES OF THIS APPROACH:
+# - Simple and computationally efficient
+# - Easy to model policy scenarios (1-year wait vs instant access)
+# - Clear separation between wait time policy and disease progression
+# - Deterministic results for policy comparison
+# - No complex inter-process communication needed
+#
+# USE CASES:
+# - Policy analysis with known wait time targets (e.g., "treatment within 1 year")
+# - Comparing deterministic delay scenarios (instant vs 6 months vs 1 year)
+# - Cost-effectiveness analysis where wait times are policy parameters
+# - System-level analysis where individual resource competition is not modeled
+# - Sensitivity analysis across different predetermined wait time policies
+#
+# WHEN TO USE THIS VS CLONING APPROACH:
+# Use this approach when:
+# - Wait times are policy parameters, not resource constraints
+# - Individual patient competition for resources is not the focus
+# - You want deterministic, comparable scenarios
+# - System-level policy analysis is the goal
+#
+# Use cloning approach when:
+# - Resource capacity limits create uncertain wait times
+# - Patient competition for limited treatment slots is key
+# - Queue dynamics and patient interactions are important
+# - Realistic resource utilization modeling is needed
+#
+# KEY INSIGHTS THIS MODEL REVEALS:
+# - Impact of predetermined wait time policies on population health outcomes
+# - Cost-effectiveness of different wait time targets
+# - Disease progression burden during systematic delays
+# - Policy trade-offs between access speed and resource allocation
+# - Population-level effects of standardized wait time policies
+#
+#############################################################################
 library(tidyverse)
 library(simmer)
 library(here)

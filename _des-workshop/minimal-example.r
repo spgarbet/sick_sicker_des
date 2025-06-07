@@ -46,9 +46,9 @@ patient <- trajectory() %>%
           set_attribute("wait_time",
                         function() now(env) - get_attribute(env, "t_queue_enter")) %>%
           set_attribute("treated", 1) %>%
-          synchronize(wait = FALSE) %>%
           timeout(tx_duration) %>%
-          release("tx", 1),
+          release("tx", 1) %>% 
+          synchronize(wait = TRUE), # allows for secular death or progression while in treatment
         trajectory() %>%                                          # death
           timeout(function() rexp(1, rate_death_S)) %>%
           set_attribute("dead", 1) %>%
@@ -131,5 +131,5 @@ audit_patient <- function(env, id = 1) {
 }
 
 # --------------------------- example audits -------------------------------
-print(audit_patient(env, 2), row.names = FALSE)
-print(audit_patient(env, 1),  row.names = FALSE)
+print(audit_patient(env, sample(1:100,1)), row.names = FALSE)
+
