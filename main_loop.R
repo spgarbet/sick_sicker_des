@@ -153,3 +153,157 @@ des <- function(env, inputs)
     # function expects positional arguments. the simple fix below resolves this
     rollback(1, 100) # Process up to 100 events per person
 }
+
+split_arrivals <- function(patient_data) {
+  library(dplyr)
+  
+  # Get all unique time points and resource types
+  time_points <- sort(unique(c(patient_data$start_time, patient_data$end_time)))
+  all_resources <- unique(patient_data$resource)
+  
+  # Create time periods
+  periods <- data.frame(
+    period_start = time_points[-length(time_points)],
+    period_end = time_points[-1]
+  ) %>%
+    mutate(
+      period_duration = period_end - period_start,
+      period_id = row_number()
+    )
+  
+  # For each period, determine which events are active
+  result_list <- lapply(1:nrow(periods), function(i) {
+    period_start <- periods$period_start[i]
+    period_end <- periods$period_end[i]
+    
+    # Find active events
+    active_rows <- which(
+      patient_data$start_time < period_end & 
+        patient_data$end_time > period_start
+    )
+    
+    # Create base period info
+    period_info <- data.frame(
+      period_id = i,
+      period_start = period_start,
+      period_end = period_end,
+      period_duration = period_end - period_start,
+      n_active_events = length(active_rows)
+    )
+    
+    if (length(active_rows) > 0) {
+      active_data <- patient_data[active_rows, ]
+      period_info$active_resources <- paste(active_data$resource, collapse = ", ")
+      period_info$active_row_ids <- paste(active_rows, collapse = ", ")
+      
+      # Create binary indicators for each resource type
+      for (resource in all_resources) {
+        col_name <- paste0(resource, "_active")
+        period_info[[col_name]] <- resource %in% active_data$resource
+      }
+    } else {
+      period_info$active_resources <- ""
+      period_info$active_row_ids <- ""
+      
+      # Set all resource indicators to FALSE
+      for (resource in all_resources) {
+        col_name <- paste0(resource, "_active")
+        period_info[[col_name]] <- FALSE
+      }
+    }
+    
+    return(period_info)
+  })
+  
+  # Combine results
+  result <- do.call(rbind, result_list)
+  result$patient_name <- unique(patient_data$name)[1]
+  
+  return(result)
+}
+
+
+plot_patient_trajectory <- function(patient_data) {
+  # Load required libraries
+  library(ggplot2)
+  library(dplyr)
+  
+  # Prepare data for plotting
+  plot_data <- patient_data %>%
+    mutate(
+      resource = as.factor(resource),
+      row_id = row_number()  # Add row identifier for y-axis positioning
+    )
+  
+  # Create the plot
+  p <- ggplot(plot_data, aes(y = row_id)) +
+    geom_segment(
+      aes(x = start_time, xend = end_time, 
+          color = resource, size = 1.5),
+      lineend = "round"
+    ) +
+    scale_color_viridis_d(name = "Health State") +  # Use viridis color palette
+    scale_size_identity() +
+    labs(
+      title = "Patient Health State Trajectory Over Time",
+      x = "Time",
+      y = "Event Sequence",
+      subtitle = paste("Patient:", unique(plot_data$name))
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      panel.grid.major.y = element_blank(),
+      axis.text.y = element_text(size = 8),
+      legend.position = "bottom"
+    ) +
+    guides(color = guide_legend(override.aes = list(size = 3)))
+  
+  return(p)
+}
+
+# Alternative version that groups overlapping events by resource type
+plot_patient_trajectory_grouped <- function(patient_data) {
+  library(ggplot2)
+  library(dplyr)
+  
+  # Get unique resources and assign y-positions
+  resources <- unique(patient_data$resource)
+  resource_positions <- data.frame(
+    resource = resources,
+    y_pos = seq_along(resources)
+  )
+  
+  # Prepare data for plotting
+  plot_data <- patient_data %>%
+    left_join(resource_positions, by = "resource") %>%
+    mutate(resource = as.factor(resource))
+  
+  # Create the plot
+  p <- ggplot(plot_data, aes(y = y_pos)) +
+    geom_segment(
+      aes(x = start_time, xend = end_time, 
+          color = resource),
+      size = 4, lineend = "round", alpha = 0.8
+    ) +
+    scale_color_viridis_d(name = "Health State") +
+    scale_y_continuous(
+      breaks = resource_positions$y_pos,
+      labels = resource_positions$resource
+    ) +
+    labs(
+      title = "Patient Health State Trajectory Over Time",
+      x = "Time",
+      y = "Health State",
+      subtitle = paste("Patient:", unique(plot_data$name))
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      panel.grid.major.y = element_line(color = "grey90", linetype = "dashed"),
+      legend.position = "bottom"
+    ) +
+    guides(color = guide_legend(override.aes = list(size = 3)))
+  
+  return(p)
+}

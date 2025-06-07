@@ -3,6 +3,8 @@ title: "Sick Sicker Simmer Constrained (Part 2)"
 author: "Shawn Garbett, John Graves"
 format: html
 editor: source
+editor_options: 
+  chunk_output_type: console
 ---
 
 ## Goal

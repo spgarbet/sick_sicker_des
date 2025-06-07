@@ -45,6 +45,9 @@ source(here('cea-table-functions.R'))
 ```{r}
 inputs <- list(
     N      = 1e3,
+    
+    lambda.wait = 1/30,
+    n.capacity = 1e7,
   
     # Parameters
     horizon=    75,      # Time horizon
@@ -83,25 +86,16 @@ inputs <- list(
     treatB = FALSE
   )
 
-```
-
-# Define Resources and Counters
-
-```{r}
 counters <- c(
   "time_in_model",
   "death",
   "healthy",
   "sick1",
   "sick2",
-  "A",
+  #"A", #This no longer is included here because we inlcude it in add_resource("A", inputs$n.capacity in the des_run function)
   "B"
 )
-```
 
-# Initialize Patient
-
-```{r}
 # Define starting state of patient
 initialize_patient <- function(traj, inputs)
 {
@@ -114,11 +108,6 @@ initialize_patient <- function(traj, inputs)
   set_attribute("trtB", function() inputs$treatB == TRUE)
 }
 
-```
-
-# Cleanup and Termination
-
-```{r}
 # Cleanup function if a termination occurs
 # Good for releasing any seized resources based on state.
 cleanup_on_termination <- function(traj, inputs)
@@ -148,22 +137,40 @@ cleanup_on_termination <- function(traj, inputs)
   )
 }
 
-terminate_simulation <- function(traj, inputs)
-{
-  traj |>
-  branch( function() 1, 
-          continue=FALSE,
-          trajectory() |> cleanup_on_termination(inputs)
-        )
+
+# terminate_simulation <- function(traj, inputs)
+# {
+#   traj |>
+#   branch( function() 1, 
+#           continue=FALSE,
+#           trajectory() |> send("timeout.event") |> cleanup_on_termination(inputs)
+#         )
+# }
+
+terminate_simulation <- function(inputs) {
+  trajectory("Terminate") |>
+    send("timeout.event") |>
+    release("time_in_model") |>
+    branch(
+      function() get_attribute(env, "State") + 1,
+      continue = rep(TRUE, 3),
+      trajectory() |> release("healthy"),
+      trajectory() |> release("sick1"),
+      trajectory() |> release("sick2")
+    ) |>
+    branch(
+      function() (get_attribute(env, "trtA") && get_attribute(env, "State")) + 1,
+      continue = rep(TRUE, 2),
+      trajectory(),
+      trajectory() |> release("A")
+    ) |>
+    branch(
+      function() (get_attribute(env, "trtB") && get_attribute(env, "State")) + 1,
+      continue = rep(TRUE, 2),
+      trajectory(),
+      trajectory() |> release("B")
+    )
 }
-```
-
-# Define Events
-
-## Death
-
-```{r}
-
 years_till_death <- function(inputs)
 {
   state <- get_attribute(env, "State")
@@ -173,21 +180,19 @@ years_till_death <- function(inputs)
   rexp(1, rate)
 }
 
-death <- function(traj, inputs)
-{
+death <- function(traj, inputs) {
+  death_cleanup <- terminate_simulation(trajectory("cleanup"), inputs)
+  
   traj |> branch(
     function() 1,
-    continue=c(FALSE), # False is patient death, had to use a branch to force termination
+    continue = c(FALSE),
     trajectory("Death") |>
-      mark("death")     |> # Must be in 'counters'
-      terminate_simulation(inputs)
+      send("death.event") |>
+      mark("death") |>
+      join(death_cleanup)
   )
 }
-```
 
-## Sick
-
-```{r}
 years_till_sick1 <- function(inputs)
 {
   state <- get_attribute(env, "State") 
@@ -210,7 +215,7 @@ sick1 <- function(traj, inputs)
     function() get_attribute(env, "trtA")+1,
     continue = rep(TRUE, 2),
     trajectory(),  # No Treatment
-    trajectory() |> seize('A')
+    trajectory() |> timeout(0) |> seize('A')
   )                         |>
   branch( 
     function() get_attribute(env, "trtB")+1,
@@ -219,11 +224,49 @@ sick1 <- function(traj, inputs)
     trajectory() |> seize('B')
   )
 }
-```
 
-## Healthy (from Sick)
+sick1 <- function(traj, inputs)
+{
+  traj |> 
+    set_attribute("State", 1) |>     # Enter Sick1
+    release("healthy") |>            # Leave Healthy
+    seize("sick1") |>                # Enter Sick1 pool
 
-```{r}
+    # Treatment A: wait for access, but can be interrupted
+    branch(
+      function() get_attribute(env, "trtA") + 1,
+      continue = rep(TRUE, 2),
+
+      # No treatment A
+      trajectory(),
+
+      # Treatment A with potential interruption
+      trajectory() |>
+        trap("death.event", handler = terminate_simulation(inputs)) |>
+        trap("timeout.event", handler = terminate_simulation(inputs)) |>
+
+        renege_if("death", trajectory()) |>
+        renege_if("timeout", trajectory()) |>
+
+        seize("A") |>                      # Wait for and seize A
+        timeout(1) |>                      # Duration of treatment
+        release("A") |>                    # Release A if completed
+
+        untrap("death.event") |>
+        untrap("timeout.event")
+    ) |>
+
+    # Treatment B: seize if assigned, no renege logic added here
+    branch(
+      function() get_attribute(env, "trtB") + 1,
+      continue = rep(TRUE, 2),
+      trajectory(),
+      trajectory() |> seize("B")
+    )
+}
+
+
+
 years_till_healthy <- function(inputs)
 {
   state <- get_attribute(env, "State") 
@@ -255,11 +298,7 @@ healthy <- function(traj, inputs)
     trajectory() |> release('B')
   )
 }
-```
 
-## Sicker
-
-```{r}
 years_till_sick2 <- function(inputs)
 {
   state <- get_attribute(env, "State") 
@@ -284,23 +323,31 @@ sick2 <- function(traj, inputs)
   release('sick1')          |> # Track state change for tally later
   seize('sick2')
 }
-```
 
-## Event Registry
-
-```{r}
 # Main Event registry
 event_registry <- list(
-  list(name          = "Terminate at time horizon",
-       attr          = "aTerminate",
-       time_to_event = function(inputs) inputs$horizon-now(env),
-       func          = terminate_simulation,
-       reactive      = FALSE),
-  list(name          = "Death",
-       attr          = "aDeath",
-       time_to_event = years_till_death,
-       func          = death,
-       reactive      = TRUE),
+  list(name = "Death",
+     attr = "aDeath",
+     time_to_event = years_till_death,
+     func = death,
+     reactive = TRUE),
+     
+  list(name = "Terminate at time horizon",
+     attr = "aTerminate",
+     time_to_event = function(inputs) inputs$horizon - now(env),
+     func = terminate_simulation,
+     reactive = FALSE),
+
+  # list(name          = "Terminate at time horizon",
+  #      attr          = "aTerminate",
+  #      time_to_event = function(inputs) inputs$horizon-now(env),
+  #      func          = terminate_simulation,
+  #      reactive      = FALSE),
+  # list(name          = "Death",
+  #      attr          = "aDeath",
+  #      time_to_event = years_till_death,
+  #      func          = death,
+  #      reactive      = TRUE),
   list(name          = "Sick1",
        attr          = "aSick1",
        time_to_event = years_till_sick1,
@@ -318,13 +365,6 @@ event_registry <- list(
        reactive      = TRUE)
 )
 
-```
-
-# Outcomes
-
-## Costs
-
-```{r}
 cost_arrivals <- function(arrivals, inputs)
 {
   arrivals$cost  <- 0  # No costs yet
@@ -363,11 +403,6 @@ cost_arrivals <- function(arrivals, inputs)
   arrivals
 }
 
-```
-
-## Quality-Adjusted Life Years
-
-```{r}
 qaly_arrivals <- function(arrivals, inputs)
 {
   arrivals$qaly  <- 0  # No qaly yet
@@ -404,11 +439,6 @@ qaly_arrivals <- function(arrivals, inputs)
   arrivals
 }
 
-```
-
-# Define Model Run Function
-
-```{r}
 # This does a single DES run versus the defined inputs.
 des_run <- function(inputs)
 {
@@ -416,6 +446,7 @@ des_run <- function(inputs)
   traj <- des(env, inputs)
   env |> 
     create_counters(counters) |>
+    add_resource("A", inputs$n.capacity) |> 
     add_generator("patient", traj, at(rep(0, inputs$N)), mon=2) |>
     run(inputs$horizon+1/365) |> # Simulate just past horizon (in years)
     wrap()
@@ -424,27 +455,6 @@ des_run <- function(inputs)
     cost_arrivals(inputs) |> 
     qaly_arrivals(inputs) 
 }
-```
-
-```{r}
-# seed 123 and N=1e4 gets quite close to embedded results
-
-# Standard of Care (no treatments)
-set.seed(123)
-run.SoC <- des_run(modifyList(inputs, list(treatA = FALSE, treatB = FALSE)))
-
-#- Treatment A
-set.seed(123)
-run.A <- des_run(modifyList(inputs, list(treatA = TRUE, treatB = FALSE)))
-run.A %>% as_tibble() %>% filter(name == "patient2") %>% mutate(foo = !as.integer(resource == "time_in_model")) %>% arrange(foo,start_time,end_time) %>% dplyr::select(-foo)
-
-#- Treatment B
-set.seed(123)
-run.B <-  des_run(modifyList(inputs, list(treatA = FALSE, treatB = TRUE)))
-
-# Treatment A + B
-set.seed(123)
-run.AB <- des_run(modifyList(inputs, list(treatA = TRUE, treatB = TRUE)))
 
 aggregate_run <- function(run) {
   run |>
@@ -455,41 +465,31 @@ aggregate_run <- function(run) {
   summarise_at(vars(dcost,dqaly),mean)
 }
 
+```
+
+```{r}
+# seed 123 and N=1e4 gets quite close to embedded results
+
+# Standard of Care (no treatments)
+set.seed(123)
+run.SoC <- des_run(modifyList(inputs, list(treatA = FALSE, treatB = FALSE)))
 result.SoC <- run.SoC |> aggregate_run() |> mutate(strategy = "SoC")
-result.A <- run.A |> aggregate_run() |> mutate(strategy = "A")
-result.B <- run.B |> aggregate_run() |> mutate(strategy = "B")
-result.AB <- run.AB |> aggregate_run() |> mutate(strategy = "AB")
+run.SoC %>% as_tibble() %>% filter(name == "patient1") %>% mutate(foo = !as.integer(resource == "time_in_model")) %>% arrange(foo,start_time,end_time) %>% dplyr::select(-foo)
+  
+#- Treatment A - Unconstrained
+set.seed(123)
+run.A.unconstrained <- des_run(modifyList(inputs, list(treatA = TRUE, treatB = FALSE, n.capacity=1e6)))
+result.A.unconstrained <- run.A.unconstrained |> aggregate_run() |> mutate(strategy = "A.unconstrained")
+run.A.unconstrained %>% as_tibble() %>% filter(name == "patient1") %>% mutate(foo = !as.integer(resource == "time_in_model")) %>% arrange(foo,start_time,end_time) %>% dplyr::select(-foo)
+  
+#- Treatment A - Fully Constrained (should be same as B alone)
+set.seed(123)
+run.A.fullyconstrained <- des_run(modifyList(inputs, list(treatA = TRUE, treatB = FALSE, n.capacity=100)))
+result.A.fullyconstrained <- run.A.fullyconstrained |> aggregate_run() |> mutate(strategy = "A.fullyconstrained")
 
-
-# Note: non-DES results are calcualted in index.qmd in the matrix-cea-tutorial repo; 
-# these results are based on deterministic models based on 
-# 1. replicating the original paper (note: does not use matrix embedding for
-# transition probabilities)
-# 2. embedding via rate matrix
-# 3. Markov chain with rewards methods
-
-res_cost <- list(
-  "DES" = c(result.SoC$dcost, result.A$dcost, result.B$dcost, result.AB$dcost),
-  "Embedded" = c(147036.6 ,271907.9 ,243650.1, 353744.0),
-  `Markov Chains With Rewards` = c(140716.8 ,259005.0, 232415.1, 332194.9),
-  "Replication" = c(151579.9, 284804.5, 259100.4, 378875.2)
-)
-
-res_effect <- list(
-  "DES"  = c(result.SoC$dqaly, result.A$dqaly, result.B$dqaly, result.AB$dqaly),
-  "Embedded" = c(21.02288, 21.73058 ,22.56671, 23.42227),
-  `Markov Chains With Rewards` = c(20.91890, 21.59932, 22.38365, 23.20440),
-  "Replication" = c(20.71133, 21.49866, 22.18447, 23.13684)
-)
-
-res_strategies <- list(
-  "DES"  = c("SoC", "A", "B", "AB"),
-  "Embedded" = c("SoC", "A", "B", "AB"),
-  `Markov Chains With Rewards` = c("SoC", "A", "B", "AB"),
-  "Replication" = c("SoC", "A", "B", "AB")
-)
-
-create_cea_table(cost = res_cost, effect = res_effect, strategies = res_strategies)
+result.SoC
+result.A.unconstrained
+result.A.fullyconstrained
 
 ```
 

@@ -174,37 +174,32 @@ window.Quarto = {
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> <span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>1.19759: patient12: Waited: 0
-1.75458: patient12: Waited: 0
-1.81973: patient14: Waited: 0
-2.88956: patient2: Waited: 0
-3.30249: patient19: Waited: 0
-4.3064: patient16: Waited: 0.861871524077387
-4.53222: patient4: Waited: 0
-4.71959: patient8: Waited: 0.181082742273044
-5.46898: patient1: Waited: 0.83958196286836
-6.3413: patient11: Waited: 1.67129283551338
-7.08808: patient17: Waited: 1.85194642851021
-7.35734: patient9: Waited: 2.03649657107694
-7.87407: patient14: Waited: 1.85283302334239
-26.5443: patient12: Waited: 20.512955319724
-28.5169: patient5: Waited: 21.6324729288
-29.2376: patient13: Waited: 22.2369820078
-29.3216: patient1: Waited: 21.7696902091528
-29.9989: patient16: Waited: 21.7410274755811
-30: patient6: Waited: 21.6139722059487
-30: patient18: Waited: 21.6372537367363
-30: patient4: Waited: 21.1656304289963
-30: patient3: Waited: 20.8979831700841
-30: patient8: Waited: 20.2991192382874
-30: patient0: Waited: 20.2865264677991
-30: patient11: Waited: 20.0037799651424
-30: patient2: Waited: 18.6392369847598
-30: patient10: Waited: 17.6546808586159
-30: patient7: Waited: 15.9503101131836
-30: patient9: Waited: 15.4575144353356
-30: patient19: Waited: 6.31551259004879
-30: patient13: Waited: 0.443671520824218</code></pre>
+<pre><code>0.319967: patient15: Waited: 0
+0.814518: patient4: Waited: 0
+1.41054: patient0: Waited: 0.379896811300797
+1.48551: patient6: Waited: 0.259447323974043
+1.83331: patient19: Waited: 0
+2.0104: patient10: Waited: 0
+2.35023: patient18: Waited: 0.334060615072369
+3.37693: patient10: Waited: 0
+3.69137: patient1: Waited: 0
+21.811: patient3: Waited: 17.9627694142792
+22.6726: patient17: Waited: 18.1910843807747
+22.7838: patient13: Waited: 18.1194827660621
+23.3425: patient15: Waited: 18.4042037331702
+24.6581: patient8: Waited: 19.0142072616304
+27.0626: patient0: Waited: 20.8042866156983
+27.8486: patient5: Waited: 20.5371626533614
+30: patient16: Waited: 20.1534528290866
+30: patient18: Waited: 20.0155291870997
+30: patient11: Waited: 19.1952738754725
+30: patient4: Waited: 18.9858231959975
+30: patient6: Waited: 15.6828689251827
+30: patient2: Waited: 14.1282878452001
+30: patient14: Waited: 13.4798192613778
+30: patient3: Waited: 3.14204984945156
+30: patient15: Waited: 3.07355723317796
+30: patient19: Waited: 0.215363357108565</code></pre>
 </div>
 </div>
 <p>This debug output demonstrates that 20 patients with a single treament center that can handle 2 individuals– the resources constraint is having an effect on patient outcomes–as they are forced to wait years for treatment (years being the unit of simulation time in this example).</p>
@@ -233,13 +228,13 @@ window.Quarto = {
     Welch Two Sample t-test
 
 data:  dr.constrained and dr.original
-t = -52.301, df = 159.02, p-value &lt; 2.2e-16
+t = -50.655, df = 147.2, p-value &lt; 2.2e-16
 alternative hypothesis: true difference in means is not equal to 0
 95 percent confidence interval:
- -26.94031 -24.97969
+ -26.62991 -24.63009
 sample estimates:
 mean of x mean of y 
-     5.73     31.69 </code></pre>
+     6.05     31.68 </code></pre>
 </div>
 </div>
 <p>First of all note we had to run replicates of the simulation to determine effect size. Secondly, the t-test comparison between the runs shows a statistically discernable difference.</p>
@@ -334,82 +329,87 @@ death &lt;- function(traj, inputs)
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"model-9.R"</span>)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>x<span class="ot">=</span><span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>0.56206: patient1: Waited: 0
-0.748492: patient2: Waited: 0
-1.64361: patient12: Waited: 0
-1.85792: patient0: Waited: 0
-2.35278: patient4: Waited: 0
-2.64446: patient16: Waited: 0
-3.72899: patient4: Waited: 0
-4.00928: patient14: Waited: 0
-4.19161: patient12: Waited: 0
-4.40949: patient16: Waited: 0
-4.64178: patient18: Waited: 0
-4.99039: patient5: Waited: 0
-5.13151: patient9: Waited: 0
-5.39367: patient19: Waited: 0
-6.10965: patient15: Waited: 0
-6.13519: patient9: Waited: 0
-6.67187: patient0: Waited: 0
-6.68338: patient11: Waited: 0
-7.02837: patient12: Waited: 0
-7.10515: patient5: Waited: 0
-7.58943: patient16: Waited: 0
-7.68087: patient7: Waited: 0
-7.81587: patient2: Waited: 0
-8.48459: patient17: Waited: 0
-8.9991: patient17: Waited: 0
-9.38651: patient19: Waited: 0
-9.80527: patient18: Waited: 0
-9.91319: patient2: Waited: 0
-10.0001: patient14: Waited: 0
-10.6902: patient3: Waited: 0
-10.7311: patient12: Waited: 0
-11.9328: patient18: Waited: 0
-12.5468: patient14: Waited: 0
-13.5788: patient7: Waited: 0
-13.7955: patient1: Waited: 0.191381735214406
-14.0568: patient10: Waited: 0
-14.1369: patient0: Waited: 0
-14.6479: patient12: Waited: 0
-15.6906: patient19: Waited: 0
-15.7727: patient0: Waited: 0
-15.8727: patient5: Waited: 0
-15.9612: patient10: Waited: 0
-16.7364: patient6: Waited: 0
-16.8457: patient3: Waited: 0
-17.2952: patient8: Waited: 0.273993157425174
-17.2952: patient17: Waited: 0.410364761682665
-17.2952: patient18: Waited: 0.240673485676098
-17.4318: patient16: Waited: 0
-17.6539: patient17: Waited: 0
-19.2895: patient13: Waited: 0
-20.4534: patient16: Waited: 0
-21.0368: patient0: Waited: 0
-21.9203: patient12: Waited: 0
-22.9859: patient2: Waited: 0
-23.2677: patient5: Waited: 0
-23.6944: patient3: Waited: 0
-24.1859: patient19: Waited: 0
-24.3052: patient0: Waited: 0
-24.9242: patient0: Waited: 0
-24.9425: patient13: Waited: 0
-26.6973: patient10: Waited: 0
-27.3284: patient17: Waited: 0
-27.7583: patient2: Waited: 0.275277588862295
-28.3503: patient12: Waited: 0
-28.3946: patient2: Waited: 0
-29.4624: patient9: Waited: 0
-29.6952: patient3: Waited: 0.132972452576766
-29.9435: patient10: Waited: 0</code></pre>
+<pre><code>1.32365: patient6: Waited: 0
+1.44599: patient8: Waited: 0
+1.62738: patient10: Waited: 0.0414530178989436
+1.95843: patient4: Waited: 0
+2.31556: patient13: Waited: 0
+3.19976: patient18: Waited: 0.391830330323797
+3.19976: patient7: Waited: 0.240158385378439
+3.19976: patient3: Waited: 0.183335128633848
+3.19976: patient19: Waited: 0.695232284027206
+3.64363: patient7: Waited: 0.443870248000998
+3.64363: patient19: Waited: 0.443870248000998
+3.64363: patient8: Waited: 0.0808788058540624
+3.64363: patient15: Waited: 0.0670771002027353
+3.95111: patient14: Waited: 0
+4.21787: patient2: Waited: 0
+4.44496: patient8: Waited: 0
+4.55725: patient13: Waited: 0
+5.15706: patient18: Waited: 0
+5.5298: patient19: Waited: 0
+6.39944: patient14: Waited: 0
+6.62581: patient2: Waited: 0
+7.18492: patient6: Waited: 0
+7.51439: patient4: Waited: 0
+8.2681: patient19: Waited: 0
+9.59479: patient0: Waited: 0
+9.60811: patient11: Waited: 0
+11.4045: patient7: Waited: 0
+11.763: patient3: Waited: 0
+12.1703: patient5: Waited: 0
+12.8832: patient16: Waited: 0
+12.9938: patient3: Waited: 0.0970368185732777
+13.0346: patient17: Waited: 0
+13.352: patient9: Waited: 0
+13.8323: patient6: Waited: 0.472390518536038
+14.0266: patient2: Waited: 0
+14.203: patient8: Waited: 0.115086449964933
+14.2327: patient15: Waited: 0
+14.6494: patient2: Waited: 0
+15.0406: patient8: Waited: 0
+15.8702: patient1: Waited: 0.782781676217482
+15.8702: patient16: Waited: 0.354391834731715
+15.8702: patient17: Waited: 0.115429399044446
+15.8702: patient18: Waited: 0.422847873698815
+15.9729: patient0: Waited: 0
+16.1042: patient9: Waited: 0
+16.2319: patient15: Waited: 0
+16.5897: patient8: Waited: 0
+17.3475: patient3: Waited: 0
+17.418: patient16: Waited: 0
+17.5779: patient11: Waited: 0
+18.7282: patient9: Waited: 0
+18.7884: patient3: Waited: 0
+19.3658: patient2: Waited: 0.120564436547269
+19.3658: patient10: Waited: 0.0195196573940386
+19.3658: patient10: Waited: 0
+19.5912: patient5: Waited: 0.185778678330411
+20.0029: patient16: Waited: 0
+20.1201: patient4: Waited: 0
+21.3153: patient11: Waited: 0
+21.4648: patient9: Waited: 0
+22.2334: patient0: Waited: 0.125955424393009
+22.2432: patient3: Waited: 0
+22.892: patient8: Waited: 0
+23.3853: patient4: Waited: 0
+23.5252: patient10: Waited: 0
+23.6526: patient5: Waited: 0
+25.2529: patient8: Waited: 0
+27.3062: patient5: Waited: 0
+27.6487: patient11: Waited: 0
+29.1077: patient8: Waited: 0
+29.5133: patient19: Waited: 0
+29.7113: patient18: Waited: 0
+29.8024: patient8: Waited: 0</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(x<span class="sc">$</span>resource)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
         death       healthy         sick1         sick2 time_in_model 
-            2            79            68             6            20 
+            8            83            73             7            20 
         treat 
-           68 </code></pre>
+           73 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -442,7 +442,7 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(resource.limit[<span class="fu">c</span>(<span class="st">'cost'</span>, <span class="st">'dcost'</span>, <span class="st">'qaly'</span>, <span class="st">'dqaly'</span>)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        cost        dcost         qaly        dqaly 
-101515.11222  64777.31122     26.49082     17.96920 </code></pre>
+101931.24634  67616.08143     23.79574     16.51776 </code></pre>
 </div>
 </div>
 <div class="cell">
@@ -459,13 +459,13 @@ Attaching package: 'dplyr'</code></pre>
     Welch Two Sample t-test
 
 data:  dr.constrained and dr.original
-t = 8.0348, df = 196.04, p-value = 8.591e-14
+t = 8.8934, df = 196.55, p-value = 3.858e-16
 alternative hypothesis: true difference in means is not equal to 0
 95 percent confidence interval:
- 3.878382 6.401618
+ 4.61503 7.24497
 sample estimates:
 mean of x mean of y 
-    36.83     31.69 </code></pre>
+    37.61     31.68 </code></pre>
 </div>
 </div>
 <p>The death rate is still different, but in this case the deaths go up which is in line with what we expected by restricting treatment. A good sign that our modifications are working as intended.</p>
