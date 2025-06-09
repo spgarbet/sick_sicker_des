@@ -61,7 +61,7 @@ library(simmer)
 # Parameters - modeling a scenario with very limited treatment capacity
 inputs <- list(
   N = 50,                     # Number of patients
-  horizon = 10,               # Time horizon (years)
+  horizon = 100,               # Time horizon (years)
   d.r = 0.03,                # Discount Rate
   
   # Disease progression rates (per year)
