@@ -477,7 +477,8 @@ des_run <- function(inputs)
     run(inputs$horizon+1/365) |> # Simulate just past horizon (in years)
     wrap()
   
-  get_mon_arrivals(env, per_resource = T) %>% 
+  arrivals <- get_mon_arrivals(env, per_resource = T) 
+  outcomes <- arrivals %>% 
     group_by(name) %>% 
     filter(resource != "time_in_model") %>% 
     nest() %>% 
@@ -489,13 +490,26 @@ des_run <- function(inputs)
     mutate(cost = map_dbl(cost_i,~(.x %>% summarise(cost = sum(cost)) %>% pull(cost)))) %>% 
     mutate(dcost = map_dbl(cost_i,~(.x %>% summarise(dcost = sum(dcost)) %>% pull(dcost)))) %>% 
     ungroup() 
+  arrivals <- get_mon_arrivals(env, per_resource = T) |>
+    cost_arrivals(inputs) |> 
+    qaly_arrivals(inputs) 
+  
+  return(list(
+    arrivals = arrivals,
+    outcomes = outcomes,
+    resources = get_mon_resources(env),
+    attributes = get_mon_attributes(env)
+  ))
 }
+
+debug <- des_run_debug(inputs, pp = "patient0", model = "10")
 
 
 set.seed(123)
 run.SoC <- des_run(modifyList(inputs, list(N = 1e3, treatA = FALSE, treatB = FALSE)))
 result.SoC <- 
   run.SoC %>% 
+  pluck("outcomes") %>% 
   summarise(cost = mean(cost),
             dcost = mean(dcost),
             qaly = mean(qaly),
@@ -505,6 +519,7 @@ set.seed(123)
 run.A.unconstrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = TRUE, treatB = FALSE, waitA_days = 0)))
 result.A.unconstrained <- 
   run.A.unconstrained %>% 
+  pluck("outcomes") %>% 
   summarise(cost = mean(cost),
             dcost = mean(dcost),
             qaly = mean(qaly),
@@ -515,6 +530,7 @@ set.seed(123)
 run.B.unconstrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = FALSE, treatB = TRUE, waitA_days = 0)))
 result.B.unconstrained <- 
   run.B.unconstrained %>% 
+  pluck("outcomes") %>% 
   summarise(cost = mean(cost),
             dcost = mean(dcost),
             qaly = mean(qaly),
@@ -525,6 +541,7 @@ set.seed(123)
 run.AB.unconstrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = TRUE, treatB = TRUE, waitA_days = 0)))
 result.AB.unconstrained <-
   run.AB.unconstrained %>% 
+  pluck("outcomes") %>% 
   summarise(cost = mean(cost),
             dcost = mean(dcost),
             qaly = mean(qaly),
@@ -535,6 +552,7 @@ set.seed(123)
 run.A.fully.constrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = TRUE, treatB = FALSE, waitA_days = 1e6)))
 result.A.fully.constrained <- 
   run.A.fully.constrained %>% 
+  pluck("outcomes") %>% 
   summarise(cost = mean(cost),
             dcost = mean(dcost),
             qaly = mean(qaly),
@@ -545,6 +563,7 @@ set.seed(123)
 run.A.constrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = TRUE, treatB = FALSE, waitA_days = 365)))
 result.A.constrained <- 
   run.A.constrained %>% 
+  pluck("outcomes") %>% 
   summarise(cost = mean(cost),
             dcost = mean(dcost),
             qaly = mean(qaly),

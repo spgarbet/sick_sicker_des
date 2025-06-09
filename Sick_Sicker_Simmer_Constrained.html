@@ -174,32 +174,38 @@ window.Quarto = {
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> <span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>0.319967: patient15: Waited: 0
-0.814518: patient4: Waited: 0
-1.41054: patient0: Waited: 0.379896811300797
-1.48551: patient6: Waited: 0.259447323974043
-1.83331: patient19: Waited: 0
-2.0104: patient10: Waited: 0
-2.35023: patient18: Waited: 0.334060615072369
-3.37693: patient10: Waited: 0
-3.69137: patient1: Waited: 0
-21.811: patient3: Waited: 17.9627694142792
-22.6726: patient17: Waited: 18.1910843807747
-22.7838: patient13: Waited: 18.1194827660621
-23.3425: patient15: Waited: 18.4042037331702
-24.6581: patient8: Waited: 19.0142072616304
-27.0626: patient0: Waited: 20.8042866156983
-27.8486: patient5: Waited: 20.5371626533614
-30: patient16: Waited: 20.1534528290866
-30: patient18: Waited: 20.0155291870997
-30: patient11: Waited: 19.1952738754725
-30: patient4: Waited: 18.9858231959975
-30: patient6: Waited: 15.6828689251827
-30: patient2: Waited: 14.1282878452001
-30: patient14: Waited: 13.4798192613778
-30: patient3: Waited: 3.14204984945156
-30: patient15: Waited: 3.07355723317796
-30: patient19: Waited: 0.215363357108565</code></pre>
+<pre><code>0.299747: patient12: Waited: 0
+1.02834: patient7: Waited: 0
+1.32691: patient14: Waited: 0
+2.21533: patient5: Waited: 0.836307300689791
+2.61663: patient12: Waited: 0.971490960564087
+4.21809: patient1: Waited: 2.09445121381193
+6.93118: patient17: Waited: 4.74178857973357
+7.16277: patient2: Waited: 4.66253761294945
+9.95863: patient13: Waited: 7.44894209615547
+12.7705: patient3: Waited: 9.55162599303259
+12.8985: patient15: Waited: 9.32166340048722
+16.9124: patient19: Waited: 11.4543276186618
+19.1595: patient16: Waited: 13.3456639687706
+21.5473: patient6: Waited: 15.4326066944777
+23.0334: patient10: Waited: 16.2500207261659
+23.3682: patient18: Waited: 16.4747875150275
+23.3827: patient4: Waited: 16.4256580760756
+23.7609: patient5: Waited: 15.7652404923615
+25.6977: patient14: Waited: 16.440847892586
+25.9374: patient11: Waited: 15.435982151335
+28.3907: patient8: Waited: 17.6989907492978
+29.6636: patient1: Waited: 17.7795290236006
+29.6697: patient0: Waited: 15.4879600049475
+30: patient2: Waited: 13.4529177910689
+30: patient13: Waited: 13.688822085108
+30: patient9: Waited: 12.8343011819777
+30: patient7: Waited: 12.4743771594016
+30: patient3: Waited: 11.3624321246652
+30: patient15: Waited: 10.679511096417
+30: patient17: Waited: 9.1713725506195
+30: patient18: Waited: 5.38907390698763
+30: patient16: Waited: 0.104750499796957</code></pre>
 </div>
 </div>
 <p>This debug output demonstrates that 20 patients with a single treament center that can handle 2 individuals– the resources constraint is having an effect on patient outcomes–as they are forced to wait years for treatment (years being the unit of simulation time in this example).</p>
@@ -228,13 +234,13 @@ window.Quarto = {
     Welch Two Sample t-test
 
 data:  dr.constrained and dr.original
-t = -50.655, df = 147.2, p-value &lt; 2.2e-16
+t = -47.911, df = 150.46, p-value &lt; 2.2e-16
 alternative hypothesis: true difference in means is not equal to 0
 95 percent confidence interval:
- -26.62991 -24.63009
+ -27.18679 -25.03321
 sample estimates:
 mean of x mean of y 
-     6.05     31.68 </code></pre>
+     5.77     31.88 </code></pre>
 </div>
 </div>
 <p>First of all note we had to run replicates of the simulation to determine effect size. Secondly, the t-test comparison between the runs shows a statistically discernable difference.</p>
@@ -329,87 +335,53 @@ death &lt;- function(traj, inputs)
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"model-9.R"</span>)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>x<span class="ot">=</span><span class="fu">des_run</span>(inputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>1.32365: patient6: Waited: 0
-1.44599: patient8: Waited: 0
-1.62738: patient10: Waited: 0.0414530178989436
-1.95843: patient4: Waited: 0
-2.31556: patient13: Waited: 0
-3.19976: patient18: Waited: 0.391830330323797
-3.19976: patient7: Waited: 0.240158385378439
-3.19976: patient3: Waited: 0.183335128633848
-3.19976: patient19: Waited: 0.695232284027206
-3.64363: patient7: Waited: 0.443870248000998
-3.64363: patient19: Waited: 0.443870248000998
-3.64363: patient8: Waited: 0.0808788058540624
-3.64363: patient15: Waited: 0.0670771002027353
-3.95111: patient14: Waited: 0
-4.21787: patient2: Waited: 0
-4.44496: patient8: Waited: 0
-4.55725: patient13: Waited: 0
-5.15706: patient18: Waited: 0
-5.5298: patient19: Waited: 0
-6.39944: patient14: Waited: 0
-6.62581: patient2: Waited: 0
-7.18492: patient6: Waited: 0
-7.51439: patient4: Waited: 0
-8.2681: patient19: Waited: 0
-9.59479: patient0: Waited: 0
-9.60811: patient11: Waited: 0
-11.4045: patient7: Waited: 0
-11.763: patient3: Waited: 0
-12.1703: patient5: Waited: 0
-12.8832: patient16: Waited: 0
-12.9938: patient3: Waited: 0.0970368185732777
-13.0346: patient17: Waited: 0
-13.352: patient9: Waited: 0
-13.8323: patient6: Waited: 0.472390518536038
-14.0266: patient2: Waited: 0
-14.203: patient8: Waited: 0.115086449964933
-14.2327: patient15: Waited: 0
-14.6494: patient2: Waited: 0
-15.0406: patient8: Waited: 0
-15.8702: patient1: Waited: 0.782781676217482
-15.8702: patient16: Waited: 0.354391834731715
-15.8702: patient17: Waited: 0.115429399044446
-15.8702: patient18: Waited: 0.422847873698815
-15.9729: patient0: Waited: 0
-16.1042: patient9: Waited: 0
-16.2319: patient15: Waited: 0
-16.5897: patient8: Waited: 0
-17.3475: patient3: Waited: 0
-17.418: patient16: Waited: 0
-17.5779: patient11: Waited: 0
-18.7282: patient9: Waited: 0
-18.7884: patient3: Waited: 0
-19.3658: patient2: Waited: 0.120564436547269
-19.3658: patient10: Waited: 0.0195196573940386
-19.3658: patient10: Waited: 0
-19.5912: patient5: Waited: 0.185778678330411
-20.0029: patient16: Waited: 0
-20.1201: patient4: Waited: 0
-21.3153: patient11: Waited: 0
-21.4648: patient9: Waited: 0
-22.2334: patient0: Waited: 0.125955424393009
-22.2432: patient3: Waited: 0
-22.892: patient8: Waited: 0
-23.3853: patient4: Waited: 0
-23.5252: patient10: Waited: 0
-23.6526: patient5: Waited: 0
-25.2529: patient8: Waited: 0
-27.3062: patient5: Waited: 0
-27.6487: patient11: Waited: 0
-29.1077: patient8: Waited: 0
-29.5133: patient19: Waited: 0
-29.7113: patient18: Waited: 0
-29.8024: patient8: Waited: 0</code></pre>
+<pre><code>0.0758419: patient13: Waited: 0
+0.111083: patient15: Waited: 0
+0.620568: patient5: Waited: 0.407637189589145
+0.620568: patient8: Waited: 0.356840827467001
+0.620568: patient16: Waited: 0.114449152871537
+0.620568: patient19: Waited: 0.217227325118539
+9.93141: patient2: Waited: 8.9316318751891
+9.93141: patient10: Waited: 8.61735658188855
+9.93141: patient11: Waited: 8.60416289508537
+9.93141: patient17: Waited: 8.3872433390992
+10.114: patient1: Waited: 8.05745074903345
+10.114: patient6: Waited: 7.44110144745856
+10.2301: patient13: Waited: 7.39286545192013
+10.2301: patient17: Waited: 6.77189467108418
+10.7787: patient12: Waited: 6.00844349918438
+10.7787: patient7: Waited: 4.39947233431214
+13.964: patient1: Waited: 6.1192995758097
+13.964: patient6: Waited: 5.68442829424817
+13.964: patient12: Waited: 6.61666432900229
+14.0083: patient5: Waited: 4.93143364926473
+14.0083: patient17: Waited: 4.08651619823787
+14.0083: patient1: Waited: 4.07687199168972
+14.0083: patient2: Waited: 4.07687199168972
+14.4998: patient10: Waited: 4.56834937820952
+14.4998: patient11: Waited: 4.56834937820952
+14.4998: patient1: Waited: 2.35726662206463
+14.4998: patient13: Waited: 4.56834937820952
+14.9593: patient4: Waited: 2.70333506000822
+14.9593: patient9: Waited: 2.22843830702031
+14.9593: patient18: Waited: 2.04241576211973
+17.5725: patient11: Waited: 4.55752227178948
+17.5725: patient3: Waited: 4.435955447798
+17.5725: patient1: Waited: 3.60851355828345
+18.7334: patient4: Waited: 4.76947924291098
+18.7334: patient9: Waited: 4.76947924291098
+18.7797: patient11: Waited: 4.3607563928709
+18.7797: patient18: Waited: 4.81574750812804
+30: patient0: Waited: 15.5439109083009
+30: patient5: Waited: 15.3510343649784</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(x<span class="sc">$</span>resource)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
         death       healthy         sick1         sick2 time_in_model 
-            8            83            73             7            20 
+            6            58            50            10            20 
         treat 
-           73 </code></pre>
+           37 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -442,7 +414,7 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(resource.limit[<span class="fu">c</span>(<span class="st">'cost'</span>, <span class="st">'dcost'</span>, <span class="st">'qaly'</span>, <span class="st">'dqaly'</span>)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        cost        dcost         qaly        dqaly 
-101931.24634  67616.08143     23.79574     16.51776 </code></pre>
+251558.00800 176934.97798     20.19579     14.31477 </code></pre>
 </div>
 </div>
 <div class="cell">
@@ -459,13 +431,13 @@ Attaching package: 'dplyr'</code></pre>
     Welch Two Sample t-test
 
 data:  dr.constrained and dr.original
-t = 8.8934, df = 196.55, p-value = 3.858e-16
+t = 8.7405, df = 195.78, p-value = 1.046e-15
 alternative hypothesis: true difference in means is not equal to 0
 95 percent confidence interval:
- 4.61503 7.24497
+ 4.382912 6.937088
 sample estimates:
 mean of x mean of y 
-    37.61     31.68 </code></pre>
+    37.54     31.88 </code></pre>
 </div>
 </div>
 <p>The death rate is still different, but in this case the deaths go up which is in line with what we expected by restricting treatment. A good sign that our modifications are working as intended.</p>
@@ -473,7 +445,77 @@ mean of x mean of y
 <section id="generating-results" class="level2">
 <h2 class="anchored" data-anchor-id="generating-results">Generating Results</h2>
 <p>Imagine our goal would be to profile the effect of resource limits on dQALY. A single simulation isn’t enough, we have to run multiple simulation and average the results for each target resource.</p>
-<p>TBD: Profile plot of resource limits from 2-20 for 100 patients.</p>
+<p>TBD: Profile plot of resource limits from 2-20 for 100 patients. # Three Approaches to Treatment Wait Times and Resource Contention</p>
+<section id="direct-scheduling---predetermined-policy-waits" class="level3">
+<h3 class="anchored" data-anchor-id="direct-scheduling---predetermined-policy-waits">1. Direct Scheduling - Predetermined Policy Waits</h3>
+<ul>
+<li>This is executed in <code>model10.R</code></li>
+<li><strong>Wait time</strong>: Fixed delay (<code>wait_days</code> parameter) regardless of other patients</li>
+<li><strong>Resource contention</strong>: None - each patient gets individual predetermined wait</li>
+<li><strong>When treatment unavailable</strong>: Event scheduled for <code>now() + wait_days</code>, disease progresses normally<br>
+</li>
+<li><strong>Use case</strong>: Policy analysis with known wait time targets</li>
+</ul>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example implementation:</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set_attribute</span>(<span class="st">"timeWhenCanGetA"</span>, <span class="cf">function</span>() <span class="fu">now</span>(env) <span class="sc">+</span> wait_days<span class="sc">/</span><span class="dv">365</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set_attribute</span>(<span class="st">"waitingForA"</span>, <span class="dv">1</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>years_till_treatmentA <span class="ot">&lt;-</span> <span class="cf">function</span>(inputs) {</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(waitingForA <span class="sc">==</span> <span class="dv">1</span>) {</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    time_remaining <span class="ot">&lt;-</span> timeWhenCanGetA <span class="sc">-</span> <span class="fu">now</span>(env)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">max</span>(<span class="dv">0</span>, time_remaining)</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    inputs<span class="sc">$</span>horizon <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="queue-based---short-resource-limited-waits" class="level3">
+<h3 class="anchored" data-anchor-id="queue-based---short-resource-limited-waits">2. Queue-Based - Short Resource-Limited Waits</h3>
+<ul>
+<li>This is executed in <code>model11.R</code></li>
+<li><strong>Wait time</strong>: Determined by simmer’s built-in queue (patients wait in line)</li>
+<li><strong>Resource contention</strong>: Limited treatment capacity creates queues, but waits are typically short</li>
+<li><strong>When treatment unavailable</strong>: Patient waits in <code>seize("treatment_center")</code> queue until slot opens (<strong>FROZEN - NO DISEASE PROGRESSION</strong>)</li>
+<li><strong>Use case</strong>: Moderate treatment capacity, reasonable wait times where “frozen” assumption is acceptable</li>
+</ul>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example implementation:</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">seize</span>(<span class="st">"treatment_center"</span>, <span class="dv">1</span>) <span class="sc">%&gt;%</span>     <span class="co"># Patient waits here, no other events fire</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">timeout</span>(treatment_duration) <span class="sc">%&gt;%</span>      <span class="co"># Treatment occurs</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="fu">release</span>(<span class="st">"treatment_center"</span>, <span class="dv">1</span>)       <span class="co"># Resource freed for next patient</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="cloning---long-uncertain-resource-limited-waits" class="level3">
+<h3 class="anchored" data-anchor-id="cloning---long-uncertain-resource-limited-waits">3. Cloning - Long Uncertain Resource-Limited Waits</h3>
+<ul>
+<li>This is executed in <code>model12.R</code></li>
+<li><strong>Wait time</strong>: Uncertain, depends on resource availability and patient competition<br>
+</li>
+<li><strong>Resource contention</strong>: Severely limited treatment slots create long, uncertain queues</li>
+<li><strong>When treatment unavailable</strong>: Clone 1 waits indefinitely, Clone 2 continues disease progression (<strong>REALISTIC COMPETING RISKS</strong>)</li>
+<li><strong>Use case</strong>: Scarce treatment capacity, long uncertain waits, queue dynamics matter</li>
+</ul>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example implementation:</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">clone</span>(</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">2</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Clone 1: Treatment seeking</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">trajectory</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">seize</span>(<span class="st">"treatment_center"</span>, <span class="dv">1</span>) <span class="sc">%&gt;%</span>    <span class="co"># May wait very long time</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">timeout</span>(treatment_duration) <span class="sc">%&gt;%</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">release</span>(<span class="st">"treatment_center"</span>, <span class="dv">1</span>),</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Clone 2: Disease progression continues</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">trajectory</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Events continue firing: death, progression, recovery</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">wait</span>()  <span class="co"># Until interrupted by Clone 1 or other events</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="fu">synchronize</span>(<span class="at">wait =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="key-distinction" class="level2">
+<h2 class="anchored" data-anchor-id="key-distinction">Key Distinction</h2>
+<ul>
+<li><strong>Approaches #1 and #3</strong> allow disease progression during waits</li>
+<li><strong>Approach #2</strong> “freezes” patients while in simmer queue</li>
+<li><strong>Cloning becomes essential</strong> for long waits where frozen assumption is unrealistic</li>
+</ul>
 </section>
 
 

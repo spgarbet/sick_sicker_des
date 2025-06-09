@@ -298,3 +298,71 @@ the results for each target resource.
 
 
 TBD: Profile plot of resource limits from 2-20 for 100 patients. 
+# Three Approaches to Treatment Wait Times and Resource Contention
+
+### 1. Direct Scheduling - Predetermined Policy Waits
+- This is executed in `model10.R`
+- **Wait time**: Fixed delay (`wait_days` parameter) regardless of other patients
+- **Resource contention**: None - each patient gets individual predetermined wait
+- **When treatment unavailable**: Event scheduled for `now() + wait_days`, disease progresses normally  
+- **Use case**: Policy analysis with known wait time targets
+
+```r
+# Example implementation:
+set_attribute("timeWhenCanGetA", function() now(env) + wait_days/365) %>%
+set_attribute("waitingForA", 1)
+
+years_till_treatmentA <- function(inputs) {
+  if(waitingForA == 1) {
+    time_remaining <- timeWhenCanGetA - now(env)
+    max(0, time_remaining)
+  } else {
+    inputs$horizon + 1
+  }
+}
+```
+
+### 2. Queue-Based - Short Resource-Limited Waits
+- This is executed in `model11.R`
+- **Wait time**: Determined by simmer's built-in queue (patients wait in line)
+- **Resource contention**: Limited treatment capacity creates queues, but waits are typically short
+- **When treatment unavailable**: Patient waits in `seize("treatment_center")` queue until slot opens (**FROZEN - NO DISEASE PROGRESSION**)
+- **Use case**: Moderate treatment capacity, reasonable wait times where "frozen" assumption is acceptable
+
+```r
+# Example implementation:
+seize("treatment_center", 1) %>%     # Patient waits here, no other events fire
+timeout(treatment_duration) %>%      # Treatment occurs
+release("treatment_center", 1)       # Resource freed for next patient
+```
+
+### 3. Cloning - Long Uncertain Resource-Limited Waits 
+- This is executed in `model12.R`
+- **Wait time**: Uncertain, depends on resource availability and patient competition  
+- **Resource contention**: Severely limited treatment slots create long, uncertain queues
+- **When treatment unavailable**: Clone 1 waits indefinitely, Clone 2 continues disease progression (**REALISTIC COMPETING RISKS**)
+- **Use case**: Scarce treatment capacity, long uncertain waits, queue dynamics matter
+
+```r
+# Example implementation:
+clone(
+  n = 2,
+  # Clone 1: Treatment seeking
+  trajectory() %>%
+    seize("treatment_center", 1) %>%    # May wait very long time
+    timeout(treatment_duration) %>%
+    release("treatment_center", 1),
+  # Clone 2: Disease progression continues
+  trajectory() %>%
+    # Events continue firing: death, progression, recovery
+    wait()  # Until interrupted by Clone 1 or other events
+) %>%
+synchronize(wait = TRUE)
+```
+
+## Key Distinction
+
+- **Approaches #1 and #3** allow disease progression during waits
+- **Approach #2** "freezes" patients while in simmer queue 
+- **Cloning becomes essential** for long waits where frozen assumption is unrealistic
+

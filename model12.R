@@ -83,9 +83,9 @@ inputs <- list(
   sicker_eligible_for_treatment = FALSE # Sicker patients can't get treatment
 )
 
-#############################################################################
-# EVENT DEFINITIONS WITH CLONING
-#############################################################################
+######################
+# EVENT DEFINITIONS 
+#####################
 
 # Event: Healthy to Sick progression
 years_till_sick <- function(inputs) {
@@ -164,7 +164,7 @@ become_sick <- function(traj, inputs) {
             log_("Treatment successful - returning to healthy!") %>%
             set_attribute("State", 0) %>%
             release("sick") %>%
-            seize("healthy"),
+            seize("healthy") ,
           
           # Treatment failed
           trajectory() %>%
@@ -486,7 +486,7 @@ des_run <- function(inputs) {
   
   list(
     arrivals = get_mon_arrivals(env, per_resource = TRUE),
-    resources = get_mon_resources(env),
+    resources = get_mon_resources(env) %>% filter(resource == "treatment_center"),
     attributes = get_mon_attributes(env)
   )
 }

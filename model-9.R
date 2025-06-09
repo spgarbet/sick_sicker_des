@@ -269,9 +269,15 @@ des_run <- function(inputs)
     run(inputs$horizon+1/365) |> # Simulate just past horizon (in years)
     wrap()
         
-  get_mon_arrivals(env, per_resource = T) |>
+  arrivals <- get_mon_arrivals(env, per_resource = T) |>
     cost_arrivals(inputs) |> 
     qaly_arrivals(inputs) 
+  
+  return(list(
+    arrivals = arrivals,
+    resources = get_mon_resources(env),
+    attributes = get_mon_attributes(env)
+  ))
 }
 
 

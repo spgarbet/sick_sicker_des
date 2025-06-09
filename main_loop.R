@@ -307,3 +307,4 @@ plot_patient_trajectory_grouped <- function(patient_data) {
   
   return(p)
 }
+
