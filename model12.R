@@ -60,13 +60,13 @@ library(simmer)
 
 # Parameters - modeling a scenario with very limited treatment capacity
 inputs <- list(
-  N = 50,                     # Number of patients
+  N = 100,                     # Number of patients
   horizon = 100,               # Time horizon (years)
   d.r = 0.03,                # Discount Rate
   
   # Disease progression rates (per year)
   r.HS = 0.2,                # Healthy to Sick rate (higher for demonstration)
-  r.SH = 0.05,               # Sick to Healthy (natural recovery) rate  
+  r.SH = 1e-6,               # Sick to Healthy (natural recovery) rate  
   r.SS2 = 0.3,               # Sick to Sicker rate (higher - disease progresses while waiting)
   r.HD = 0.005,              # Healthy to Death rate
   r.SD = 0.03,               # Sick to Death rate (higher than healthy)
@@ -97,107 +97,7 @@ years_till_sick <- function(inputs) {
   }
 }
 
-# This is where cloning happens - when patient becomes sick
-become_sick <- function(traj, inputs) {
-  traj %>%
-    set_attribute("State", 1) %>% # 1 = Sick
-    release('healthy') %>%
-    seize('sick') %>%
-    log_("Became sick - creating clones for treatment vs natural progression") %>%
-    
-    # Create patient-specific signal names using a simpler approach
-    # Extract numeric ID from patient name (e.g., "patient14" -> 14)
-    set_attribute("patient_id", function() {
-      name <- get_name(env)
-      as.numeric(gsub("patient", "", name))
-    }) %>%
-    
-    # KEY: Create clones for parallel processes
-    clone(
-      n = 2,
-      
-      # Clone 1: Treatment-seeking pathway
-      trajectory("Treatment Seeking") %>%
-        log_("Clone 1: Seeking treatment") %>%
-        set_attribute("seeking_treatment", 1) %>%
-        
-        # Set up traps for patient-specific signals from Clone 2
-        trap(function() paste0("patient", get_attribute(env, "patient_id"), "_died")) %>%
-        trap(function() paste0("patient", get_attribute(env, "patient_id"), "_progressed")) %>%
-        trap(function() paste0("patient", get_attribute(env, "patient_id"), "_recovered")) %>%
-        trap(function() paste0("patient", get_attribute(env, "patient_id"), "_gave_up")) %>%
-        
-        # Try to get treatment - this might take a VERY long time
-        seize("treatment_center", 1) %>%
-        log_("FINALLY got treatment slot!") %>%
-        
-        # Send patient-specific signal that treatment started
-        send(function() paste0("patient", get_attribute(env, "patient_id"), "_treatment_started")) %>%
-        
-        # Undergo treatment with reduced progression risk
-        set_attribute("on_treatment", 1) %>%
-        
-        # Still face some risks during treatment (use patient-specific signals)
-        renege_if(function() paste0("patient", get_attribute(env, "patient_id"), "_died_during_tx"),
-                  out = trajectory() %>%
-                    log_("Died during treatment") %>%
-                    set_attribute("on_treatment", 0) %>%
-                    release("treatment_center")) %>%
-        
-        renege_if(function() paste0("patient", get_attribute(env, "patient_id"), "_progressed_during_tx"), 
-                  out = trajectory() %>%
-                    log_("Disease progressed during treatment - treatment stopped") %>%
-                    set_attribute("on_treatment", 0) %>%
-                    release("treatment_center")) %>%
-        
-        timeout(inputs$treatment_duration) %>%
-        renege_abort() %>%
-        
-        # Treatment completion
-        log_("Treatment completed!") %>%
-        branch(
-          function() if(runif(1) < inputs$treatment_success_rate) 1 else 2,
-          continue = c(TRUE, TRUE),
-          
-          # Successful treatment
-          trajectory() %>%
-            log_("Treatment successful - returning to healthy!") %>%
-            set_attribute("State", 0) %>%
-            release("sick") %>%
-            seize("healthy") ,
-          
-          # Treatment failed
-          trajectory() %>%
-            log_("Treatment failed - remaining sick")
-        ) %>%
-        
-        set_attribute("on_treatment", 0) %>%
-        set_attribute("seeking_treatment", 0) %>%
-        release("treatment_center"),
-      
-      # Clone 2: Natural disease progression while waiting
-      trajectory("Natural History While Waiting") %>%
-        log_("Clone 2: Natural progression while waiting for treatment") %>%
-        set_attribute("seeking_treatment", 0) %>%
-        
-        # Set up trap for patient-specific treatment start signal
-        trap(function() paste0("patient", get_attribute(env, "patient_id"), "_treatment_started"),
-             handler = trajectory() %>%
-               log_("Treatment started - stopping natural progression")) %>%
-        
-        # Patient gives up waiting after max_wait_time
-        timeout(inputs$max_wait_time) %>%
-        log_("Got tired of waiting - giving up on treatment") %>%
-        send(function() paste0("patient", get_attribute(env, "patient_id"), "_gave_up")) %>%
-        
-        # Continue with natural disease progression
-        wait() # Wait for further events from the event system
-    ) %>%
-    
-    # Synchronize clones - continue based on what happened
-    synchronize(wait = TRUE) %>%
-    log_("Treatment pathway resolved - continuing with final state")
-}
+source(here::here("become-sick-cloned.R"))
 
 # Modified progression events that interact with clones
 years_till_healthy <- function(inputs) {
@@ -217,12 +117,10 @@ years_till_healthy <- function(inputs) {
 
 recover_naturally <- function(traj, inputs) {
   traj %>%
-    set_attribute("State", 0) %>% # 0 = Healthy
+    set_attribute("State", 0) %>%
     release('sick') %>%
     seize('healthy') %>%
     log_("Recovered naturally to healthy state") %>%
-    
-    # Send patient-specific signal
     send(function() paste0("patient", get_attribute(env, "patient_id"), "_recovered"))
 }
 
@@ -284,10 +182,10 @@ death <- function(traj, inputs) {
       function() 1,
       continue = FALSE,
       trajectory("Death") %>%
-        set_attribute("State", 3) %>% # 3 = Dead
+        set_attribute("State", 3) %>%
         log_("Patient died") %>%
         
-        # Send patient-specific signals based on treatment status
+        # Send appropriate death signals
         branch(
           function() get_attribute(env, "on_treatment"),
           continue = rep(TRUE, 2),
@@ -303,7 +201,6 @@ death <- function(traj, inputs) {
         terminate_simulation(inputs)
     )
 }
-
 #############################################################################
 # INFRASTRUCTURE FUNCTIONS (same as before)
 #############################################################################

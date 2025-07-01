@@ -502,11 +502,11 @@ des_run <- function(inputs)
   ))
 }
 
-debug <- des_run_debug(inputs, pp = "patient0", model = "10")
+# debug <- des_run_debug(inputs, pp = "patient0", model = "10")
 
 
 set.seed(123)
-run.SoC <- des_run(modifyList(inputs, list(N = 1e3, treatA = FALSE, treatB = FALSE)))
+run.SoC <- des_run(modifyList(inputs, list(N = 1e4, treatA = FALSE, treatB = FALSE)))
 result.SoC <- 
   run.SoC %>% 
   pluck("outcomes") %>% 
@@ -516,7 +516,7 @@ result.SoC <-
             dqaly = mean(dqaly)
             )
 set.seed(123)
-run.A.unconstrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = TRUE, treatB = FALSE, waitA_days = 0)))
+run.A.unconstrained <- des_run(modifyList(inputs, list(N = 1e4, treatA = TRUE, treatB = FALSE, waitA_days = 0)))
 result.A.unconstrained <- 
   run.A.unconstrained %>% 
   pluck("outcomes") %>% 
@@ -527,7 +527,7 @@ result.A.unconstrained <-
   )
 
 set.seed(123)
-run.B.unconstrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = FALSE, treatB = TRUE, waitA_days = 0)))
+run.B.unconstrained <- des_run(modifyList(inputs, list(N = 1e4, treatA = FALSE, treatB = TRUE, waitA_days = 0)))
 result.B.unconstrained <- 
   run.B.unconstrained %>% 
   pluck("outcomes") %>% 
@@ -538,7 +538,7 @@ result.B.unconstrained <-
   )
 
 set.seed(123)
-run.AB.unconstrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = TRUE, treatB = TRUE, waitA_days = 0)))
+run.AB.unconstrained <- des_run(modifyList(inputs, list(N = 1e4, treatA = TRUE, treatB = TRUE, waitA_days = 0)))
 result.AB.unconstrained <-
   run.AB.unconstrained %>% 
   pluck("outcomes") %>% 
@@ -549,7 +549,7 @@ result.AB.unconstrained <-
   )
 
 set.seed(123)
-run.A.fully.constrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = TRUE, treatB = FALSE, waitA_days = 1e6)))
+run.A.fully.constrained <- des_run(modifyList(inputs, list(N = 1e4, treatA = TRUE, treatB = FALSE, waitA_days = 1e6)))
 result.A.fully.constrained <- 
   run.A.fully.constrained %>% 
   pluck("outcomes") %>% 
@@ -560,7 +560,7 @@ result.A.fully.constrained <-
   )
 
 set.seed(123)
-run.A.constrained <- des_run(modifyList(inputs, list(N = 1e3, treatA = TRUE, treatB = FALSE, waitA_days = 365)))
+run.A.constrained <- des_run(modifyList(inputs, list(N = 1e4, treatA = TRUE, treatB = FALSE, waitA_days = 365)))
 result.A.constrained <- 
   run.A.constrained %>% 
   pluck("outcomes") %>% 
@@ -571,18 +571,20 @@ result.A.constrained <-
   )
 
 res_cost <- list(
-  "DES" = c(result.SoC$dcost, result.A.fully.constrained$dcost, result.A.unconstrained$dcost, result.A.constrained$dcost,result.B.unconstrained$dcost, result.AB.unconstrained$dcost),
-  "Embedded" = c(147036.6 , 271907.9 ,243650.1, 353744.0)
+  "DTMC" = c(147036.6 , 271907.9 ,243650.1, 353744.0),
+  "DES (M=10k)" = c(result.SoC$dcost, result.A.fully.constrained$dcost, result.A.unconstrained$dcost, result.A.constrained$dcost,result.B.unconstrained$dcost, result.AB.unconstrained$dcost)
+  
 )
 
 res_effect <- list(
-  "DES"  = c(result.SoC$dqaly, result.A.fully.constrained$dqaly, result.A.unconstrained$dqaly, result.A.constrained$dqaly, result.B.unconstrained$dqaly, result.AB.unconstrained$dqaly),
-  "Embedded" = c(21.02288,  21.73058 ,22.56671, 23.42227)
+  "DTMC" = c(21.02288,  21.73058 ,22.56671, 23.42227),
+  "DES (M=10k)"  = c(result.SoC$dqaly, result.A.fully.constrained$dqaly, result.A.unconstrained$dqaly, result.A.constrained$dqaly, result.B.unconstrained$dqaly, result.AB.unconstrained$dqaly)
 )
 
 res_strategies <- list(
-  "DES"  = c("SoC", "A-FULL","A-NONE", "A-1YR","B", "AB"),
-  "Embedded" = c("SoC","A", "B", "AB")
+  "DTMC" = c("SoC","A", "B", "AB"),
+  "DES (M=10k)"  = c("SoC", "A-FULL","A-NONE", "A-1YR","B", "AB")
+
 )
 
 create_cea_table(cost = res_cost, effect = res_effect, strategies = res_strategies)

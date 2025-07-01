@@ -1,0 +1,345 @@
+---
+title: "Discrete Event Simulation for Health Economic Modelling"
+author:
+  - name: John A. Graves, Ph.D.
+    email: john.graves@vanderbilt.edu
+    affiliations:
+      - name: Professor of Health Policy and Medicine, Vanderbilt University School of Medicine
+      - name: Professor of Management, Vanderbilt Owen Graduate School of Management
+      - name: Director, Vanderbilt Center for Health Economic Modeling
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    incremental: true
+    logo: "vchem.png"
+    slide-number: false
+    html-math-method: katex
+    transition: fade
+    background-transition: fade
+    highlight-style: ayu-mirage
+    embed-resources: true
+editor_options: 
+  chunk_output_type: console
+editor: source
+bibliography: references.bib
+filters:
+  - _extensions/_shortcodes.lua
+---
+
+# Overview 
+
+```{r}
+library(knitr)
+library(kableExtra)
+```
+
+
+## 1. Conceptual Issues 
+
+::: incremental
+  - A (brief) overview of decision modelling approaches. 
+  - A taxonomy of errors in decision modelling. 
+  - What does DES buy you? 
+  - Basic terminology and visualisation of DES.
+  
+:::
+
+
+
+## 2. Computational Issues
+
+::: incremental
+  - Computational considerations for DES. 
+  - A worked example of DES for health economic modelling. 
+:::
+
+# A (brief) overview of decision modelling approaches {background-color="black"}
+
+# {background-image="images/modeling-graves.png" background-size="contain" background-position="center" background-repeat="no-repeat"}
+
+# Deterministic Models {background-color="dodgerblue"}
+
+## 
+
+<br><br><br><br>
+
+### [Cohort-level]{style="color:crimson"} models that track [expected values]{style="color:lightseagreen"}.
+ 
+## Deterministic Models
+
+1. [Discrete Time Markov Cohort]{style="color:forestgreen"}
+  - Characterized by transitions among mutually exclusive health states. 
+  - Suffers from "memoryless" property, though tricks can help. 
+  - Useful for expected outcomes, though possible to analytically solve for higher-order moments, e.g., variance, skewness; see @caswell2021a. 
+  
+## Deterministic Models
+
+2. [Differential equations modelling]{style="color:forestgreen"}
+  - Draws on stochastic process theory. 
+  - Processes represented by differential equations (DEQs).
+  - Solutions to DEQs provide occupancy of underlying process at time $t$. 
+
+# Stochastic Models {background-color="dodgerblue"}
+
+## 
+
+<br><br><br><br>
+
+
+### [Individual-level]{style="color:crimson"} models that simulate patient pathways with [random]{style="color:lightseagreen"} variation.
+
+
+## Stochastic Models
+
+1. Microsimulation
+
+   - An individual [state-transition model]{style="color:dodgerblue"} (STM). 
+   - Facilitate transition probabilities that are a function of attributes.  (e.g., time since disease onset, the occurrence of previous events, or time-varying response to treatment). 
+   - Can capture greater scope of output since the model returns the distribution of events. 
+
+## Stochastic Models
+
+2. Discrete Event Simulation 
+
+  - Extends the flexibilities of microsimulation. 
+  - Models time to event(s) explictly. 
+  - Can incorporate interdependencies and resource contention (e.g., wait times, queueus)
+  
+# A Taxonomy of Modelling Error {background-color="black"}
+
+```{r}
+# Create the data frame
+errors_table <- data.frame(
+  `Error Type` = c("Structural", "Estimation and sampling", "Integration", "Stochastic", "Embedding", "Truncation"),
+  `DEQ` = c("✓", "✓", "", "", "", ""),
+  `MRKCHRT` = c("✓", "✓", "✓", "", "✓", ""),
+  `MICROSIM` = c("✓", "✓", "✓", "✓", "✓", "✓"),
+  `DES` = c("✓", "✓", "", "✓", "", "")
+)
+```
+
+
+# Unavoidable (Shared) Errors {background-color="dodgerblue"}
+
+## 
+
+<br><br><br><br>
+
+### Inherent errors you (generally) cannot [minimize]{style="color:crimson"} or [sidestep]{style="color:lightseagreen"} by choosing a specific modelling approach. 
+
+## Errors in Expectation
+
+- Structural errors that result in bias. 
+- Attributes of models / parameters that result in model estimates that deviate from the "true" underlying event generation process. 
+- Not the same as heterogeneity!
+
+## Errors in Expectation
+
+:::nonincremental
+- Structural errors that result in bias.. 
+- Attributes of models / parameters that result in model estimates that deviate from the "true" underlying event generation process. 
+- Not the same as heterogeneity!
+:::
+
+:::{.callout-tip appearance="simple"}
+Biases in outcomes due to unmodelled queues / resource contention can be addressed using DES! 
+:::
+
+## Errors in Expectation
+
+```{r}
+# Create the table with kable and kableExtra
+kable(errors_table[1,], 
+      col.names = c("Error Type", "DEQ", "MRKCHRT", "MICROSIM", "DES")
+     ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, "Deterministic Models" = 2, "Stochastic Models" = 2)) %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:5, width = "1.5cm") %>% 
+  row_spec(1,  color = "dodgerblue")
+```
+
+
+## Estimation Errors
+
+- Sampling and estimation uncertainty. 
+- Focus of VOI.
+
+## Estimation Errors
+
+```{r}
+# Create the table with kable and kableExtra
+kable(errors_table[1:2,], 
+      col.names = c("Error Type", "DEQ", "MRKCHRT", "MICROSIM", "DES")
+     ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, "Deterministic Models" = 2, "Stochastic Models" = 2)) %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:5, width = "1.5cm")  %>% 
+  row_spec(2,  color = "dodgerblue")
+```
+
+  
+# Addressable Errors {background-color="dodgerblue"}
+
+## 
+
+<br><br><br><br>
+
+### Errors you can address using specific methods and approaches. 
+
+##
+
+Can [minimize]{style="color:crimson"} or [sidestep]{style="color:lightseagreen"} by choosing a specific modelling approach. 
+
+## Integration Error
+
+- Occurs when events accumulate at cycle boundaries. 
+- Easily corrected with 1/2 cycle correction, Simpson's rule approaches, etc.
+
+## Integration Error
+
+```{r}
+# Create the table with kable and kableExtra
+kable(errors_table[1:3,], 
+      col.names = c("Error Type", "DEQ", "MRKCHRT", "MICROSIM", "DES")
+     ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, "Deterministic Models" = 2, "Stochastic Models" = 2)) %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:5, width = "1.5cm")  %>% 
+  row_spec(3,  color = "dodgerblue")
+```
+
+
+## Stochastic Error
+
+- Realisation and timing of events among otherwise identical patients may vary.
+- Literature refers to this as "first-order" uncertainty. 
+- Can be addressed by increasing simulated patient sample $M$.
+
+## Stochastic Error
+
+
+```{r}
+# Create the table with kable and kableExtra
+kable(errors_table[1:4,], 
+      col.names = c("Error Type", "DEQ", "MRKCHRT", "MICROSIM", "DES")
+     ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, "Deterministic Models" = 2, "Stochastic Models" = 2)) %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:5, width = "1.5cm") %>% 
+  row_spec(4,  color = "dodgerblue")
+```
+
+## Embedding Error
+
+- Standard rate-to-probability conversion formulas (i.e., $P = 1 - e^{-rt}$) only accurate if no competing events. 
+- Pairwise conversions will effectively rule out the possibility of 2 or more events in same cycle. 
+- Easily addressed by embedding transition probability matrix $\mathbf{P}$ using matrix analogue to standard formula, i.e., $\mathbf{P} = \exp{(\mathbf{R}t})$. 
+- See @leech2025modeling and @graves2021comparison for techniques. 
+
+
+## Embedding Error
+
+
+```{r}
+# Create the table with kable and kableExtra
+kable(errors_table[1:5,], 
+      col.names = c("Error Type", "DEQ", "MRKCHRT", "MICROSIM", "DES")
+     ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, "Deterministic Models" = 2, "Stochastic Models" = 2)) %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:5, width = "1.5cm") %>% 
+  row_spec(5,  color = "dodgerblue")
+```
+
+
+## Truncation Error
+
+- Information on the precise timing of an event occurring in continuous time is lost when event times are moved to the cycle boundary point.
+- Analogue: loss of power when dichotomizing a continuous variable. 
+
+## Information Loss in Discrete Time
+
+![](images/01_information-loss.png)
+
+## Information Loss in Discrete Time
+
+![](images/02_information-loss.png)
+
+## Information Loss in Discrete Time
+
+![](images/03_information-loss.png)
+
+
+## Truncation Error vs. Integration Error
+
+- [**Integration error**]{style="color:dodgerblue"} affects [expected values]{style="color:crimson"}.
+- [**Truncation error**]{style="color:dodgerblue"} affects [variance]{style="color:crimson"}.
+- Addressable by increasing simulated patient size $M$ or decreasing cycle length. 
+
+## Truncation Error
+
+
+```{r}
+# Create the table with kable and kableExtra
+kable(errors_table[,], 
+      col.names = c("Error Type", "DEQ", "MRKCHRT", "MICROSIM", "DES")
+     ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, "Deterministic Models" = 2, "Stochastic Models" = 2)) %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:5, width = "1.5cm") %>% 
+  row_spec(6,  color = "dodgerblue")
+```
+
+
+# What does DES buy you?
+
+## 
+
+```{r}
+
+errors_table[1,5] = "✓ (-queues)"
+# Create the table with kable and kableExtra
+kable(errors_table, 
+      col.names = c("Error Type", "DEQ", "MRKCHRT", "MICROSIM", "DES")
+     ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE) %>%
+  add_header_above(c(" " = 1, "Deterministic Models" = 2, "Stochastic Models" = 2)) %>%
+  column_spec(1, bold = TRUE, width = "2cm") %>%
+  column_spec(2:5, width = "1.5cm")  %>%
+  column_spec(5, width = "3cm", color = "darkviolet", include_thead = TRUE)
+```
+ 
+## What Does DES Buy You?
+
+- No embedding error because event times are randomly sampled based on rates.
+- No truncation error because exact event times used. 
+- DES will converge [much faster]{style="color:crimson"} than microsimulation. 
+
+# {background-image="images/convergence.png" background-size="contain" background-position="center" background-repeat="no-repeat"}
+
+## What Does DES Buy You?
+
+- Can explicitly model wait times and resource contention. 
+- Technical demands (roughly) on par with microsimulation.
+
+::: footer
+Source: @graves2021comparison
+:::
+
+## Preview {background-image="images/dtmc-des.png" background-size="contain" background-position="center" background-repeat="no-repeat"}
+
+
+## References
